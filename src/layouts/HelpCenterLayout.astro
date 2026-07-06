@@ -1,0 +1,132 @@
+---
+// Fundations
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+// Icons
+import Plus from "@/components/fundations/icons/Plus.astro";
+import ChevronRight from "@/components/fundations/icons/ChevronRight.astro";
+const { frontmatter } = Astro.props;
+// Breadcrumbs Data
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Help Center", href: "/helpcenter/home" },
+  { label: frontmatter.page, href: "#" }, // Current page (unstyled)
+];
+---
+
+<BaseLayout>
+  <section>
+    <Wrapper variant="standard" class="pt-32 pb-8 bg-accent-300">
+      <div class="max-w-xl mx-auto">
+        <nav aria-label="Breadcrumb">
+          <ol class="flex items-center text-sm gap-x-2 text-base-600">
+            {
+              breadcrumbs.map((item, index) => (
+                <>
+                  <li>
+                    {index < breadcrumbs.length - 1 ? (
+                      <a
+                        href={item.href}
+                        class="text-xs font-medium hover:text-accent-500 text-base-800"
+                      >
+                        {item.label}
+                      </a>
+                    ) : (
+                      <span class="text-xs font-medium text-accent-900 underline">
+                        {item.label}
+                      </span>
+                    )}
+                  </li>
+                  {index < breadcrumbs.length - 1 && (
+                    <li class="text-accent-900">
+                      <ChevronRight size="sm" />
+                    </li>
+                  )}
+                </>
+              ))
+            }
+          </ol>
+        </nav>
+        <Text
+          tag="h1"
+          variant="displayMD"
+          class="font-semibold tracking-tight text-accent-900 mt-24"
+        >
+          {frontmatter.page}
+        </Text>
+        <Text variant="textBase" class="mt-4 text-accent-900">
+          {frontmatter.description}
+        </Text>
+      </div>
+    </Wrapper>
+  </section>
+  <section>
+    <Wrapper variant="standard" class="py-12 border-t-8 border-accent-900">
+      <Wrapper variant="prose" class="max-w-xl mx-auto">
+        <Text tag="p" variant="textBase" class="mt-4 text-accent-900">
+          <span>
+            Last updated on
+            <time datetime="{frontmatter.lastUpdated}">
+              {
+                new Date(frontmatter.lastUpdated).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                })
+              }
+            </time>
+          </span>
+        </Text>
+        <slot />
+      </Wrapper>
+    </Wrapper>
+  </section>
+  <section>
+    <Wrapper variant="standardPaddingless" class="border-t-8 bg-yellow">
+      <div
+        class="grid grid-cols-1 lg:grid-cols-4 lg:divide-x-8 divide-accent-900"
+      >
+        <div class="p-8 bg-accent-200">
+          <Text
+            tag="h2"
+            variant="displayXL"
+            class="font-medium text-accent-900"
+          >
+            FAQ
+          </Text>
+          <Text
+            tag="p"
+            variant="textLG"
+            class="mt-4 text-accent-900 text-balance"
+          >
+            Answers to commonly asked questions about our platform
+          </Text>
+        </div>
+        <div class="divide-y-8 divide-accent-900 lg:col-span-3">
+          {
+            frontmatter.faq.map((item) => (
+              <details class="p-8 text-left cursor-pointer group">
+                <summary class="flex items-center justify-between w-full text-2xl font-medium text-left text-accent-900 select-none  group-open:text-accent-900">
+                  {item.question}
+                  <div class="flex items-center justify-center w-8 h-8 border-2 border-accent-900 rounded-full transform group-open:-rotate-45 duration-300 ease-out shadow-xs shadow-accent-900  group-open:bg-accent-900 group-open:text-white">
+                    <Plus class="size-6 " />
+                  </div>
+                </summary>
+                <div>
+                  <Text
+                    tag="h5"
+                    variant="textBase"
+                    class="font-medium text-base-800"
+                  />
+                  <div class="py-4 pt-2 text-xl text-accent-900">
+                    {item.answer}
+                  </div>
+                </div>
+              </details>
+            ))
+          }
+        </div>
+      </div>
+    </Wrapper>
+  </section>
+</BaseLayout>

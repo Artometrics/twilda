@@ -1,0 +1,93 @@
+---
+// Fundations
+import Text from "@/components/fundations/elements/Text.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+// Icons
+import Plus from "@/components/fundations/icons/Plus.astro";
+const faqs = [
+  {
+    question: "How fast can we get set up?",
+    answer:
+      "Most teams launch in a day using our templates. We’ll help import your existing forms, spreadsheets, or tickets.",
+  },
+  {
+    question: "Do you integrate with our tools?",
+    answer:
+      "Yes. Send updates to Slack or Teams, sync tasks to Jira/Linear/Trello, and connect HRIS and SSO with a few clicks.",
+  },
+  {
+    question: "Can we enforce approvals and SLAs?",
+    answer:
+      "You can build multi-step approvals with fallbacks, set SLA timers, and trigger escalations automatically.",
+  },
+  {
+    question: "Is our data secure?",
+    answer:
+      "We offer SSO, role-based access, audit logs, and encryption in transit and at rest. Data residency options are available on Enterprise.",
+  },
+  {
+    question: "Who can submit requests?",
+    answer:
+      "Anyone you invite: employees, vendors, or contractors. Share forms publicly or keep queues private with permissions.",
+  },
+  {
+    question: "Does it work on mobile?",
+    answer:
+      "Yes. Review, approve, and update requests from mobile web or our app—no laptop required.",
+  },
+  {
+    question: "Can we export our data?",
+    answer:
+      "Absolutely. Export to CSV/JSON anytime, or pipe updates into your own systems via webhooks.",
+  },
+  {
+    question: "Do you offer onboarding help?",
+    answer:
+      "Growth and Enterprise plans include implementation support, office hours, and best-practice templates tailored to your teams.",
+  },
+];
+---
+
+<section>
+  <Wrapper variant="standardPaddingless" class="border-t-8">
+    <div
+      class="grid grid-cols-1 lg:grid-cols-4 lg:divide-x-8 divide-accent-900"
+    >
+      <div class="p-8 py-16 bg-accent-200">
+        <div class="lg:sticky lg:top-20">
+          <Text
+            tag="h2"
+            variant="displayXL"
+            class="font-medium text-accent-900"
+          >
+            FAQ
+          </Text>
+          <Text
+            tag="p"
+            variant="textLG"
+            class="mt-4 text-accent-900 text-balance"
+          >
+            Answers to commonly asked questions about our platform
+          </Text>
+        </div>
+      </div>
+      <div class="divide-y-8 divide-accent-900 lg:col-span-3">
+        {
+          faqs.map((faq) => (
+            <details class="p-8 text-left cursor-pointer group">
+              <summary class="flex items-center justify-between w-full  text-left  select-none  group-open:text-accent-900">
+                <span class="text-2xl font-medium text-accent-900">
+                  {faq.question}
+                </span>
+                <div class="flex items-center justify-center size-8 bg-accent-300 border-2 border-accent-900 rounded-full transform group-open:-rotate-45 duration-300 ease-out shadow-xs shadow-accent-900  group-open:bg-accent-900 group-open:text-white">
+                  <Plus class="size-6 " />
+                </div>
+              </summary>
+              <div class="py-4 pt-2 text-xl text-accent-900">{faq.answer}</div>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  </Wrapper>
+</section>

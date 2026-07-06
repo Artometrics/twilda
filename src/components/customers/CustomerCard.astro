@@ -1,0 +1,46 @@
+---
+// Assets
+import { Image } from "astro:assets";
+// Fundations
+import Text from "@/components/fundations/elements/Text.astro";
+// Content
+const { customer, avatar, url, testimonial } = {
+  url: "/customers/" + Astro.props.post.id,
+  avatar: Astro.props.post.data.avatar.url,
+  customer: Astro.props.post.data.customer,
+  testimonial: Astro.props.post.data.testimonial,
+};
+---
+
+<article
+  class="relative overflow-hidden bg-white shadow duration-300 shadow-accent-900 outline-2 outline-accent-900 h-full rounded-xl hover:shadow-none hover:translate-y-1"
+>
+  <a
+    href={url}
+    title={customer}
+    aria-label={customer}
+    class="absolute inset-0 z-10"></a>
+  <Image
+    src={avatar}
+    alt={customer}
+    width={600}
+    height={400}
+    loading="eager"
+    decoding="async"
+    class="object-cover w-full aspect-12/8"
+  />
+  <div class="p-8 border-t-2 border-accent-900">
+    <div>
+      <Text tag="p" variant="textXS" class="uppercase text-base-500">
+        {customer}
+      </Text>
+      <Text
+        tag="h3"
+        variant="textLG"
+        class="mt-4 font-medium text-base-900 text-balance"
+      >
+        "{testimonial}"
+      </Text>
+    </div>
+  </div>
+</article>

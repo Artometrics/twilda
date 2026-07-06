@@ -1,0 +1,14 @@
+---
+description: Content collections, frontmatter shape, and image paths for Ella Mae — align with layouts, no orphan schema changes.
+globs:
+  - src/content/**/*
+  - src/content.config.ts
+---
+
+# Content (`src/content/**`) + `content.config.ts`
+
+- **Loaders only:** `src/content.config.ts` defines collections with `glob` loaders and **no Zod schema**. Treat frontmatter as a contract with **layouts** (`src/layouts/*Layout.astro`) and listing pages under `src/pages/`. If you add or rename fields, update every consumer (including `BlogLayout`, cards, RSS).
+- **Copy-paste templates:** Use existing entries as the source of truth — e.g. `src/content/posts/1.md`, `src/content/changelog/1.md`, `src/content/team/isaac-turner.md`, `src/content/customers/1.md`, `src/content/helpcenter/1.md`, `src/content/integrations/1.md`, `src/content/legal/terms.md`.
+- **Blog ↔ team:** `posts` frontmatter `team` must match a `team` collection entry **id** (filename stem). `BlogLayout` calls `getEntry("team", frontmatter.team)`.
+- **Images:** Entries use paths such as `/src/images/blog/...`, `/src/images/team/...` with `astro:assets` `<Image>` — keep `image.url` and `image.alt` (or equivalent) in sync with layout expectations. This repo has **no** top-level `public/` folder; prefer `src/images/` patterns already in the theme.
+- **Posts format:** Collection allows `.md` and `.mdx` under `src/content/posts/`; other collections are `.md` only per `content.config.ts`.

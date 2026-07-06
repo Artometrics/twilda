@@ -1,0 +1,187 @@
+---
+// Fundations
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+// Grouped page data from the first version into Static & Content Collection
+const pageData = [
+  {
+    categoryTitle: "Static",
+    links: [
+      {
+        sectionTitle: "Landing Pages",
+        links: [
+          { title: "Landing One", url: "/" },
+          { title: "404", url: "/404" },
+        ],
+      },
+      {
+        sectionTitle: "Forms Pages",
+        links: [
+          { title: "Contact", url: "/contact" },
+          { title: "Login", url: "/forms/login" },
+          { title: "Sign up", url: "/forms/signup" },
+        ],
+      },
+      {
+        sectionTitle: "System",
+        links: [
+          { title: "Links", url: "/system/links" },
+          { title: "Buttons", url: "/system/buttons" },
+          { title: "Colors", url: "/system/colors" },
+          { title: "Typography", url: "/system/typography" },
+          {
+            title: "License",
+            url: "https://lexingtonthemes.com/legal/license",
+          },
+          {
+            title: "Docs",
+            url: "https://lexingtonthemes.com/documentation",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    categoryTitle: "Content Collections",
+    links: [
+      {
+        sectionTitle: "Blog ",
+        links: [
+          { title: "Home", url: "/blog/" },
+          { title: "Post", url: "/blog/posts/1" },
+          { title: "Tag index", url: "/blog/tags" },
+          { title: "Tag category", url: "/blog/tags/finance" },
+        ],
+      },
+      {
+        sectionTitle: "Team",
+        links: [
+          { title: "Home", url: "/team/" },
+          {
+            title: "Details",
+            url: "/team/jordan-wells",
+          },
+        ],
+      },
+      {
+        sectionTitle: "Help Center",
+        links: [
+          {
+            title: "Home",
+            url: "/helpcenter/",
+          },
+          {
+            title: "Details",
+            url: "/helpcenter/1",
+          },
+        ],
+      },
+      {
+        sectionTitle: "Customers",
+        links: [
+          {
+            title: "Home",
+            url: "/customers/",
+            ariaLabel: "link to customers home",
+          },
+          {
+            title: "Details",
+            url: "/customers/1",
+            ariaLabel: "link to customers details",
+          },
+        ],
+      },
+      {
+        sectionTitle: "Legal",
+        links: [
+          { title: "Terms", url: "/legal/terms" },
+          { title: "Privacy Policy", url: "/legal/privacy" },
+        ],
+      },
+      {
+        sectionTitle: "Integrations",
+        links: [
+          {
+            title: "Home",
+            url: "/integrations/",
+            ariaLabel: "link to integrations home",
+          },
+          {
+            title: "Details",
+            url: "/integrations/1",
+            ariaLabel: "link to integrations details",
+          },
+        ],
+      },
+      {
+        sectionTitle: "Changelog",
+        links: [
+          {
+            title: "Home",
+            url: "/changelog/",
+            ariaLabel: "link to changelog home",
+          },
+          {
+            title: "Details",
+            url: "/changelog/1",
+            ariaLabel: "link to changelog details",
+          },
+        ],
+      },
+    ],
+  },
+];
+---
+
+<BaseLayout>
+  <section>
+    <Wrapper variant="standard" class="py-32">
+      <Text
+        tag="h1"
+        variant="displayMD"
+        class="font-semibold tracking-tight text-accent-900"
+      >
+        Overview
+      </Text>
+      <div class="flex flex-col mt-12 gap-12">
+        {
+          pageData.map((category, i) => (
+            <div>
+              <Text
+                tag="h2"
+                variant="textLG"
+                class="font-medium  text-base-900"
+              >
+                {category.categoryTitle}
+              </Text>
+              <div class="mt-4 gap-y-8 gap-x-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                {category.links.map((section, j) => (
+                  <div>
+                    <Text
+                      tag="h3"
+                      variant="textBase"
+                      class="text-base-900 font-semibold  "
+                    >
+                      {section.sectionTitle}
+                    </Text>
+                    <div class="flex flex-col mt-4  gap-1 ">
+                      {section.links.map((link, k) => (
+                        <a
+                          href={link.url}
+                          class="hover:text-base-900 text-base-600 text-sm font-medium"
+                        >
+                          {link.title}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </Wrapper>
+  </section>
+</BaseLayout>

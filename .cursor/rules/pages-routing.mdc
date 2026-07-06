@@ -1,0 +1,13 @@
+---
+description: Ella Mae routing, getStaticPaths, and layout selection under src/pages.
+globs:
+  - src/pages/**/*
+---
+
+# Pages & routing (`src/pages/**`)
+
+- **Dynamic routes:** Section detail pages use `[...slug].astro` for `team`, `legal`, `changelog`, `customers`, `helpcenter`, and `integrations`. Blog entries use `blog/posts/[...slug].astro`. Tag pages: `blog/tags/[tag].astro` and `blog/tags/index.astro`.
+- **Pattern:** `getStaticPaths` typically does `getCollection("<name>")` and maps `params.slug` (or equivalent) to `entry.id`; detail templates use `render(entry)` from `astro:content` and pass `entry.data` into the matching layout (e.g. `BlogLayout frontmatter={entry.data}`).
+- **Layouts:** Choose the layout that matches the section (`BlogLayout`, `ChangelogLayout`, `LegalLayout`, `TeamLayout`, `CustomersLayout`, `HelpCenterLayout`, `IntegrationsLayout`) — each expects the frontmatter shape that existing markdown already uses.
+- **RSS:** `rss.xml.js` maps `posts` to item links `/blog/posts/${post.id}/`; keep link shape aligned with `blog/posts/[...slug].astro`.
+- **Marketing home:** `index.astro` composes feature/pricing/testimonial/Faq sections; navigation links are maintained in `src/components/global/Navigation.astro`.

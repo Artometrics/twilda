@@ -1,0 +1,130 @@
+---
+// Fundations
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+const platformFeatures = [
+  {
+    title: "Intake forms",
+    description:
+      "Collect required details with conditional logic and file uploads so requests start complete.",
+  },
+  {
+    title: "Automations",
+    description: "Route by team, priority, or category without manual triage.",
+  },
+  {
+    title: "Approvals",
+    description:
+      "Multi-step approvals with roles, fallbacks, and clear owners.",
+  },
+  {
+    title: "SLA tracking",
+    description:
+      "Response timers, risk alerts, and escalations before deadlines slip.",
+  },
+  {
+    title: "Playbooks",
+    description: "Reusable checklists and snippets for consistent answers.",
+  },
+  {
+    title: "Notifications",
+    description:
+      "Smart updates via email and chat so stakeholders always know status.",
+  },
+  {
+    title: "Permissions",
+    description: "Role-based access, requester controls, and private queues.",
+  },
+  {
+    title: "Audit trail",
+    description: "Every change, comment, and decision logged with timestamps.",
+  },
+  {
+    title: "Dashboards",
+    description: "Track volume, cycle time, and bottlenecks at a glance.",
+  },
+  {
+    title: "Live support",
+    description:
+      "Ops specialists to help design flows and troubleshoot edge cases.",
+  },
+  {
+    title: "Mobile app",
+    description: "Review, approve, and update requests from your phone.",
+  },
+  {
+    title: "Integrations",
+    description:
+      "Connect chat, ticketing, HRIS, and finance tools without code.",
+  },
+];
+---
+
+<section>
+  <Wrapper variant="standardPaddingless" class="border-t-8">
+    <div
+      class="grid grid-cols-1 lg:grid-cols-2 lg:divide-x-8 lg:divide-accent-900"
+    >
+      <div class="p-8 lg:px-20 bg-accent-200">
+        <div class="py-16 lg:sticker lg:sticky top-20">
+          <div>
+            <Text
+              tag="h2"
+              variant="displayLG"
+              class="font-semibold tracking-tight text-accent-900 text-balance"
+            >
+              Build and run your ops workspace
+            </Text>
+            <Text
+              tag="p"
+              variant="textLG"
+              class="max-w-md mt-4 text-lg text-accent-900 xl:text-xl"
+            >
+              Operate with controls real teams use. Manage roles, approvals,
+              SLAs, and dashboards without extra tabs or guesswork.
+              <br />
+              <br />
+              From day-one setup to daily ops, Ellamae keeps every request calm,
+              auditable, and fast.
+            </Text>
+
+            <Button
+              isLink={true}
+              href="/"
+              size="xl"
+              variant="default"
+              class="mt-8 w-fit">Get started</Button
+            >
+          </div>
+        </div>
+      </div>
+      <ul
+        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 gap-2 bg-accent-900 list-none"
+        role="list"
+      >
+        {
+          platformFeatures.map((feature, index) => (
+            <li class="p-8 bg-white lg:p-12">
+              <div>
+                <div class="flex items-center justify-center font-semibold border-2 border-accent-900 rounded-full size-10 shadow-xs duration-300 shadow-accent-900  bg-accent-200">
+                  {index + 1}
+                </div>
+                <Text
+                  tag="h3"
+                  variant="textXL"
+                  class="mt-8 font-medium text-accent-900 "
+                >
+                  {feature.title}
+                </Text>
+              </div>
+              <Text tag="p" variant="textBase" class="mt-4 text-accent-900 ">
+                {feature.description}
+              </Text>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </Wrapper>
+</section>

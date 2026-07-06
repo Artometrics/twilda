@@ -1,0 +1,112 @@
+---
+// Assets
+import { Image } from "astro:assets";
+import Blob2 from "@/images/blobs/blob2.svg";
+// Fundations
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+---
+
+<BaseLayout hideNav={true} hideFooter={true}>
+  <section>
+    <Wrapper variant="standardPaddingless" class="border-y-8">
+      <div
+        class="relative justify-center h-[calc(100dvh-1rem)] max-h-full overflow-hidden lg:px-0 md:px-12 grid lg:grid-cols-2 lg:divide-x-8 divide-accent-900"
+      >
+        <div
+          class="relative z-10 flex flex-col flex-1 px-4 py-10 bg-secondary-500 lg:py-24 md:flex-none md:px-28 sm:justify-center"
+        >
+          <div class="w-full mx-auto text-center md:px-0 sm:px-4">
+            <Text tag="h2" variant="displayXL" class="font-semibold text-white">
+              Contact us
+            </Text>
+
+            <form class="mt-6">
+              <input
+                autocomplete="off"
+                name="hidden"
+                type="text"
+                style="display: none"
+                aria-hidden="true"
+                tabindex="-1"
+              />
+              <input type="hidden" name="_redirect" value="#" />
+
+              <div class="space-y-6">
+                <div
+                  class="overflow-hidden border-2 border-accent-900 shadow-lg divide-y-4 divide-accent-900 rounded-xl"
+                >
+                  <div>
+                    <label for="name" class="sr-only">Your name</label>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      placeholder="Your name"
+                      required
+                      class="block w-full px-3 py-4 text-xl text-accent-900 placeholder-black border-2 border-transparent border-accent-900 appearance-none focus:border-accent-900 focus:bg-accent-300 focus:outline-none focus:ring-black sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label for="company" class="sr-only">Company name</label>
+                    <input
+                      id="company"
+                      name="company"
+                      type="text"
+                      placeholder="Company name"
+                      class="block w-full px-3 py-4 text-xl text-accent-900 placeholder-black border-2 border-transparent border-accent-900 appearance-none focus:border-accent-900 focus:bg-accent-300 focus:outline-none focus:ring-black sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label for="email" class="sr-only">Email</label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="Email"
+                      required
+                      class="block w-full px-3 py-4 text-xl text-accent-900 placeholder-black border-2 border-transparent border-accent-900 appearance-none focus:border-accent-900 focus:bg-accent-300 focus:outline-none focus:ring-black sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label for="details" class="sr-only">Project details</label>
+                    <textarea
+                      id="details"
+                      name="details"
+                      placeholder="What are you working on?"
+                      rows="4"
+                      class="block w-full px-3 py-4 text-xl text-accent-900 placeholder-black border-2 border-transparent border-accent-900 appearance-none focus:border-accent-900 focus:bg-accent-300 focus:outline-none focus:ring-black sm:text-sm"
+                    ></textarea>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  size="xl"
+                  variant="default"
+                  class="w-full mt-8"
+                >
+                  Submit
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="flex flex-col items-center justify-center bg-accent-200">
+          <Image
+            width={800}
+            height={800}
+            alt="#_"
+            src={Blob2}
+            class="object-center size-full size-24 lg:size-82"
+          />
+        </div>
+      </div>
+    </Wrapper>
+  </section>
+</BaseLayout>

@@ -1,0 +1,70 @@
+---
+// Assets
+import { Image } from "astro:assets";
+import Collab from "@/images/assets/collab.svg";
+// Fundations
+import Text from "@/components/fundations/elements/Text.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+const features = [
+  {
+    title: "Requests start right",
+    description:
+      "Smart forms capture the details, due dates, and context teams need on the first try.",
+  },
+  {
+    title: "Status without standups",
+    description:
+      "Live timelines, SLA timers, and automatic nudges keep everyone aligned without extra meetings.",
+  },
+  {
+    title: "One workspace, many teams",
+    description:
+      "IT, finance, HR, and ops share consistent intake flows with roles and permissions built in.",
+  },
+];
+---
+
+<section>
+  <Wrapper variant="standard" class="py-24 border-t-8 bg-accent-900">
+    <Text
+      tag="h2"
+      variant="displayXL"
+      class="font-semibold tracking-tight text-white text-center"
+    >
+      Operations that stay organized
+    </Text>
+    <Image
+      width={800}
+      height={800}
+      loading="eager"
+      decoding="async"
+      src={Collab}
+      class="object-cover object-top w-full mt-12 bg-white border-2 border-accent-900 lg:rounded-full h-96"
+      alt="#_"
+    />
+    <div
+      class="mt-24 grid grid-cols-1 md:grid-cols-2 lg:text-center lg:grid-cols-3 gap-6 lg:gap-12"
+    >
+      {
+        features.map((feature) => (
+          <div>
+            <Text
+              tag="h3"
+              variant="displaySM"
+              class="font-medium text-secondary-400"
+            >
+              {feature.title}
+            </Text>
+            <Text
+              tag="p"
+              variant="textLG"
+              class="mt-4 text-white  text-balance"
+            >
+              {feature.description}
+            </Text>
+          </div>
+        ))
+      }
+    </div>
+  </Wrapper>
+</section>

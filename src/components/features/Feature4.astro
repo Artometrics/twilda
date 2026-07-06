@@ -1,0 +1,79 @@
+---
+// Assets
+import { Image } from "astro:assets";
+import Blob1 from "@/images/blobs/blob1.svg";
+import Blob4 from "@/images/blobs/blob4.svg";
+import Blob3 from "@/images/blobs/blob3.svg";
+// Fundations
+import Text from "@/components/fundations/elements/Text.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+const features = [
+  {
+    image: Blob1,
+    title: "Structured intake",
+    description:
+      "Templates with required fields ensure teams get the context they need from the start.",
+  },
+  {
+    image: Blob4,
+    title: "Fast handoffs",
+    description:
+      "Auto-assign tasks and send nudges when SLAs are at risk, keeping work moving.",
+  },
+  {
+    image: Blob3,
+    title: "Reliable records",
+    description:
+      "Every decision, approval, and change is logged with timestamps for easy audits.",
+  },
+];
+---
+
+<section>
+  <Wrapper variant="standard" class="py-24 bg-accent-900">
+    <div class="max-w-xl mx-auto lg:text-center text-balance">
+      <Text
+        tag="h2"
+        variant="displayLG"
+        class="font-semibold tracking-tight text-white"
+      >
+        Everything you need to move fast
+      </Text>
+      <Text tag="p" variant="textLG" class="mt-4 text-base-400">
+        Ellamae keeps operations tidy and transparent—from intake to handoff to
+        close.
+      </Text>
+    </div>
+    <div
+      class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:text-center lg:grid-cols-3 gap-6 lg:gap-12"
+    >
+      {
+        features.map((feature) => (
+          <div>
+            <Image
+              width={800}
+              height={800}
+              src={feature.image}
+              alt="#_"
+              class="lg:mx-auto size-12 "
+            />
+            <Text
+              tag="h3"
+              variant="displaySM"
+              class="font-medium text-secondary-400 mt-8"
+            >
+              {feature.title}
+            </Text>
+            <Text
+              tag="p"
+              variant="textLG"
+              class="mt-4 text-white  text-balance"
+            >
+              {feature.description}
+            </Text>
+          </div>
+        ))
+      }
+    </div>
+  </Wrapper>
+</section>

@@ -1,0 +1,51 @@
+---
+// Fundations
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+// Components
+import TeamCard from "@/components/team/TeamCard.astro";
+// Content
+import { getCollection } from "astro:content";
+const allAuthors = await getCollection("team");
+---
+
+<BaseLayout>
+  <section>
+    <Wrapper variant="standard" class="pt-32 pb-12 lg:pt-64">
+      <div class="max-w-xl mx-auto text-center text-balance">
+        <Text
+          tag="h1"
+          variant="displayXL"
+          class="font-semibold tracking-tight text-accent-900"
+        >
+          Meet the crew
+        </Text>
+        <Text
+          tag="p"
+          variant="textBase"
+          class="mt-4 text-accent-900 text-balance"
+        >
+          We're a team of crypto enthusiasts, developers, and entrepreneurs who
+          are passionate about decentralized finance and blockchain technology.
+        </Text>
+      </div>
+    </Wrapper>
+    <Wrapper variant="standard" class="border-t-8 border-accent-900 py-8">
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24"
+      >
+        {
+          // Sorting authors alphabetically inline
+          allAuthors
+            .sort((a, b) => {
+              const nameA = a.data.name.toLowerCase();
+              const nameB = b.data.name.toLowerCase();
+              return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
+            })
+            .map((post) => <TeamCard post={post} />)
+        }
+      </div>
+    </Wrapper>
+  </section>
+</BaseLayout>

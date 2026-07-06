@@ -1,0 +1,35 @@
+---
+// Assets
+import { Image } from "astro:assets";
+import TestimonialImage from "@/images/assets/testimonial.png";
+
+// Fundations
+import Text from "@/components/fundations/elements/Text.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+---
+
+<section>
+  <Wrapper variant="standard" class="py-24 bg-accent-900">
+    <Image
+      width={800}
+      height={800}
+      alt="testimonial"
+      src={TestimonialImage}
+      class="object-cover object-top mx-auto rounded-full shadow shadow-white border-2 border-white size-24"
+    />
+    <div class="mx-auto text-center mt-8">
+      <Text
+        tag="h3"
+        variant="displayLG"
+        class="font-medium tracking-tight text-white"
+      >
+        "Ella Mae finally gave our ops team one place to intake, route, and
+        close requests. Instead of chasing updates in chat, we see exactly who
+        owns what and when it'll ship."
+      </Text>
+      <Text tag="p" variant="textLG" class="mt-8 tracking-tight text-base-400">
+        Matt Lenoir Head of Design Ops at FRII-ends
+      </Text>
+    </div>
+  </Wrapper>
+</section>

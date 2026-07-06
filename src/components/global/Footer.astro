@@ -1,0 +1,106 @@
+---
+// Assets
+import BigLogo from "@/components/assets/BigLogo.astro";
+// Fundations
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+
+// Icons
+import XBrand from "@/components/fundations/icons/XBrand.astro";
+import GitHub from "@/components/fundations/icons/GitHub.astro";
+import ArrowRight from "@/components/fundations/icons/ArrowRight.astro";
+const footerLinks = [
+  { label: "Overview", url: "/", ariaLabel: "Go to overview" },
+  { label: "Links", url: "/", ariaLabel: "Links" },
+  { label: "Buttons", url: "/system/buttons/", ariaLabel: "Buttons" },
+  { label: "Colors", url: "/system/colors/", ariaLabel: "Colors" },
+  { label: "Typography", url: "/system/typography/", ariaLabel: "typography" },
+];
+---
+
+<footer class="overflow-hidden">
+  <Wrapper variant="standard" class="pt-12 bg-accent-900 border-t">
+    <div
+      class="items-start pb-12 grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-32 lg:pb-48"
+    >
+      <div class="flex flex-col max-w-xl gap-6 lg:col-span-2">
+        <div>
+          <Text
+            tag="h2"
+            variant="displayLG"
+            class="font-semibold tracking-tight text-white lg:text-5xl"
+          >
+            Subscribe, get tips to grow the way you deserve.
+          </Text>
+          <form class="justify-between mt-4 sm:flex gap-2">
+            <label class="sr-only" for="email-address">Email address</label>
+            <input
+              autocomplete="email"
+              class="w-full px-5 py-3 text-sm text-center placeholder-black bg-white border-2 rounded-full shadow h-14 border-accent-400 lg:text-left focus:ring-black focus:border-white shadow-accent-400 focus:shadow-none duration-300 focus:translate-y-1"
+              id="email-address"
+              name="email"
+              placeholder="Enter your email"
+              required
+              type="email"
+            />
+
+            <Button size="xl" variant="accent" type="submit">
+              Subscribe
+            </Button>
+          </form>
+
+          <div class="flex flex-col mt-4 gap-6">
+            <p class="text-xl font-normal text-white">
+              Lexington Themes <span>
+                © Copyright 2023. All rights reserved.</span
+              >
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <Button
+                isLink={true}
+                iconOnly
+                size="sm"
+                variant="accent"
+                href="#_"
+              >
+                <XBrand slot="icon" size="sm" />
+                <span class="sr-only">Follow on X</span>
+              </Button>
+
+              <Button
+                isLink={true}
+                iconOnly
+                size="sm"
+                variant="accent"
+                href="#_"
+              >
+                <GitHub slot="icon" size="sm" />
+                <span class="sr-only">View on GitHub</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <nav
+        class="flex flex-col justify-between text-base text-white gap-y-4 l"
+        role="navigation"
+      >
+        {
+          footerLinks.map((link) => (
+            <a
+              class="hover:text-accent-300"
+              href={link.url}
+              aria-label={link.ariaLabel}
+              target={link.external ? "_blank" : undefined}
+              rel={link.external ? "noopener noreferrer" : undefined}
+            >
+              {link.label}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+    <BigLogo class="text-white lg:-mb-6" />
+  </Wrapper>
+</footer>

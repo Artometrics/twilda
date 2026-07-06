@@ -1,0 +1,37 @@
+---
+// Fundations
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+---
+
+<BaseLayout hideNav={true} hideFooter={true}>
+  <section>
+    <Wrapper
+      variant="standard"
+      class="flex flex-col items-center justify-center py-24  bg-accent-900 lg:h-svh"
+    >
+      <div class="max-w-3xl mx-auto text-center lg:py-32">
+        <Text
+          tag="h1"
+          variant="displayXL"
+          class="font-semibold tracking-tight text-white"
+        >
+          404 - Page Not Found
+        </Text>
+        <Text tag="p" variant="textLG" class="mt-4 text-base-400 text-balance">
+          Looks like this request doesn’t exist in the workspace. Check the URL
+          or head back to the home page to pick the right queue.
+        </Text>
+        <Button
+          isLink={true}
+          href="/"
+          size="xl"
+          variant="accent"
+          class="mx-auto mt-8 w-fit">Go back home</Button
+        >
+      </div>
+    </Wrapper>
+  </section>
+</BaseLayout>

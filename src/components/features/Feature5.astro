@@ -1,0 +1,74 @@
+---
+// Fundations
+import Text from "@/components/fundations/elements/Text.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+const features = [
+  {
+    title: "Request Templates",
+    description:
+      "Standardize how work comes in with ready-to-use forms for IT, finance, HR, and facilities.",
+    bgColor: "border-b-8 lg:border-r-8 border-accent-900 bg-accent-200",
+  },
+  {
+    title: "SLA Tracking",
+    description:
+      "Set response targets, see countdowns, and get alerted before deadlines slip.",
+    bgColor:
+      "border-b-8 lg:border-r-8 border-accent-900 bg-secondary-500 text-white",
+  },
+  {
+    title: "Knowledge Base",
+    description:
+      "Attach playbooks and snippets so teams answer once and reuse everywhere.",
+    bgColor: "border-b-8  border-accent-900 bg-white",
+  },
+  {
+    title: "Approvals",
+    description:
+      "Multi-step approvals with role-based rules and fallback owners when people are out.",
+    bgColor:
+      "border-b-8 lg:border-r-8 border-accent-900 lg:border-b-0 bg-white",
+  },
+  {
+    title: "Analytics",
+    description:
+      "Track volume, turnaround time, and bottlenecks to prioritize improvements.",
+    bgColor:
+      "border-b-8 lg:border-r-8 border-accent-900 lg:border-b-0 bg-accent-200",
+  },
+  {
+    title: "Mobile App",
+    description:
+      "Manage requests, approve on the go, and keep stakeholders updated from any device.",
+    bgColor:
+      "border-b-8  lg:border-b-0 border-accent-900 bg-secondary-500 text-white",
+  },
+];
+---
+
+<section>
+  <Wrapper variant="standardPaddingless">
+    <div class="grid grid-cols-1 lg:grid-cols-3">
+      {
+        features.map((card) => (
+          <div class={`p-8 lg:p-12 ${card.bgColor}`}>
+            <Text
+              tag="h3"
+              variant="displaySM"
+              class="font-semibold tracking-tight"
+            >
+              {card.title}
+            </Text>
+            <Text
+              tag="p"
+              variant="textLG"
+              class="mt-4 font-medium text-balance"
+            >
+              {card.description}
+            </Text>
+          </div>
+        ))
+      }
+    </div>
+  </Wrapper>
+</section>

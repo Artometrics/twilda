@@ -1,0 +1,46 @@
+---
+// Assets
+import { Image } from "astro:assets";
+// Fundations
+import Text from "@/components/fundations/elements/Text.astro";
+// Content
+const { page, description, pubDate, image, url } = {
+  url: "/changelog/" + Astro.props.post.id,
+  page: Astro.props.post.data.page,
+  image: Astro.props.post.data.image.url,
+  description: Astro.props.post.data.description,
+  pubDate: new Date(Astro.props.post.data.pubDate).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "2-digit",
+  }),
+};
+---
+
+<article
+  class="relative overflow-hidden bg-white shadow duration-300 shadow-accent-900 outline-2 outline-accent-900 rounded-xl hover:shadow-none hover:translate-y-1 p-8"
+>
+  <a
+    href={url}
+    title={`Read changelog update: ${page}`}
+    aria-label={`Read changelog update: ${page}`}
+    class="absolute inset-0 z-10"></a>
+
+  <Text tag="p" variant="textXS" class="uppercase text-base-500">
+    {pubDate}
+  </Text>
+  <Text
+    tag="h3"
+    variant="displaySM"
+    class="mt-12 font-medium text-base-900 text-balance"
+  >
+    {page}
+  </Text>
+  <Text
+    tag="p"
+    variant="textBase"
+    class="mt-2 text-accent-900 line-clamp-2 lg:text-balance"
+  >
+    {description}
+  </Text>
+</article>

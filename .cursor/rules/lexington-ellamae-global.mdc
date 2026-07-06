@@ -1,0 +1,13 @@
+---
+description: Global conventions for Lexington Themes Ella Mae Astro theme — imports, fundations path, minimal diffs.
+alwaysApply: true
+---
+
+# Lexington — Ella Mae (global)
+
+- **Package:** `@lexington/ellamae`; **publisher:** Lexington Themes (https://lexingtonthemes.com/). Prefer `@/` imports mapped to `src/` (`tsconfig.json`).
+- **Spelling:** The shared UI layer lives under `src/components/fundations/` — do **not** rename to “foundations”.
+- **Shell layout:** Pages that need the standard site chrome should use `BaseLayout` (`src/layouts/BaseLayout.astro`), which loads `src/styles/global.css` and `src/components/fundations/head/BaseHead.astro`, and wraps content with `Navigation` / `Footer` unless `hideNav` / `hideFooter` is set.
+- **Styling:** Tailwind v4 with tokens and plugins declared in `src/styles/global.css` (`@tailwindcss/forms`, `@tailwindcss/typography`, `tailwind-scrollbar-hide`). Reuse `Text`, `Wrapper`, `Button`, and other `fundations` components before adding one-off markup.
+- **Scope:** Keep changes minimal and consistent with surrounding files; avoid drive-by refactors or unrelated formatting.
+- **Support links:** Use README placeholders when relevant — [Documentation](https://lexingtonthemes.com/documentation/quick-start/), [Support](https://lexingtonthemes.com/legal/support/).

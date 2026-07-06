@@ -1,0 +1,106 @@
+---
+// Assets
+import { Image } from "astro:assets";
+import Blob3 from "@/images/blobs/blob3.svg";
+import Blob4 from "@/images/blobs/blob2.svg";
+
+// Fundations
+import Text from "@/components/fundations/elements/Text.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+// Icons
+import ArrowRight from "@/components/fundations/icons/ArrowRight.astro";
+const featureList = [
+  "Custom intake forms",
+  "SLA timers and reminders",
+  "Auto-routing by team",
+  "Escalations and overrides",
+  "Full audit history",
+];
+---
+
+<section>
+  <Wrapper
+    variant="standardPaddingless"
+    class="border-t-2 divide-y-8 divide-accent-900"
+  >
+    <div
+      class="w-full grid grid-cols-1 md:grid-cols-2 divide-y-8 divide-accent-900 md:divide-y-0 md:divide-x-8"
+    >
+      <div
+        class="flex flex-col items-center justify-center block w-full h-full aspect-square lg:mt-0 bg-accent-300"
+      >
+        <Image
+          class="size-24 lg:size-82"
+          width={800}
+          height={800}
+          loading="eager"
+          decoding="async"
+          src={Blob3}
+          alt="#_"
+        />
+      </div>
+      <div
+        class="relative items-center h-full p-8 bg-white lg:px-20 gap-12 lg:flex"
+      >
+        <div class="max-w-xl text-balance">
+          <Text
+            tag="h2"
+            variant="displayLG"
+            class="font-semibold tracking-tight text-accent-900"
+          >
+            Approvals that route themselves
+          </Text>
+          <Text tag="p" variant="textLG" class="mt-4 text-accent-900">
+            Turn recurring asks into guided flows with rules, deadlines, and
+            clear owners—no manual chasing.
+          </Text>
+          <ul class="flex flex-col mt-6 text-accent-900 xl:text-xl" role="list">
+            {
+              featureList.map((item) => (
+                <li class="inline-flex items-center gap-3">
+                  <ArrowRight class="size-4" />
+                  {item}
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div
+      class="grid grid-cols-1 lg:grid-cols-2 divide-y-8 divide-accent-900 md:divide-y-0 md:divide-x-8"
+    >
+      <div
+        class="relative items-center h-full p-8 bg-white lg:px-20 gap-12 lg:flex"
+      >
+        <div class="max-w-xl mx-auto text-center lg:text-left">
+          <div>
+            <Text
+              tag="h2"
+              variant="displayLG"
+              class="font-semibold tracking-tight text-accent-900"
+            >
+              All work, one dashboard
+            </Text>
+            <Text tag="p" variant="textLG" class="mt-4 text-accent-900">
+              See every request, owner, and deadline in a single board. Reassign
+              in seconds and unblock teams faster.
+            </Text>
+          </div>
+        </div>
+      </div>
+      <div
+        class="flex flex-col items-center justify-center block w-full h-full aspect-square lg:mt-0 bg-secondary-500"
+      >
+        <Image
+          class="size-24 lg:size-82"
+          width={800}
+          height={800}
+          decoding="async"
+          src={Blob4}
+          alt="#_"
+        />
+      </div>
+    </div>
+  </Wrapper>
+</section>
