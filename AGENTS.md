@@ -133,3 +133,10 @@ From README / `package.json`:
 ---
 
 *Optional:* `.pages.yml` (PagesCMS) is mentioned in README for optional CMS wiring — not required for build.
+
+## Cursor Cloud specific instructions
+
+- This is a **static Astro site** (no backend, DB, or services). Setup is just `npm install`; run with `npm run dev`.
+- **Dev server port is `4321`** (Astro default), not `3000` as the README/AGENTS `Commands` table states. Browse the running site at `http://localhost:4321/`.
+- **No lint/typecheck script is configured.** `astro check` is not wired up and its deps (`@astrojs/check`, `typescript`) are not installed; running `npx astro check` triggers an interactive install prompt that hangs non-interactively. Use `npm run build` as the correctness check (it type-checks/renders all routes).
+- Fuse.js live search lives on the **blog** (`src/components/blog/BlogSearch.astro`), reachable via the search icon on `/blog/`, not on the Help Center.
