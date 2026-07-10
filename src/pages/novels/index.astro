@@ -1,0 +1,91 @@
+---
+import NovelcrafterLayout from "@/layouts/NovelcrafterLayout.astro";
+import Cover from "@/apps/novelcrafter/Cover.astro";
+import { novels } from "@/apps/novelcrafter/data";
+
+const recent = novels.slice(0, 3);
+---
+
+<NovelcrafterLayout title="Your Novels · novelcrafter">
+  <header class="nc-topbar">
+    <a class="nc-brand" href="/novels">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" />
+        <path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5A2.5 2.5 0 0 1 4 20.5z" />
+      </svg>
+      <span>novelcrafter</span>
+    </a>
+    <nav class="nc-topnav">
+      <a class="is-active" href="/novels">Novels</a>
+      <a href="/novels">Series</a>
+      <a href="/novels">Prompts</a>
+    </nav>
+    <div class="nc-topbar__spacer"></div>
+    <div class="nc-topbar__right">
+      <a href="/novels">Help</a>
+      <span class="nc-credits">3/5</span>
+      <span class="nc-avatar-sm">K</span>
+    </div>
+  </header>
+
+  <main class="nc-library">
+    <div class="nc-library__head">
+      <h1>Your Novels</h1>
+      <p>This is your personal library of novels. Which one do you want to work on today?</p>
+    </div>
+
+    <p class="nc-section-label">CONTINUE WHERE YOU LEFT OFF</p>
+    <div class="nc-continue">
+      {
+        recent.map((n) => (
+          <a class="nc-continue__card" href={`/novels/${n.id}`}>
+            <span class="nc-continue__thumb">
+              <Cover kind={n.cover} title={n.title} author={n.author} />
+            </span>
+            <span class="nc-continue__meta">
+              <strong>{n.title}</strong>
+              <span>{n.author}</span>
+              <em>{n.updated}</em>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+
+    <div class="nc-toolbar">
+      <button class="nc-btn nc-btn--primary" type="button">+ Create Novel</button>
+      <button class="nc-btn" type="button">Import</button>
+      <div class="nc-toolbar__spacer"></div>
+      <div class="nc-field">
+        <label>SEARCH/FILTER:</label>
+        <input class="nc-input" type="search" placeholder="Search name/series…" />
+      </div>
+      <div class="nc-field">
+        <label>SORT BY:</label>
+        <select class="nc-select"><option>Date</option><option>Title</option></select>
+      </div>
+      <div class="nc-field">
+        <label>VIEW AS:</label>
+        <div class="nc-viewtoggle">
+          <button class="is-active" type="button">Grid</button>
+          <button type="button">List</button>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="nc-group-title">No Series <span>{novels.length} books</span></h2>
+    <div class="nc-grid">
+      {
+        novels.map((n) => (
+          <a class="nc-book" href={`/novels/${n.id}`}>
+            <div class="nc-book__cover">
+              <Cover kind={n.cover} title={n.title} author={n.author} />
+            </div>
+            <p class="nc-book__title">{n.title}</p>
+            <p class="nc-book__date">{n.updated}</p>
+          </a>
+        ))
+      }
+    </div>
+  </main>
+</NovelcrafterLayout>
