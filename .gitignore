@@ -1,0 +1,16 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# netlify
+.netlify/
+
+# environment
+.env
+.env.*
+
+# os / editor
+.DS_Store
