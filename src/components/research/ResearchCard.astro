@@ -1,0 +1,57 @@
+---
+import Text from "@/components/fundations/elements/Text.astro";
+
+const { url, title, description, pubDate, status, readTime, tags = [] } =
+  Astro.props;
+---
+
+<article class="relative bg-white group border border-accent-200 rounded-xl p-6 hover:border-accent-400 transition">
+  <div class="flex flex-wrap gap-2 mb-3">
+    {
+      status && (
+        <span class="text-xs uppercase tracking-wide text-accent-600">
+          {status === "in-progress" ? "In progress" : status}
+        </span>
+      )
+    }
+    {
+      readTime && (
+        <span class="text-xs text-accent-500">· {readTime}</span>
+      )
+    }
+  </div>
+  <Text
+    tag="h2"
+    variant="textXL"
+    class="font-semibold text-accent-900 group-hover:text-accent-600 transition"
+  >
+    <a href={url} class="before:absolute before:inset-0">
+      {title}
+    </a>
+  </Text>
+  <Text tag="p" variant="textBase" class="mt-2 text-accent-700 line-clamp-3">
+    {description}
+  </Text>
+  <Text tag="p" variant="textSM" class="mt-4 text-accent-500">
+    <time datetime={new Date(pubDate).toISOString()}>
+      {
+        new Date(pubDate).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      }
+    </time>
+  </Text>
+  {
+    tags.length > 0 && (
+      <div class="flex flex-wrap gap-2 mt-3">
+        {tags.map((tag: string) => (
+          <span class="text-xs px-2 py-0.5 bg-accent-100 text-accent-700 rounded capitalize">
+            {tag}
+          </span>
+        ))}
+      </div>
+    )
+  }
+</article>

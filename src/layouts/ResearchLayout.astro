@@ -1,0 +1,118 @@
+---
+// Fundations
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import ShareButtons from "@/components/fundations/elements/ShareButtons.astro";
+// Content
+import { getEntry } from "astro:content";
+
+const { frontmatter } = Astro.props;
+const team = frontmatter.team
+  ? await getEntry("team", frontmatter.team)
+  : null;
+
+const statusLabel =
+  frontmatter.status === "in-progress"
+    ? "In progress"
+    : frontmatter.status === "complete"
+      ? "Complete"
+      : "Draft";
+---
+
+<BaseLayout>
+  <section>
+    <Wrapper variant="standard" class="py-32">
+      <div
+        class="flex flex-col justify-between max-w-3xl mx-auto text-center text-balance"
+      >
+        {
+          frontmatter.series && (
+            <Text tag="p" variant="textSM" class="text-accent-600 uppercase tracking-widest">
+              {frontmatter.series}
+            </Text>
+          )
+        }
+        <Text
+          tag="h1"
+          variant="displayMD"
+          class="font-semibold tracking-tight text-accent-900 mt-2"
+        >
+          {frontmatter.title}
+        </Text>
+        {
+          frontmatter.subtitle && (
+            <Text tag="p" variant="textLG" class="mt-3 text-accent-700 italic">
+              {frontmatter.subtitle}
+            </Text>
+          )
+        }
+        <Text tag="p" variant="textBase" class="mt-4 text-accent-900">
+          {frontmatter.description}
+        </Text>
+        <div
+          class="flex flex-wrap items-center justify-center gap-3 mt-6 text-sm text-accent-700"
+        >
+          <span class="px-2 py-1 border border-accent-300 rounded-md bg-accent-50">
+            {statusLabel}
+          </span>
+          {
+            frontmatter.readTime && (
+              <span>{frontmatter.readTime} read</span>
+            )
+          }
+          <time datetime={new Date(frontmatter.pubDate).toISOString()}>
+            {
+              new Date(frontmatter.pubDate).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            }
+          </time>
+        </div>
+        {
+          frontmatter.preregistration && (
+            <div class="mt-6">
+              <Button
+                isLink
+                size="sm"
+                variant="accent"
+                href={frontmatter.preregistration}
+                title="Pre-registration"
+              >
+                View pre-registration
+              </Button>
+            </div>
+          )
+        }
+      </div>
+      <div class="max-w-xl mx-auto mt-12">
+        <Wrapper variant="prose">
+          <slot />
+        </Wrapper>
+        {
+          team && (
+            <div class="w-full mt-16 flex items-center gap-3">
+              <Text tag="p" variant="textBase" class="text-accent-900">
+                <span class="font-medium">{team.data.name}</span>
+                · {team.data.role}
+              </Text>
+            </div>
+          )
+        }
+        <div class="w-full mt-12 pt-8 border-t border-accent-200">
+          <Text tag="p" variant="textSM" class="text-accent-700 mb-4">
+            Share this investigation:
+          </Text>
+          <ShareButtons
+            url={Astro.url.href}
+            title={frontmatter.title}
+            contentType="generic"
+          />
+        </div>
+      </div>
+    </Wrapper>
+  </section>
+</BaseLayout>
