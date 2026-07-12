@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { CodexEntry, CoverKind, Novel } from "@/apps/novelcrafter/data";
 import { gatsbySeed } from "@/lib/novels/seed";
+import { trinitySeed, trinitySnippets } from "@/lib/novels/trinity-seed";
 
 type Client = SupabaseClient<Database>;
 
@@ -157,7 +158,92 @@ export async function createNovel(
   });
   if (scErr) throw scErr;
 
+  const title = input?.title ?? "Untitled Novel";
+  const coverKind = input?.cover_kind ?? "cardinal";
+  if (isTrinityNovel(title, coverKind)) {
+    await seedTrinityIfEmpty(supabase, userId, novel.id);
+  }
+
   return novel.id;
+}
+
+function isTrinityNovel(title: string, coverKind: CoverKind): boolean {
+  return coverKind === "trinity" || title.toLowerCase().includes("trinity");
+}
+
+async function insertCodexSeed(
+  supabase: Client,
+  novelId: string,
+  entries: CodexEntry[],
+) {
+  if (entries.length === 0) return;
+  const rows = entries.map((e) => ({
+    novel_id: novelId,
+    type: e.type,
+    name: e.name,
+    initials: e.initials,
+    tags: e.tags,
+    aliases: e.aliases ?? [],
+    summary: e.summary,
+    description: e.description,
+    mentions: e.mentions ?? 0,
+  }));
+  const { error } = await supabase.from("codex_entries").insert(rows);
+  if (error) throw error;
+}
+
+async function insertSnippetSeed(
+  supabase: Client,
+  novelId: string,
+  snippets: { title: string; content: string }[],
+) {
+  if (snippets.length === 0) return;
+  const rows = snippets.map((s) => ({
+    novel_id: novelId,
+    title: s.title,
+    content: s.content,
+  }));
+  const { error } = await supabase.from("snippets").insert(rows);
+  if (error) throw error;
+}
+
+/** Seed Trinity codex + snippets when novel is empty (idempotent). */
+export async function seedTrinityIfEmpty(
+  supabase: Client,
+  userId: string,
+  novelId: string,
+): Promise<boolean> {
+  const novel = await getNovelFull(supabase, userId, novelId);
+  if (!novel) return false;
+  if (!isTrinityNovel(novel.title, novel.cover_kind)) return false;
+
+  const { count: snippetCount } = await supabase
+    .from("snippets")
+    .select("id", { count: "exact", head: true })
+    .eq("novel_id", novelId);
+
+  const needsCodex = novel.codex.length === 0;
+  const needsSnippets = (snippetCount ?? 0) === 0;
+  if (!needsCodex && !needsSnippets) return false;
+
+  if (needsCodex) {
+    await insertCodexSeed(supabase, novelId, trinitySeed.codex);
+    await supabase
+      .from("novels")
+      .update({
+        synopsis: trinitySeed.synopsis,
+        series_name: trinitySeed.series ?? "Trinity Cycle",
+        author: trinitySeed.author,
+      })
+      .eq("id", novelId)
+      .eq("user_id", userId);
+  }
+
+  if (needsSnippets) {
+    await insertSnippetSeed(supabase, novelId, trinitySnippets);
+  }
+
+  return true;
 }
 
 export async function updateNovelMetadata(

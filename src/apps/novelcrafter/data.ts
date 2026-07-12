@@ -1,6 +1,8 @@
 // Novelcrafter-style data layer.
 // Gatsby is a fully populated example; Trinity and Cardinal are blank templates.
 
+import { trinitySeed as trinity } from "@/lib/novels/trinity-seed";
+
 export type CodexType = "character" | "location" | "lore" | "other";
 
 export interface CodexEntry {
@@ -371,23 +373,8 @@ const gatsby: Novel = {
   chapters: gatsbyChapters,
 };
 
-const trinity: Novel = {
-  id: "trinity",
-  title: "Trinity",
-  author: "KSM",
-  updated: "May 24",
-  sortKey: 2,
-  synopsis: "Oracle of Silicon Valley.",
-  cover: "trinity",
-  blank: true,
-  codex: [],
-  chapters: [
-    {
-      title: "Chapter I",
-      scenes: [{ title: "Scene 1", text: "" }],
-    },
-  ],
-};
+export { gatsby };
+export { trinitySeed as trinity } from "@/lib/novels/trinity-seed";
 
 const cardinal: Novel = {
   id: "cardinal",
@@ -407,7 +394,6 @@ const cardinal: Novel = {
   ],
 };
 
-export { gatsby };
 export const novels: Novel[] = [gatsby, trinity, cardinal];
 
 export function getNovel(id: string): Novel | undefined {
