@@ -10,6 +10,7 @@ import {
   formatUpdated,
 } from "@/lib/novels/service";
 import { requireAuth, dbErrorMessage, isDbSetupError } from "@/lib/auth/guards";
+import { ensureUserProfile } from "@/lib/auth/profile";
 
 const auth = requireAuth(Astro);
 if (auth instanceof Response) return auth;
@@ -19,6 +20,7 @@ let novels: Awaited<ReturnType<typeof listNovels>> = [];
 let dbError: string | null = null;
 
 try {
+  await ensureUserProfile(supabase, user);
   await ensureStarterNovels(supabase, user.id);
   novels = await listNovels(supabase, user.id);
 } catch (error) {

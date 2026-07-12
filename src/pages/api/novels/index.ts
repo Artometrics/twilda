@@ -1,5 +1,7 @@
 import type { APIRoute } from "astro";
 import { createSupabaseServerClient } from "@/lib/supabase/ssr";
+import { dbErrorMessage } from "@/lib/auth/guards";
+import { ensureUserProfile } from "@/lib/auth/profile";
 import { createNovel, ensureStarterNovels } from "@/lib/novels/service";
 
 export const prerender = false;
@@ -14,6 +16,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
   }
 
   try {
+    await ensureUserProfile(supabase, user);
     await ensureStarterNovels(supabase, user.id);
     const body = await request.json().catch(() => ({}));
     const id = await createNovel(supabase, user.id, body);
@@ -23,7 +26,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     });
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Create failed" }),
+      JSON.stringify({ error: dbErrorMessage(err) }),
       { status: 500 },
     );
   }

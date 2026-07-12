@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import { createSupabaseServerClient } from "@/lib/supabase/ssr";
+import { ensureUserProfile } from "@/lib/auth/profile";
 
 const code = Astro.url.searchParams.get("code");
 const next = Astro.url.searchParams.get("next") ?? "/novels/";
@@ -11,6 +12,17 @@ if (code) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return Astro.redirect(`/forms/login/?error=${encodeURIComponent(error.message)}`);
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    try {
+      await ensureUserProfile(supabase, user);
+    } catch {
+      // Library page will retry; don't block login redirect.
+    }
   }
 }
 

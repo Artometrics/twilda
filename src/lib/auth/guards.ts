@@ -23,7 +23,15 @@ export function isDbSetupError(message: string): boolean {
   return /relation|does not exist|schema cache|PGRST/i.test(message);
 }
 
-export function dbErrorMessage(error: unknown): string {
+function messageFromUnknown(error: unknown): string | null {
   if (error instanceof Error) return error.message;
-  return "Database unavailable";
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return null;
+}
+
+export function dbErrorMessage(error: unknown): string {
+  return messageFromUnknown(error) ?? "Database unavailable";
 }
