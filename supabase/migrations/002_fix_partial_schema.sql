@@ -1,6 +1,49 @@
 -- Run this if 001_initial_schema.sql failed partway (e.g. "last_opened_at does not exist").
 -- Safe to run multiple times.
 
+-- Subscriptions (if 001 stopped before this)
+create table if not exists public.subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade unique,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  plan text not null default 'free' check (plan in ('free', 'pro', 'studio')),
+  status text not null default 'active' check (status in ('active', 'trialing', 'canceled', 'past_due')),
+  ai_credits_remaining int not null default 5,
+  ai_credits_monthly int not null default 5,
+  current_period_end timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.subscriptions enable row level security;
+
+drop policy if exists "subscriptions_select_own" on public.subscriptions;
+create policy "subscriptions_select_own" on public.subscriptions
+  for select using (auth.uid() = user_id);
+
+create or replace function public.handle_new_subscription()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.subscriptions (user_id)
+  values (new.id)
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_profile_subscription on public.profiles;
+create trigger on_profile_subscription
+  after insert on public.profiles
+  for each row execute function public.handle_new_subscription();
+
+insert into public.subscriptions (user_id)
+select id from public.profiles
+on conflict (user_id) do nothing;
+
 -- Patch novels table if an older version existed
 alter table public.novels add column if not exists synopsis text not null default '';
 alter table public.novels add column if not exists author text not null default '';
