@@ -24,6 +24,7 @@ Create project **`twilda`** under org **Artometrics** (separate from other apps)
 1. Copy URL + keys into `.env` and Netlify env.
 2. Enable Auth providers when wiring login/signup.
 3. RLS on for every table before production anon use.
+4. Run database schema: copy all of `supabase/migrations/001_initial_schema.sql` into Supabase **SQL Editor** and **Run** (idempotent; see `supabase/migrations/README.md`).
 
 ```bash
 npx supabase gen types typescript --project-id <ref> > src/lib/supabase/database.types.ts
