@@ -4,14 +4,11 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import Text from "@/components/fundations/elements/Text.astro";
 import Button from "@/components/fundations/elements/Button.astro";
 import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import { getSafeRedirect } from "@/lib/auth";
 
 export const prerender = false;
 
-const next = getSafeRedirect(Astro.url.searchParams.get("next"));
-
 if (Astro.locals.user) {
-  return Astro.redirect(next);
+  return Astro.redirect("/novels/");
 }
 
 const inputClass =
@@ -30,8 +27,11 @@ const inputClass =
           variant="displayXL"
           class="font-semibold text-accent-900 text-center"
         >
-          Sign in
+          Reset password
         </Text>
+        <p class="mt-4 text-center text-accent-900 lg:text-2xl">
+          Enter your email and we will send a reset link.
+        </p>
 
         <div
           id="auth-message"
@@ -40,8 +40,7 @@ const inputClass =
           aria-live="polite"
         />
 
-        <form id="login-form" class="mt-6" novalidate>
-          <input type="hidden" name="next" value={next} />
+        <form id="forgot-form" class="mt-6" novalidate>
           <div class="space-y-6">
             <div
               class="overflow-hidden border-2 border-accent-900 shadow divide-y-2 divide-accent-900 rounded-xl"
@@ -58,61 +57,25 @@ const inputClass =
                   class={inputClass}
                 />
               </div>
-              <div>
-                <label for="password" class="sr-only">Password</label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Password"
-                  required
-                  autocomplete="current-password"
-                  class={inputClass}
-                />
-              </div>
             </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember"
-                  type="checkbox"
-                  class="w-4 h-4 text-accent-900 border-2 border-accent-900 rounded-full focus:ring-black"
-                />
-                <label
-                  for="remember-me"
-                  class="ml-2 text-accent-900 lg:text-2xl"
-                >
-                  Remember me
-                </label>
-              </div>
-              <div>
-                <a
-                  href="/forms/forgot"
-                  class="text-accent-900 lg:text-2xl hover:text-accent-800"
-                >
-                  Forgot your password?
-                </a>
-              </div>
-            </div>
+
             <Button
               type="submit"
-              id="login-submit"
+              id="forgot-submit"
               size="xl"
               variant="default"
               class="w-full mt-8"
             >
-              Sign in
+              Send reset link
             </Button>
 
             <div>
-              <p class="text-sm text-accent-900 lg:text-2xl font-medium">
-                Not a member?
+              <p class="text-sm text-accent-900 lg:text-2xl font-medium text-center">
                 <a
-                  href="/forms/signup"
-                  class="ml-3 text-accent-900 underline lg:text-2xl hover:text-accent-800"
+                  href="/forms/login"
+                  class="text-accent-900 underline lg:text-2xl hover:text-accent-800"
                 >
-                  Sign up now
+                  Back to sign in
                 </a>
               </p>
             </div>
@@ -126,8 +89,8 @@ const inputClass =
 <script>
   import { actions } from "astro:actions";
 
-  const form = document.getElementById("login-form") as HTMLFormElement;
-  const submit = document.getElementById("login-submit") as HTMLButtonElement;
+  const form = document.getElementById("forgot-form") as HTMLFormElement;
+  const submit = document.getElementById("forgot-submit") as HTMLButtonElement;
   const message = document.getElementById("auth-message") as HTMLDivElement;
 
   function showMessage(text: string, isError: boolean) {
@@ -144,18 +107,20 @@ const inputClass =
 
     try {
       const formData = new FormData(form);
-      const result = await actions.signIn(formData);
+      const result = await actions.resetPassword(formData);
 
       if (result.error || !result.data?.success) {
         showMessage(
-          result.data?.message || result.error?.message || "Sign in failed.",
+          result.data?.message || result.error?.message || "Request failed.",
           true,
         );
         submit.disabled = false;
         return;
       }
 
-      window.location.href = result.data.redirectTo;
+      showMessage(result.data.message, false);
+      form.reset();
+      submit.disabled = false;
     } catch {
       showMessage("Something went wrong. Please try again.", true);
       submit.disabled = false;

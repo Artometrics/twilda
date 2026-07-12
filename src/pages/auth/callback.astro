@@ -1,0 +1,86 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import { createSSRClient } from "@/lib/supabase/ssr";
+import { getSafeRedirect } from "@/lib/auth";
+import type { EmailOtpType } from "@supabase/supabase-js";
+
+export const prerender = false;
+
+const supabase = createSSRClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const requestUrl = new URL(Astro.request.url);
+const tokenHash = requestUrl.searchParams.get("token_hash");
+const type = requestUrl.searchParams.get("type") as EmailOtpType | null;
+const code = requestUrl.searchParams.get("code");
+const next = getSafeRedirect(requestUrl.searchParams.get("next"));
+
+if (code) {
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (!error) {
+    return Astro.redirect(next);
+  }
+}
+
+if (tokenHash && type) {
+  const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+  if (!error) {
+    return Astro.redirect(next);
+  }
+}
+
+const errorMessage =
+  tokenHash || code
+    ? "That link is invalid or has expired. Request a new one and try again."
+    : null;
+---
+
+<BaseLayout hideNav={true} hideFooter={true}>
+  <section>
+    <Wrapper
+      variant="standard"
+      class="flex flex-col items-center justify-center py-24 border-y-8 bg-accent-300 min-h-[100dvh]"
+    >
+      <div class="w-full max-w-md mx-auto text-center">
+        <Text
+          tag="h1"
+          variant="displayXL"
+          class="font-semibold text-accent-900"
+        >
+          {errorMessage ? "Link expired" : "Confirming…"}
+        </Text>
+        {
+          errorMessage ? (
+            <p class="mt-6 text-accent-900 lg:text-2xl">{errorMessage}</p>
+          ) : (
+            <p class="mt-6 text-accent-900 lg:text-2xl">
+              Finishing sign-in. You will be redirected shortly.
+            </p>
+          )
+        }
+        <p class="mt-8">
+          <a
+            href="/forms/login"
+            class="text-accent-900 underline lg:text-2xl hover:text-accent-800"
+          >
+            Back to sign in
+          </a>
+        </p>
+      </div>
+    </Wrapper>
+  </section>
+</BaseLayout>
+
+{
+  !errorMessage && (
+    <script>
+      window.setTimeout(() => {
+        window.location.href = "/novels/";
+      }, 1500);
+    </script>
+  )
+}

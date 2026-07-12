@@ -1,9 +1,10 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient as createSupabaseBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
 /**
- * Browser / client-safe Supabase client (anon key).
- * Relies on Row Level Security — never use the service role here.
+ * Browser Supabase client (anon key + RLS).
+ * Prefer Astro actions + cookie sessions for auth; use this for optional client reads.
  */
 export function createBrowserClient(): SupabaseClient<Database> {
   const url = import.meta.env.PUBLIC_SUPABASE_URL;
@@ -15,5 +16,5 @@ export function createBrowserClient(): SupabaseClient<Database> {
     );
   }
 
-  return createClient<Database>(url, anonKey);
+  return createSupabaseBrowserClient<Database>(url, anonKey);
 }
