@@ -1,0 +1,16 @@
+---
+description: Env, Netlify, and Supabase conventions for Twilda
+alwaysApply: true
+---
+
+# Env, Netlify & Supabase (Twilda)
+
+- **Product:** Twilda · **Company:** Artometrics · **Domain:** `twilda.com`
+- **Site:** Netlify project `twilda` (Git deploy from `kylesmcauliffe/twilda`). Link locally with `npx netlify link`.
+- **Public env:** Only `PUBLIC_*` (`PUBLIC_SITE_URL`, `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`).
+- **Secrets:** `SUPABASE_SERVICE_ROLE_KEY` is server-only. Never commit or paste into chat.
+- **Templates:** `.env.example` → `.env` locally; set the same vars in Netlify.
+- **Clients:** `@/lib/supabase/client` (browser) / `@/lib/supabase/server` (server). Prefer anon + RLS.
+- **SSR:** `export const prerender = false` on on-demand routes; adapter `@astrojs/netlify`.
+- **Note:** In-app “Codex” panels in `/novels` are lore/character features — not the product name.
+- **Setup:** `docs/SETUP.md`

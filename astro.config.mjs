@@ -2,9 +2,13 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
+import netlify from "@astrojs/netlify";
+
+const site = process.env.PUBLIC_SITE_URL || "https://twilda.com";
 
 // https://astro.build/config
 export default defineConfig({
+  adapter: netlify(),
   vite: {
     plugins: [tailwindcss()],
     ssr: {
@@ -22,6 +26,6 @@ export default defineConfig({
     skipInline: false,
     drafts: true
   },
-  site: 'https://yourdomain.com',
-  integrations: [ sitemap(), mdx()]
+  site,
+  integrations: [sitemap(), mdx()]
 });

@@ -1,5 +1,5 @@
 {
-  "name": "@lexington/ellamae",
+  "name": "@artometrics/twilda",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -7,13 +7,16 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "netlify:dev": "netlify dev",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.0",
+    "@astrojs/netlify": "^8.1.1",
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.7.3",
     "@lexingtonthemes/seo": "^0.4.0",
+    "@supabase/supabase-js": "^2.110.2",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.1",

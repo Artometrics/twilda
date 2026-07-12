@@ -7,27 +7,32 @@
 
 ## Tech stack
 
-- **Astro** `^6.0.0` (`astro.config.mjs`)
-- **Tailwind CSS** `^4.1.18` via **`@tailwindcss/vite`**; plugins: **`@tailwindcss/forms`**, **`@tailwindcss/typography`**, **`tailwind-scrollbar-hide`** (see `src/styles/global.css`)
-- **MDX:** `@astrojs/mdx` `^5.0.0`
-- **Sitemap:** `@astrojs/sitemap` `^3.7.1`
-- **RSS:** `@astrojs/rss` `^4.0.17` (used by `src/pages/rss.xml.js`)
-- **SEO component:** `@lexingtonthemes/seo` `^0.1.0` (see `src/components/fundations/head/Seo.astro`)
+- **Astro** `^7.0.0` (`astro.config.mjs`) with **`@astrojs/netlify`** adapter (static by default; SSR via `export const prerender = false`)
+- **Tailwind CSS** `^4` via **`@tailwindcss/vite`**; plugins: **`@tailwindcss/forms`**, **`@tailwindcss/typography`**, **`tailwind-scrollbar-hide`** (see `src/styles/global.css`)
+- **MDX:** `@astrojs/mdx`
+- **Sitemap:** `@astrojs/sitemap`
+- **RSS:** `@astrojs/rss` (used by `src/pages/rss.xml.js`)
+- **SEO component:** `@lexingtonthemes/seo` (see `src/components/fundations/head/Seo.astro`)
+- **Supabase:** `@supabase/supabase-js` — clients in `src/lib/supabase/`; env via `.env.example`
+- **Host:** Netlify site `twilda` (`netlify.toml`); production domain `twilda.com`
 - **Markdown:** Shiki theme `night-owl`; `markdown.drafts: true` in config
 - **Aliases:** `@/*` → `src/*` (`tsconfig.json`)
 
-*Not in `package.json`:* nothing extra to list. (`zod` appears only as `vite.ssr.noExternal` in `astro.config.mjs`, not as a direct dependency.)
+(`zod` appears only as `vite.ssr.noExternal` in `astro.config.mjs`, not as a direct dependency.)
 
 ## Folder map
 
 | Area | Path | Role |
 |------|------|------|
-| Routes | `src/pages/` | File-based routing; dynamic `[...slug].astro`, `blog/tags/[tag].astro`, `rss.xml.js` |
+| Routes | `src/pages/` | File-based routing; dynamic `[...slug].astro`, `blog/tags/[tag].astro`, `rss.xml.js`, `api/health.ts` |
+| Lib | `src/lib/` | Site helpers + Supabase clients (`supabase/`) |
 | Layouts | `src/layouts/` | `BaseLayout.astro`, section layouts (blog, legal, team, …) |
 | UI | `src/components/` | `global/`, `fundations/`, `features/`, `blog/`, `pricing/`, etc. |
 | Content | `src/content/` | Markdown (and MDX for posts) per collection subfolder |
 | Tokens / global CSS | `src/styles/global.css` | Tailwind v4 `@theme`, fonts, colors, animations |
 | Processed images | `src/images/` | Blog, team, changelog, brands, blobs, integrations, customers, assets |
+| Setup docs | `docs/SETUP.md` | Netlify + Supabase + env checklist |
+| Supabase SQL | `supabase/migrations/` | Future schema migrations |
 | Public static root | `public/` | **Not present in this repo** (no top-level `public/` directory) |
 
 ## Content collections (`src/content.config.ts`)
@@ -106,7 +111,7 @@ Dynamic segments use **`[...slug].astro`** under those sections; **blog posts** 
 
 ## Customization
 
-- **Site URL / canonical / sitemap:** `site: 'https://yourdomain.com'` in `astro.config.mjs`. Align **`rss.xml.js`** `site` and **`Seo.astro`** (`@lexingtonthemes/seo` / `AstroSeo`) placeholders when going live.
+- **Site URL / canonical / sitemap:** `PUBLIC_SITE_URL` (see `.env.example`) feeds `astro.config.mjs` `site`. Production: `https://twilda.com`. Full key setup: **`docs/SETUP.md`**.
 - **Brand colors & typography:** `src/styles/global.css` — `@theme` (OKLCH palette `accent`, `secondary`, `base`, `white`/`black`; `--font-sans` / Inter variable).
 - **Shell / meta:** `src/layouts/BaseLayout.astro` imports global CSS and `src/components/fundations/head/BaseHead.astro` (`Seo`, `Meta`, `Fonts`, `Favicons`, plus `Fuse` / `KeenSlider` scripts).
 - **Nav / footer:** `src/components/global/Navigation.astro`, `src/components/global/Footer.astro` (nav link list is inline in `Navigation.astro`).
@@ -118,9 +123,10 @@ From README / `package.json`:
 | Command | Action |
 |--------|--------|
 | `npm install` | Install dependencies |
-| `npm run dev` | Dev server (README: `localhost:3000`) |
+| `npm run dev` | Astro dev server (`localhost:4321`) |
 | `npm run build` | Production build → `./dist/` |
 | `npm run preview` | Preview production build |
+| `npm run netlify:dev` | Dev with Netlify env/functions |
 | `npm run astro -- …` | Astro CLI |
 
 ## Guardrails
@@ -136,7 +142,8 @@ From README / `package.json`:
 
 ## Cursor Cloud specific instructions
 
-- This is a **static Astro site** (no backend, DB, or services). Setup is just `npm install`; run with `npm run dev`.
-- **Dev server port is `4321`** (Astro default), not `3000` as the README/AGENTS `Commands` table states. Browse the running site at `http://localhost:4321/`.
-- **No lint/typecheck script is configured.** `astro check` is not wired up and its deps (`@astrojs/check`, `typescript`) are not installed; running `npx astro check` triggers an interactive install prompt that hangs non-interactively. Use `npm run build` as the correctness check (it type-checks/renders all routes).
-- Fuse.js live search lives on the **blog** (`src/components/blog/BlogSearch.astro`), reachable via the search icon on `/blog/`, not on the Help Center.
+- Setup: `npm install`, copy `.env.example` → `.env`, run `npm run dev`. See **`docs/SETUP.md`** for Supabase + Netlify keys.
+- **Dev server port is `4321`** (Astro default). Browse at `http://localhost:4321/`. Health: `/api/health`.
+- Site uses the **Netlify adapter**; most pages stay static. On-demand routes set `prerender = false`.
+- **No lint/typecheck script is configured.** Use `npm run build` as the correctness check.
+- Fuse.js live search lives on the **blog** (`src/components/blog/BlogSearch.astro`), via the search icon on `/blog/`, not on the Help Center.

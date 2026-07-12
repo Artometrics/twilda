@@ -1,0 +1,13 @@
+---
+description: Supabase client and API route patterns
+globs: src/lib/supabase/**/*.{ts,js},src/pages/api/**/*.{ts,js}
+alwaysApply: false
+---
+
+# Supabase & API routes
+
+- Import clients from `@/lib/supabase/client` or `@/lib/supabase/server` — do not inline `createClient` with hard-coded keys.
+- API routes under `src/pages/api/` must set `export const prerender = false`.
+- Never return `SUPABASE_SERVICE_ROLE_KEY`, full JWTs, or raw `.env` contents in responses.
+- After creating tables in Supabase, regenerate types into `src/lib/supabase/database.types.ts`.
+- Health check: `GET /api/health` reports whether public Supabase env is configured/reachable without leaking secrets.

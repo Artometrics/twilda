@@ -4,3 +4,19 @@
 
 [build.environment]
   NODE_VERSION = "22"
+
+# Preview / branch deploys inherit build settings; set secrets in the Netlify UI
+# (Site → Environment variables) for production, deploy-preview, and branch-deploy.
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store"

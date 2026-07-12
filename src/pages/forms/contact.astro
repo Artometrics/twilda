@@ -23,16 +23,22 @@ import Wrapper from "@/components/fundations/containers/Wrapper.astro";
               Contact us
             </Text>
 
-            <form class="mt-6">
-              <input
-                autocomplete="off"
-                name="hidden"
-                type="text"
-                style="display: none"
-                aria-hidden="true"
-                tabindex="-1"
-              />
-              <input type="hidden" name="_redirect" value="#" />
+            <form
+              class="mt-6"
+              name="contact"
+              method="POST"
+              data-netlify="true"
+              data-netlify-honeypot="bot-field"
+              netlify-honeypot="bot-field"
+            >
+              <input type="hidden" name="form-name" value="contact" />
+              <p class="hidden">
+                <label>
+                  Don’t fill this out if you’re human:
+                  <input name="bot-field" tabindex="-1" autocomplete="off" />
+                </label>
+              </p>
+              <input type="hidden" name="_redirect" value="/forms/contact?success=true" />
 
               <div class="space-y-6">
                 <div
