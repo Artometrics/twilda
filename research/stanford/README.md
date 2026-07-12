@@ -75,4 +75,5 @@ python scripts/05_dropouts.py
 ## Published articles
 
 - `/research/stanford-cause-or-filter/` — narrative investigation
+- `/research/stanford-workbook/` — interactive workbook (README · DATA · ANALYSIS · FALSIFIER)
 - `/research/how-we-investigate/` — methodology companion

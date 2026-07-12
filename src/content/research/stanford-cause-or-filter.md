@@ -20,6 +20,8 @@ Stanford alumni are wildly overrepresented among US tech billionaires. Nobody di
 
 This investigation is **pre-registered**. We committed to a falsifier and analysis plan in [`PREREGISTRATION.md`](https://github.com/kylesmcauliffe/twilda/blob/main/PREREGISTRATION.md) before collecting data or running models. The CSV, scripts, and results live in [`research/stanford/`](https://github.com/kylesmcauliffe/twilda/tree/main/research/stanford).
 
+**Use the interactive workbook:** [Stanford: Cause or Filter? — Research Instrument](/research/stanford-workbook/) (README · DATA · ANALYSIS · FALSIFIER tabs — matches the spreadsheet workflow).
+
 **Status:** Seed sample only (20 verified billionaire founders, 8 controls). Below our pre-committed minimums (N = 30 + 100). Numbers below are illustrative — the conclusion is **withheld** until collection completes.
 
 ---
