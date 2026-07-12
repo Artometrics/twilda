@@ -4,6 +4,19 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import Text from "@/components/fundations/elements/Text.astro";
 import Button from "@/components/fundations/elements/Button.astro";
 import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import OAuthButtons from "@/components/auth/OAuthButtons.astro";
+import { getSafeRedirect } from "@/lib/auth";
+
+export const prerender = false;
+
+const next = getSafeRedirect(Astro.url.searchParams.get("next"));
+
+if (Astro.locals.user) {
+  return Astro.redirect(next);
+}
+
+const inputClass =
+  "block w-full px-3 py-4 text-xl text-accent-900 placeholder-black border-2 border-transparent border-accent-900 appearance-none focus:border-accent-900 focus:bg-accent-300 focus:outline-none focus:ring-black sm:text-sm";
 ---
 
 <BaseLayout hideNav={true} hideFooter={true}>
@@ -20,33 +33,47 @@ import Wrapper from "@/components/fundations/containers/Wrapper.astro";
         >
           Sign up
         </Text>
-        <form class="mt-6">
-          <input
-            type="text"
-            name="hidden"
-            autocomplete="off"
-            style="display: none"
-            aria-hidden="true"
-            tabindex="-1"
-          />
-          <input type="hidden" name="_redirect" value="#" />
 
+        <div
+          id="auth-message"
+          class="hidden mt-4 rounded-xl border-2 border-accent-900 bg-white px-4 py-3 text-accent-900 lg:text-xl"
+          role="alert"
+          aria-live="polite"
+        />
+
+        <OAuthButtons next={next} class="mt-6" />
+
+        <p class="mt-6 text-center text-accent-900 lg:text-xl font-medium">
+          or sign up with email
+        </p>
+
+        <form id="signup-form" class="mt-6" novalidate>
           <div class="space-y-6">
             <div
               class="overflow-hidden border-2 border-accent-900 shadow divide-y-2 divide-accent-900 rounded-xl"
             >
               <div>
-                <label for="username" class="sr-only"
-                  >User name or email address</label
-                >
+                <label for="display_name" class="sr-only">Display name</label>
                 <input
-                  id="username"
-                  name="username"
+                  id="display_name"
+                  name="display_name"
                   type="text"
-                  placeholder="User name or email address"
-                  autocomplete="username"
+                  placeholder="Display name"
+                  autocomplete="nickname"
                   required
-                  class="block w-full px-3 py-4 text-xl text-accent-900 placeholder-black border-2 border-transparent border-accent-900 appearance-none focus:border-accent-900 focus:bg-accent-300 focus:outline-none focus:ring-black sm:text-sm"
+                  class={inputClass}
+                />
+              </div>
+              <div>
+                <label for="email" class="sr-only">Email address</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Email address"
+                  required
+                  autocomplete="email"
+                  class={inputClass}
                 />
               </div>
               <div>
@@ -55,16 +82,18 @@ import Wrapper from "@/components/fundations/containers/Wrapper.astro";
                   id="password"
                   name="password"
                   type="password"
-                  placeholder="Type password here..."
+                  placeholder="Password (6+ characters)"
                   autocomplete="new-password"
                   required
-                  class="block w-full px-3 py-4 text-xl text-accent-900 placeholder-black border-2 border-transparent border-accent-900 appearance-none focus:border-accent-900 focus:bg-accent-300 focus:outline-none focus:ring-black sm:text-sm"
+                  minlength="6"
+                  class={inputClass}
                 />
               </div>
             </div>
 
             <Button
               type="submit"
+              id="signup-submit"
               size="xl"
               variant="default"
               class="w-full mt-8"
@@ -74,7 +103,7 @@ import Wrapper from "@/components/fundations/containers/Wrapper.astro";
 
             <div>
               <p class="text-sm text-accent-900 lg:text-2xl font-medium">
-                Already have a pass?
+                Already have an account?
                 <a
                   href="/forms/login"
                   class="ml-3 text-accent-900 underline lg:text-2xl hover:text-accent-300"
@@ -89,3 +118,45 @@ import Wrapper from "@/components/fundations/containers/Wrapper.astro";
     </Wrapper>
   </section>
 </BaseLayout>
+
+<script>
+  import { actions } from "astro:actions";
+
+  const form = document.getElementById("signup-form") as HTMLFormElement;
+  const submit = document.getElementById("signup-submit") as HTMLButtonElement;
+  const message = document.getElementById("auth-message") as HTMLDivElement;
+
+  function showMessage(text: string, isError: boolean) {
+    message.textContent = text;
+    message.classList.remove("hidden");
+    message.classList.toggle("bg-accent-200", isError);
+    message.classList.toggle("bg-white", !isError);
+  }
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    submit.disabled = true;
+    message.classList.add("hidden");
+
+    try {
+      const formData = new FormData(form);
+      const result = await actions.signUp(formData);
+
+      if (result.error || !result.data?.success) {
+        showMessage(
+          result.data?.message || result.error?.message || "Sign up failed.",
+          true,
+        );
+        submit.disabled = false;
+        return;
+      }
+
+      showMessage(result.data.message, false);
+      form.reset();
+      submit.disabled = false;
+    } catch {
+      showMessage("Something went wrong. Please try again.", true);
+      submit.disabled = false;
+    }
+  });
+</script>

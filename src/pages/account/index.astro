@@ -1,0 +1,64 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+
+export const prerender = false;
+
+const user = Astro.locals.user ?? null;
+
+if (!user) {
+  return Astro.redirect("/forms/login?next=/account/");
+}
+
+const displayName =
+  (user.user_metadata?.display_name as string | undefined) ||
+  user.email?.split("@")[0] ||
+  "Writer";
+---
+
+<BaseLayout>
+  <section>
+    <Wrapper variant="standard" class="py-24 border-y-8 bg-accent-300">
+      <div class="w-full max-w-lg mx-auto">
+        <Text tag="h1" variant="displayXL" class="font-semibold text-accent-900">
+          Account
+        </Text>
+        <p class="mt-4 text-accent-900 lg:text-2xl">
+          Signed in as <strong>{displayName}</strong>
+          {user.email ? ` (${user.email})` : ""}.
+        </p>
+
+        <div class="mt-8 flex flex-wrap gap-4">
+          <Button isLink size="lg" variant="default" href="/novels/">
+            Open novels
+          </Button>
+          <Button type="button" id="signout-btn" size="lg" variant="accent">
+            Sign out
+          </Button>
+        </div>
+      </div>
+    </Wrapper>
+  </section>
+</BaseLayout>
+
+<script>
+  import { actions } from "astro:actions";
+
+  const btn = document.getElementById("signout-btn") as HTMLButtonElement;
+
+  btn?.addEventListener("click", async () => {
+    btn.disabled = true;
+    try {
+      const result = await actions.signOut();
+      if (result.data?.success) {
+        window.location.href = result.data.redirectTo;
+        return;
+      }
+      btn.disabled = false;
+    } catch {
+      btn.disabled = false;
+    }
+  });
+</script>

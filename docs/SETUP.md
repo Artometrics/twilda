@@ -22,12 +22,27 @@ cp .env.example .env
 Create project **`twilda`** under org **Artometrics** (separate from other apps).
 
 1. Copy URL + keys into `.env` and Netlify env.
-2. Enable Auth providers when wiring login/signup.
-3. RLS on for every table before production anon use.
+2. Apply the initial schema — see **`supabase/README.md`** (SQL Editor or `supabase db push`).
+3. Configure Auth redirect URLs (see **`supabase/README.md`** § Auth redirect URLs).
+4. Enable **Email** provider under Authentication → Providers.
+5. RLS is enabled in the migration — verify before production anon use.
 
 ```bash
 npx supabase gen types typescript --project-id <ref> > src/lib/supabase/database.types.ts
 ```
+
+### Auth routes (after schema + redirects)
+
+| Route | Purpose |
+|-------|---------|
+| `/forms/login` | Sign in (Supabase email + password) |
+| `/forms/signup` | Create account |
+| `/forms/forgot` | Password reset email |
+| `/auth/callback` | Email confirm + OAuth / PKCE callback (SSR) |
+
+Successful sign-in redirects to `/novels/`. Contact form stays on **Netlify Forms** (`/forms/contact`).
+
+OAuth (Google, GitHub, Apple, Microsoft): see **`docs/OAUTH_SETUP.md`**.
 
 ## 3. Netlify
 
