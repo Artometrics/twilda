@@ -1,14 +1,18 @@
 ---
+import "@/styles/global.css";
 import "@/styles/novelcrafter.css";
 import Fonts from "@/components/fundations/head/Fonts.astro";
 interface Props {
   title?: string;
 }
-const { title = "novelcrafter" } = Astro.props;
+const { title = "Novels · Twilda" } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" class="nc-html">
+<html
+  lang="en"
+  class="nc-html scroll-smooth selection:bg-accent-800 selection:text-accent-200"
+>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -19,7 +23,7 @@ const { title = "novelcrafter" } = Astro.props;
       html.nc-html,
       body.nc-body {
         margin: 0;
-        background: #0e0f11;
+        background: var(--color-accent-950);
       }
     </style>
   </head>
