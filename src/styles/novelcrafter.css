@@ -355,6 +355,225 @@
   font-size: 12px;
   color: var(--nc-text-faint);
 }
+.nc-book__author {
+  margin: 2px 2px 0;
+  font-size: 12px;
+  color: var(--nc-text-dim);
+}
+.nc-grid.nc-grid--list {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.nc-grid.nc-grid--list .nc-book {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: var(--nc-panel);
+  border: 2px solid var(--nc-border);
+  border-radius: var(--nc-radius);
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+.nc-grid.nc-grid--list .nc-book:hover {
+  border-color: var(--color-secondary-500);
+  transform: translateY(-1px);
+}
+.nc-grid.nc-grid--list .nc-book__cover {
+  width: 56px;
+  aspect-ratio: 2 / 3;
+  flex: none;
+  box-shadow: none;
+}
+.nc-grid.nc-grid--list .nc-book__meta {
+  min-width: 0;
+}
+.nc-library__empty {
+  text-align: center;
+  color: var(--nc-text-faint);
+  font-size: 14px;
+  margin-top: 24px;
+}
+
+/* ---------- Prompts ---------- */
+.nc-prompt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+.nc-prompt-card {
+  background: var(--nc-panel);
+  border: 2px solid var(--nc-border);
+  border-radius: var(--nc-radius);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.nc-prompt-card__category {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: var(--color-secondary-400);
+  text-transform: uppercase;
+}
+.nc-prompt-card__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.nc-prompt-card__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--nc-text-dim);
+  flex: 1;
+}
+.nc-prompt-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* ---------- Workspace brand ---------- */
+.nc-ws__brand {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--nc-text-dim);
+  padding: 0 4px;
+}
+.nc-ws__brand:hover {
+  color: var(--nc-text);
+}
+.nc-ws__novel-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+}
+.nc-ws__novel-link:hover strong {
+  color: var(--color-secondary-300);
+}
+.nc-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.nc-btn--ghost:hover {
+  background: var(--nc-panel);
+  border-color: var(--nc-border-soft);
+}
+.nc-chat-prompt {
+  margin: 16px auto 0;
+  max-width: 480px;
+  padding: 12px 16px;
+  background: var(--nc-panel);
+  border: 2px solid var(--nc-border);
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--nc-text-dim);
+}
+
+/* ---------- Modal & toast ---------- */
+.nc-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--nc-panel);
+  border: 2px solid var(--nc-border);
+  border-radius: 12px;
+  color: var(--nc-text);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+.nc-textarea:focus {
+  outline: none;
+  border-color: var(--color-secondary-500);
+}
+.nc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in oklch, var(--color-accent-950) 70%, transparent);
+  z-index: 70;
+}
+.nc-modal-backdrop.is-open {
+  display: block;
+}
+.nc-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(460px, 92vw);
+  background: var(--nc-panel);
+  border: 2px solid var(--nc-border);
+  border-radius: 16px;
+  box-shadow: 0 16px 0 color-mix(in oklch, var(--color-accent-950) 80%, transparent);
+  z-index: 71;
+  padding: 18px;
+}
+.nc-modal.is-open {
+  display: block;
+}
+.nc-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.nc-modal__head h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+.nc-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.nc-modal__body .nc-field > span {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  color: var(--nc-text-faint);
+}
+.nc-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+.nc-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--nc-panel-2);
+  border: 2px solid var(--color-secondary-600);
+  color: var(--nc-text);
+  padding: 10px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 80;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  pointer-events: none;
+}
+.nc-toast.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 
 /* ---------- Covers ---------- */
 .nc-cover {
@@ -978,6 +1197,24 @@
 .nc-detail.is-open {
   display: block;
 }
+.nc-detail--dynamic {
+  position: fixed;
+  top: 74px;
+  left: 356px;
+  width: 460px;
+  max-width: calc(100vw - 380px);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  background: var(--nc-panel);
+  border: 2px solid var(--nc-border);
+  border-radius: 16px;
+  box-shadow: 0 16px 0 color-mix(in oklch, var(--color-accent-950) 80%, transparent);
+  z-index: 61;
+  padding: 18px;
+}
+.nc-detail--dynamic.is-open {
+  display: block;
+}
 .nc-detail__top {
   display: flex;
   gap: 12px;
@@ -1019,15 +1256,28 @@
   border-bottom: 2px solid var(--nc-border-soft);
   margin-bottom: 14px;
 }
-.nc-detail__tabs span {
+.nc-detail__tabs button {
   padding: 8px 12px;
   font-size: 13px;
   font-weight: 500;
   color: var(--nc-text-faint);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
 }
-.nc-detail__tabs span.is-active {
+.nc-detail__tabs button.is-active {
   color: var(--nc-text);
-  border-bottom: 2px solid var(--color-secondary-500);
+  border-bottom-color: var(--color-secondary-500);
+}
+.nc-detail__pane {
+  display: none;
+}
+.nc-detail__pane.is-active {
+  display: block;
+}
+.nc-detail--dynamic.is-open {
+  display: block;
 }
 .nc-detail__label {
   font-size: 11px;
@@ -1052,7 +1302,8 @@
 
 @media (max-width: 900px) {
   .nc-continue,
-  .nc-grid {
+  .nc-grid,
+  .nc-prompt-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   .nc-side {

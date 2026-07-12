@@ -1,0 +1,68 @@
+---
+import NovelcrafterLayout from "@/layouts/NovelcrafterLayout.astro";
+import NovelsTopbar from "@/components/novels/NovelsTopbar.astro";
+import Cover from "@/apps/novelcrafter/Cover.astro";
+import { novels } from "@/apps/novelcrafter/data";
+
+const grouped = novels.reduce<Record<string, typeof novels>>((acc, novel) => {
+  const key = novel.series ?? "No Series";
+  (acc[key] ??= []).push(novel);
+  return acc;
+}, {});
+---
+
+<NovelcrafterLayout title="Series · Twilda">
+  <NovelsTopbar active="series" />
+
+  <main class="nc-library">
+    <div class="nc-library__head">
+      <h1>Your Series</h1>
+      <p>Group related novels into series to keep worlds, characters, and timelines connected.</p>
+    </div>
+
+    <div class="nc-toolbar">
+      <button class="nc-btn nc-btn--primary" type="button" data-series-create>+ Create Series</button>
+      <div class="nc-toolbar__spacer"></div>
+      <a class="nc-btn" href="/novels/">Back to Novels</a>
+    </div>
+
+    {
+      Object.entries(grouped).map(([series, items]) => (
+        <section class="nc-series-group">
+          <h2 class="nc-group-title">
+            {series} <span>{items.length} book{items.length === 1 ? "" : "s"}</span>
+          </h2>
+          <div class="nc-grid">
+            {items.map((n) => (
+              <a class="nc-book" href={`/novels/${n.id}/`}>
+                <div class="nc-book__cover">
+                  <Cover kind={n.cover} title={n.title} author={n.author} />
+                </div>
+                <p class="nc-book__title">{n.title}</p>
+                <p class="nc-book__date">{n.updated}</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      ))
+    }
+  </main>
+
+  <div class="nc-toast" data-toast hidden></div>
+
+  <script>
+    document.querySelector("[data-series-create]")?.addEventListener("click", () => {
+      const toast = document.querySelector<HTMLElement>("[data-toast]");
+      if (!toast) return;
+      toast.textContent = "Series creation opens from any novel's Settings → Metadata.";
+      toast.hidden = false;
+      toast.classList.add("is-visible");
+      window.setTimeout(() => {
+        toast.classList.remove("is-visible");
+        window.setTimeout(() => {
+          toast.hidden = true;
+        }, 300);
+      }, 3200);
+    });
+  </script>
+</NovelcrafterLayout>

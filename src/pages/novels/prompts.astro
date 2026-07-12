@@ -1,0 +1,72 @@
+---
+import NovelcrafterLayout from "@/layouts/NovelcrafterLayout.astro";
+import NovelsTopbar from "@/components/novels/NovelsTopbar.astro";
+import { prompts } from "@/apps/novelcrafter/prompts";
+import { novels } from "@/apps/novelcrafter/data";
+
+const defaultNovel = novels[0]?.id ?? "the-great-gatsby";
+---
+
+<NovelcrafterLayout title="Prompts · Twilda">
+  <NovelsTopbar active="prompts" />
+
+  <main class="nc-library">
+    <div class="nc-library__head">
+      <h1>Writing Prompts</h1>
+      <p>Jump-start scenes, deepen characters, or stress-test your outline. Copy a prompt or open it in Chat.</p>
+    </div>
+
+    <div class="nc-prompt-grid">
+      {
+        prompts.map((prompt) => (
+          <article class="nc-prompt-card" data-prompt={prompt.id}>
+            <p class="nc-prompt-card__category">{prompt.category}</p>
+            <h2 class="nc-prompt-card__title">{prompt.title}</h2>
+            <p class="nc-prompt-card__text">{prompt.text}</p>
+            <div class="nc-prompt-card__actions">
+              <button class="nc-btn" type="button" data-copy-prompt={prompt.text}>
+                Copy
+              </button>
+              <a
+                class="nc-btn nc-btn--primary"
+                href={`/novels/${defaultNovel}/?mode=chat&prompt=${prompt.id}`}
+              >
+                Use in Chat
+              </a>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </main>
+
+  <div class="nc-toast" data-toast hidden></div>
+
+  <script>
+    const toast = document.querySelector<HTMLElement>("[data-toast]");
+    function showToast(message: string) {
+      if (!toast) return;
+      toast.textContent = message;
+      toast.hidden = false;
+      toast.classList.add("is-visible");
+      window.setTimeout(() => {
+        toast.classList.remove("is-visible");
+        window.setTimeout(() => {
+          toast.hidden = true;
+        }, 300);
+      }, 2200);
+    }
+
+    document.querySelectorAll<HTMLButtonElement>("[data-copy-prompt]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const text = btn.dataset.copyPrompt ?? "";
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast("Prompt copied to clipboard.");
+        } catch {
+          showToast("Could not copy — select the text manually.");
+        }
+      });
+    });
+  </script>
+</NovelcrafterLayout>

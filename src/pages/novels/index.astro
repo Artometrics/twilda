@@ -1,32 +1,15 @@
 ---
 import NovelcrafterLayout from "@/layouts/NovelcrafterLayout.astro";
+import NovelsTopbar from "@/components/novels/NovelsTopbar.astro";
 import Cover from "@/apps/novelcrafter/Cover.astro";
 import { novels } from "@/apps/novelcrafter/data";
 
-const recent = novels.slice(0, 3);
+const recent = [...novels].sort((a, b) => b.sortKey - a.sortKey).slice(0, 3);
+const blankTemplateId = novels.find((n) => n.blank)?.id ?? novels[0].id;
 ---
 
 <NovelcrafterLayout title="Your Novels · Twilda">
-  <header class="nc-topbar">
-    <a class="nc-brand" href="/">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" />
-        <path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5A2.5 2.5 0 0 1 4 20.5z" />
-      </svg>
-      <span>Twilda</span>
-    </a>
-    <nav class="nc-topnav">
-      <a class="is-active" href="/novels">Novels</a>
-      <a href="/novels">Series</a>
-      <a href="/novels">Prompts</a>
-    </nav>
-    <div class="nc-topbar__spacer"></div>
-    <div class="nc-topbar__right">
-      <a href="/novels">Help</a>
-      <span class="nc-credits">3/5</span>
-      <span class="nc-avatar-sm">K</span>
-    </div>
-  </header>
+  <NovelsTopbar active="novels" />
 
   <main class="nc-library">
     <div class="nc-library__head">
@@ -38,7 +21,7 @@ const recent = novels.slice(0, 3);
     <div class="nc-continue">
       {
         recent.map((n) => (
-          <a class="nc-continue__card" href={`/novels/${n.id}`}>
+          <a class="nc-continue__card" href={`/novels/${n.id}/`}>
             <span class="nc-continue__thumb">
               <Cover kind={n.cover} title={n.title} author={n.author} />
             </span>
@@ -53,39 +36,158 @@ const recent = novels.slice(0, 3);
     </div>
 
     <div class="nc-toolbar">
-      <button class="nc-btn nc-btn--primary" type="button">+ Create Novel</button>
-      <button class="nc-btn" type="button">Import</button>
+      <a class="nc-btn nc-btn--primary" href={`/novels/${blankTemplateId}/?mode=write`}>
+        + Create Novel
+      </a>
+      <button class="nc-btn" type="button" data-import-trigger>Import</button>
+      <input type="file" accept=".txt,.md,.markdown" data-import-input hidden />
       <div class="nc-toolbar__spacer"></div>
       <div class="nc-field">
-        <label>SEARCH/FILTER:</label>
-        <input class="nc-input" type="search" placeholder="Search name/series…" />
+        <label for="library-search">SEARCH/FILTER:</label>
+        <input
+          id="library-search"
+          class="nc-input"
+          type="search"
+          placeholder="Search name/series…"
+          data-library-search
+        />
       </div>
       <div class="nc-field">
-        <label>SORT BY:</label>
-        <select class="nc-select"><option>Date</option><option>Title</option></select>
+        <label for="library-sort">SORT BY:</label>
+        <select id="library-sort" class="nc-select" data-library-sort>
+          <option value="date">Date</option>
+          <option value="title">Title</option>
+        </select>
       </div>
       <div class="nc-field">
         <label>VIEW AS:</label>
-        <div class="nc-viewtoggle">
-          <button class="is-active" type="button">Grid</button>
-          <button type="button">List</button>
+        <div class="nc-viewtoggle" data-library-view>
+          <button class="is-active" type="button" data-view="grid">Grid</button>
+          <button type="button" data-view="list">List</button>
         </div>
       </div>
     </div>
 
-    <h2 class="nc-group-title">No Series <span>{novels.length} books</span></h2>
-    <div class="nc-grid">
+    <h2 class="nc-group-title" data-library-count>
+      No Series <span>{novels.length} books</span>
+    </h2>
+    <div class="nc-grid" data-library-grid>
       {
         novels.map((n) => (
-          <a class="nc-book" href={`/novels/${n.id}`}>
+          <a
+            class="nc-book"
+            href={`/novels/${n.id}/`}
+            data-book
+            data-title={n.title.toLowerCase()}
+            data-sort-key={n.sortKey}
+            data-series={(n.series ?? "no series").toLowerCase()}
+          >
             <div class="nc-book__cover">
               <Cover kind={n.cover} title={n.title} author={n.author} />
             </div>
-            <p class="nc-book__title">{n.title}</p>
-            <p class="nc-book__date">{n.updated}</p>
+            <div class="nc-book__meta">
+              <p class="nc-book__title">{n.title}</p>
+              <p class="nc-book__date">{n.updated}</p>
+              <p class="nc-book__author">{n.author}</p>
+            </div>
           </a>
         ))
       }
     </div>
+    <p class="nc-library__empty" data-library-empty hidden>
+      No novels match your search.
+    </p>
   </main>
+
+  <div class="nc-toast" data-toast hidden></div>
+
+  <script define:vars={{ blankTemplateId }}>
+    const grid = document.querySelector("[data-library-grid]");
+    const search = document.querySelector("[data-library-search]");
+    const sort = document.querySelector("[data-library-sort]");
+    const viewToggle = document.querySelector("[data-library-view]");
+    const emptyState = document.querySelector("[data-library-empty]");
+    const countLabel = document.querySelector("[data-library-count] span");
+    const importTrigger = document.querySelector("[data-import-trigger]");
+    const importInput = document.querySelector("[data-import-input]");
+    const toast = document.querySelector("[data-toast]");
+
+    function showToast(message) {
+      if (!toast) return;
+      toast.textContent = message;
+      toast.hidden = false;
+      toast.classList.add("is-visible");
+      window.setTimeout(() => {
+        toast.classList.remove("is-visible");
+        window.setTimeout(() => {
+          toast.hidden = true;
+        }, 300);
+      }, 2600);
+    }
+
+    function getBooks() {
+      return Array.from(document.querySelectorAll("[data-book]"));
+    }
+
+    function applyFilters() {
+      const q = (search?.value ?? "").trim().toLowerCase();
+      const books = getBooks();
+      let visible = 0;
+
+      books.forEach((book) => {
+        const title = book.dataset.title ?? "";
+        const series = book.dataset.series ?? "";
+        const match = !q || title.includes(q) || series.includes(q);
+        book.style.display = match ? "" : "none";
+        if (match) visible += 1;
+      });
+
+      if (emptyState) emptyState.hidden = visible > 0;
+      if (countLabel) countLabel.textContent = `${visible} book${visible === 1 ? "" : "s"}`;
+    }
+
+    function applySort() {
+      if (!grid || !sort) return;
+      const mode = sort.value;
+      const books = getBooks();
+      books.sort((a, b) => {
+        if (mode === "title") {
+          return (a.dataset.title ?? "").localeCompare(b.dataset.title ?? "");
+        }
+        return Number(b.dataset.sortKey ?? 0) - Number(a.dataset.sortKey ?? 0);
+      });
+      books.forEach((book) => grid.appendChild(book));
+    }
+
+    search?.addEventListener("input", applyFilters);
+    sort?.addEventListener("change", () => {
+      applySort();
+      applyFilters();
+    });
+
+    viewToggle?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLButtonElement) || !target.dataset.view) return;
+      viewToggle.querySelectorAll("button").forEach((btn) => {
+        btn.classList.toggle("is-active", btn === target);
+      });
+      grid?.classList.toggle("nc-grid--list", target.dataset.view === "list");
+    });
+
+    importTrigger?.addEventListener("click", () => importInput?.click());
+
+    importInput?.addEventListener("change", async () => {
+      const file = importInput.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      localStorage.setItem(`nc:import:${blankTemplateId}`, text);
+      showToast(`Imported “${file.name}”. Opening Write mode…`);
+      window.setTimeout(() => {
+        window.location.href = `/novels/${blankTemplateId}/?mode=write`;
+      }, 700);
+      importInput.value = "";
+    });
+
+    applySort();
+  </script>
 </NovelcrafterLayout>

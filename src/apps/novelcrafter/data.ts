@@ -35,6 +35,8 @@ export interface Novel {
   author: string;
   series?: string;
   updated: string;
+  /** Higher = more recently updated (for library sort) */
+  sortKey: number;
   synopsis: string;
   cover: CoverKind;
   blank?: boolean;
@@ -357,6 +359,7 @@ const gatsby: Novel = {
   title: "The Great Gatsby",
   author: "F. Scott Fitzgerald",
   updated: "Jul 10",
+  sortKey: 3,
   synopsis:
     "A bond salesman new to Long Island is drawn into the dazzling, doomed world of his mysterious neighbor Jay Gatsby, whose fortune and glittering parties conceal a single obsession: to win back the love he lost, Daisy Buchanan.",
   cover: "gatsby",
@@ -369,6 +372,7 @@ const trinity: Novel = {
   title: "Trinity",
   author: "KSM",
   updated: "May 24",
+  sortKey: 2,
   synopsis: "Oracle of Silicon Valley.",
   cover: "trinity",
   blank: true,
@@ -386,6 +390,7 @@ const cardinal: Novel = {
   title: "Cardinal",
   author: "KSM",
   updated: "May 24",
+  sortKey: 1,
   synopsis: "A Subliminal History of Silicon Valley.",
   cover: "cardinal",
   blank: true,

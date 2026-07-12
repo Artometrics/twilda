@@ -10,6 +10,7 @@ import {
   novelWordCount,
   type CodexEntry,
 } from "@/apps/novelcrafter/data";
+import { prompts } from "@/apps/novelcrafter/prompts";
 
 export function getStaticPaths() {
   return novels.map((n) => ({ params: { id: n.id } }));
@@ -30,24 +31,29 @@ function avatarStyle(seed: string): string {
   const h2 = (h + 45) % 360;
   return `background-image:linear-gradient(135deg, hsl(${h} 68% 56%), hsl(${h2} 62% 40%));`;
 }
+
+const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
 ---
 
 <NovelcrafterLayout title={`${novel.title} · Twilda`}>
   <div class="nc-ws">
     <!-- Header -->
     <header class="nc-ws__header">
-      <a class="nc-iconbtn" href="/novels" aria-label="Back to library">
+      <a class="nc-iconbtn" href="/novels/" aria-label="Back to library">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
       </a>
+      <a class="nc-ws__brand" href="/">Twilda</a>
       <button class="nc-iconbtn" type="button" data-mode-btn="settings" aria-label="Settings">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L14.5 3h-4l-.3 2.4a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.3 2.4h4l.3-2.4a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6c.1-.3.1-.7.1-1z"/></svg>
       </button>
       <div class="nc-ws__novel">
-        <span class="nc-ws__thumb"><Cover kind={novel.cover} title={novel.title} author={novel.author} /></span>
-        <span>
-          <strong>{novel.title}</strong>
-          <span>{novel.author}</span>
-        </span>
+        <a href={`/novels/${novel.id}/?mode=settings`} class="nc-ws__novel-link">
+          <span class="nc-ws__thumb"><Cover kind={novel.cover} title={novel.title} author={novel.author} /></span>
+          <span>
+            <strong>{novel.title}</strong>
+            <span>{novel.author}</span>
+          </span>
+        </a>
       </div>
 
       <div class="nc-modes" role="tablist">
@@ -87,7 +93,7 @@ function avatarStyle(seed: string): string {
         <div class="nc-side__pane" data-side-pane="codex" style="display:flex;flex-direction:column;flex:1;min-height:0;">
           <div class="nc-side__search">
             <input class="nc-input" type="search" placeholder="Search all entries…" data-codex-search />
-            <button class="nc-btn" type="button">+ New Entry</button>
+            <button class="nc-btn" type="button" data-new-entry>+ New Entry</button>
           </div>
           <div class="nc-side__scroll">
             {
@@ -101,7 +107,7 @@ function avatarStyle(seed: string): string {
                   const items = entriesByType(group.type);
                   if (items.length === 0) return null;
                   return (
-                    <section class="nc-cx-group">
+                    <section class="nc-cx-group" data-cx-group={group.type}>
                       <div class="nc-cx-group__head" data-cx-toggle>
                         <h4>{group.label}</h4>
                         <span class="nc-cx-group__count">{items.length} entries</span>
@@ -109,7 +115,7 @@ function avatarStyle(seed: string): string {
                       </div>
                       <div class="nc-cx-list">
                         {items.map((e) => (
-                          <button class="nc-cx-item" type="button" data-entry={e.id} data-name={e.name.toLowerCase()}>
+                          <button class="nc-cx-item" type="button" data-entry={e.id} data-name={e.name.toLowerCase()} data-entry-type={e.type}>
                             <span class="nc-cx-av" style={avatarStyle(e.id)}>{e.initials}</span>
                             <span class="nc-cx-body">
                               <p class="nc-cx-name">{e.name}</p>
@@ -126,6 +132,7 @@ function avatarStyle(seed: string): string {
                 })
               )
             }
+            <div data-user-codex></div>
           </div>
         </div>
 
@@ -146,8 +153,8 @@ function avatarStyle(seed: string): string {
         <div class="nc-side__foot">
           <span class="nc-avatar-sm" style="width:24px;height:24px;font-size:11px;">K</span>
           <span class="nc-credits" style="padding:2px 8px;">3/5</span>
-          <a href="/novels">Help</a>
-          <a href="/novels">Export</a>
+          <a href="/helpcenter/">Help</a>
+          <button class="nc-btn nc-btn--ghost" type="button" data-export>Export</button>
         </div>
       </aside>
 
@@ -220,7 +227,9 @@ function avatarStyle(seed: string): string {
           <div class="nc-placeholder">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <h2>Chat with your story</h2>
-            <p>Brainstorm, ask questions about your Codex, or co-write scenes with an AI assistant that knows your novel. Connect a model to begin.</p>
+            <p data-chat-intro>Brainstorm, ask questions about your Codex, or co-write scenes with an AI assistant that knows your novel. Connect a model to begin.</p>
+            <p class="nc-chat-prompt" data-chat-prompt hidden></p>
+            <a class="nc-btn nc-btn--primary" href="/novels/prompts/">Browse prompts</a>
           </div>
         </section>
 
@@ -270,45 +279,146 @@ function avatarStyle(seed: string): string {
           <div class="nc-detail__tags">
             {e.tags.map((t) => (<span class="nc-tag">{t}</span>))}
           </div>
-          <div class="nc-detail__tabs">
-            <span class="is-active">Details</span>
-            <span>Research</span>
-            <span>Relations</span>
-            <span>Mentions</span>
-            <span>Tracking</span>
+          <div class="nc-detail__tabs" role="tablist">
+            <button type="button" class="is-active" data-detail-tab="details">Details</button>
+            <button type="button" data-detail-tab="research">Research</button>
+            <button type="button" data-detail-tab="relations">Relations</button>
+            <button type="button" data-detail-tab="mentions">Mentions</button>
+            <button type="button" data-detail-tab="tracking">Tracking</button>
           </div>
-          {e.aliases && e.aliases.length > 0 && (
-            <>
-              <p class="nc-detail__label">ALIASES / NICKNAMES</p>
-              <div class="nc-detail__field">{e.aliases.join(", ")}</div>
-            </>
-          )}
-          <p class="nc-detail__label">DESCRIPTION</p>
-          <div class="nc-detail__field">{e.description}</div>
-          {typeof e.mentions === "number" && (
-            <p class="nc-detail__mentions">{e.mentions} mentions in the manuscript</p>
-          )}
+          <div class="nc-detail__pane is-active" data-detail-pane="details">
+            {e.aliases && e.aliases.length > 0 && (
+              <>
+                <p class="nc-detail__label">ALIASES / NICKNAMES</p>
+                <div class="nc-detail__field">{e.aliases.join(", ")}</div>
+              </>
+            )}
+            <p class="nc-detail__label">DESCRIPTION</p>
+            <div class="nc-detail__field">{e.description}</div>
+          </div>
+          <div class="nc-detail__pane" data-detail-pane="research">
+            <p class="nc-detail__label">RESEARCH NOTES</p>
+            <div class="nc-detail__field">Add source material, historical context, and reference links for {e.name}.</div>
+          </div>
+          <div class="nc-detail__pane" data-detail-pane="relations">
+            <p class="nc-detail__label">RELATIONS</p>
+            <div class="nc-detail__field">Map connections between {e.name} and other Codex entries as your story grows.</div>
+          </div>
+          <div class="nc-detail__pane" data-detail-pane="mentions">
+            <p class="nc-detail__label">MENTIONS</p>
+            <div class="nc-detail__field">
+              {typeof e.mentions === "number"
+                ? `${e.mentions} mentions in the manuscript`
+                : "Mention tracking will appear once the manuscript is connected."}
+            </div>
+          </div>
+          <div class="nc-detail__pane" data-detail-pane="tracking">
+            <p class="nc-detail__label">TRACKING</p>
+            <div class="nc-detail__field">Track arc beats, status changes, and continuity flags for {e.name}.</div>
+          </div>
         </div>
       ))
     }
   </div>
 
-  <script>
+  <div class="nc-modal-backdrop" data-entry-modal-backdrop hidden></div>
+  <div class="nc-modal" data-entry-modal hidden>
+    <div class="nc-modal__head">
+      <h3>New Codex Entry</h3>
+      <button class="nc-iconbtn" type="button" data-entry-modal-close aria-label="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <form class="nc-modal__body" data-entry-form>
+      <label class="nc-field">
+        <span>Name</span>
+        <input class="nc-input" name="name" required placeholder="Character or location name" />
+      </label>
+      <label class="nc-field">
+        <span>Type</span>
+        <select class="nc-select" name="type">
+          <option value="character">Character</option>
+          <option value="location">Location</option>
+          <option value="lore">Lore</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <label class="nc-field">
+        <span>Summary</span>
+        <input class="nc-input" name="summary" placeholder="One-line summary" />
+      </label>
+      <label class="nc-field">
+        <span>Description</span>
+        <textarea class="nc-textarea" name="description" rows="4" placeholder="Full description"></textarea>
+      </label>
+      <div class="nc-modal__actions">
+        <button class="nc-btn" type="button" data-entry-modal-close>Cancel</button>
+        <button class="nc-btn nc-btn--primary" type="submit">Save Entry</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="nc-detail nc-detail--dynamic" data-user-detail hidden>
+    <div class="nc-detail__top">
+      <span class="nc-detail__av" data-user-detail-av>??</span>
+      <div>
+        <p class="nc-detail__title" data-user-detail-title></p>
+        <span class="nc-detail__type" data-user-detail-type></span>
+      </div>
+      <button class="nc-iconbtn nc-detail__close" type="button" data-user-detail-close aria-label="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="nc-detail__label">DESCRIPTION</p>
+    <div class="nc-detail__field" data-user-detail-description></div>
+  </div>
+
+  <div class="nc-toast" data-toast hidden></div>
+
+  <script define:vars={{ novelId: novel.id, novelTitle: novel.title, promptMap }}>
+    const toast = document.querySelector("[data-toast]");
+    function showToast(message) {
+      if (!toast) return;
+      toast.textContent = message;
+      toast.hidden = false;
+      toast.classList.add("is-visible");
+      window.setTimeout(() => {
+        toast.classList.remove("is-visible");
+        window.setTimeout(() => {
+          toast.hidden = true;
+        }, 300);
+      }, 2400);
+    }
+
     // Mode tabs (Plan / Write / Chat / Review / Settings)
-    const modeBtns = document.querySelectorAll<HTMLButtonElement>("[data-mode-btn]");
-    const panels = document.querySelectorAll<HTMLElement>(".nc-mode-panel");
-    const topModeBtns = document.querySelectorAll<HTMLButtonElement>(".nc-modes [data-mode-btn]");
-    function setMode(mode: string) {
+    const modeBtns = document.querySelectorAll("[data-mode-btn]");
+    const panels = document.querySelectorAll(".nc-mode-panel");
+    const topModeBtns = document.querySelectorAll(".nc-modes [data-mode-btn]");
+    function setMode(mode) {
       panels.forEach((p) => p.classList.toggle("is-active", p.dataset.mode === mode));
       topModeBtns.forEach((b) => b.classList.toggle("is-active", b.dataset.modeBtn === mode));
     }
     modeBtns.forEach((b) =>
-      b.addEventListener("click", () => setMode(b.dataset.modeBtn!)),
+      b.addEventListener("click", () => setMode(b.dataset.modeBtn)),
     );
 
+    const params = new URLSearchParams(window.location.search);
+    const initialMode = params.get("mode");
+    if (initialMode) setMode(initialMode);
+
+    const promptId = params.get("prompt");
+    if (promptId && promptMap[promptId]) {
+      setMode("chat");
+      const promptEl = document.querySelector("[data-chat-prompt]");
+      if (promptEl) {
+        promptEl.textContent = `Prompt: ${promptMap[promptId]}`;
+        promptEl.hidden = false;
+      }
+    }
+
     // Sidebar tabs
-    const sideTabs = document.querySelectorAll<HTMLButtonElement>("[data-side-tab]");
-    const sidePanes = document.querySelectorAll<HTMLElement>("[data-side-pane]");
+    const sideTabs = document.querySelectorAll("[data-side-tab]");
+    const sidePanes = document.querySelectorAll("[data-side-pane]");
     sideTabs.forEach((t) =>
       t.addEventListener("click", () => {
         sideTabs.forEach((x) => x.classList.toggle("is-active", x === t));
@@ -320,63 +430,267 @@ function avatarStyle(seed: string): string {
     );
 
     // Codex group collapse
-    document.querySelectorAll<HTMLElement>("[data-cx-toggle]").forEach((h) =>
+    document.querySelectorAll("[data-cx-toggle]").forEach((h) =>
       h.addEventListener("click", () =>
         h.closest(".nc-cx-group")?.classList.toggle("is-collapsed"),
       ),
     );
 
     // Codex search filter
-    const search = document.querySelector<HTMLInputElement>("[data-codex-search]");
+    const search = document.querySelector("[data-codex-search]");
     search?.addEventListener("input", () => {
       const q = search.value.trim().toLowerCase();
-      document.querySelectorAll<HTMLElement>(".nc-cx-item").forEach((el) => {
+      document.querySelectorAll(".nc-cx-item").forEach((el) => {
         const match = !q || (el.dataset.name ?? "").includes(q);
         el.style.display = match ? "flex" : "none";
       });
     });
 
     // Codex detail overlay
-    const backdrop = document.querySelector<HTMLElement>("[data-detail-backdrop]");
-    const details = document.querySelectorAll<HTMLElement>("[data-detail]");
-    const items = document.querySelectorAll<HTMLElement>(".nc-cx-item");
+    const backdrop = document.querySelector("[data-detail-backdrop]");
+    const details = document.querySelectorAll("[data-detail]");
+    const userDetail = document.querySelector("[data-user-detail]");
+    let activeItems = [];
+
     function closeDetail() {
       backdrop?.classList.remove("is-open");
       details.forEach((d) => d.classList.remove("is-open"));
-      items.forEach((i) => i.classList.remove("is-active"));
+      userDetail?.classList.remove("is-open");
+      userDetail?.setAttribute("hidden", "");
+      activeItems.forEach((i) => i.classList.remove("is-active"));
+      activeItems = [];
     }
-    items.forEach((it) =>
-      it.addEventListener("click", () => {
-        const id = it.dataset.entry;
-        closeDetail();
-        it.classList.add("is-active");
-        backdrop?.classList.add("is-open");
-        document.querySelector<HTMLElement>(`[data-detail="${id}"]`)?.classList.add("is-open");
-      }),
-    );
+
+    function openStaticDetail(id, item) {
+      closeDetail();
+      item.classList.add("is-active");
+      activeItems = [item];
+      backdrop?.classList.add("is-open");
+      document.querySelector(`[data-detail="${id}"]`)?.classList.add("is-open");
+    }
+
+    function openUserDetail(entry, item) {
+      closeDetail();
+      item.classList.add("is-active");
+      activeItems = [item];
+      backdrop?.classList.add("is-open");
+      if (!userDetail) return;
+      userDetail.querySelector("[data-user-detail-title]").textContent = entry.name;
+      userDetail.querySelector("[data-user-detail-type]").textContent = entry.type;
+      userDetail.querySelector("[data-user-detail-description]").textContent =
+        entry.description || entry.summary || "No description yet.";
+      userDetail.querySelector("[data-user-detail-av]").textContent = entry.initials;
+      userDetail.removeAttribute("hidden");
+      userDetail.classList.add("is-open");
+    }
+
+    document.querySelectorAll(".nc-cx-item[data-entry]").forEach((it) => {
+      if (it.dataset.userEntry) return;
+      it.addEventListener("click", () => openStaticDetail(it.dataset.entry, it));
+    });
+
     backdrop?.addEventListener("click", closeDetail);
-    document.querySelectorAll<HTMLElement>("[data-detail-close]").forEach((b) =>
+    document.querySelectorAll("[data-detail-close], [data-user-detail-close]").forEach((b) =>
       b.addEventListener("click", closeDetail),
     );
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeDetail();
+      if (e.key === "Escape") {
+        closeDetail();
+        closeEntryModal();
+      }
     });
 
-    // Manuscript editor persistence + live word count
-    const ms = document.querySelector<HTMLElement>(".nc-manuscript");
-    const wordsLabel = document.querySelector<HTMLElement>(".nc-ws__toolright span");
+    // Detail sub-tabs
+    document.querySelectorAll("[data-detail]").forEach((detail) => {
+      const tabs = detail.querySelectorAll("[data-detail-tab]");
+      const panes = detail.querySelectorAll("[data-detail-pane]");
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const name = tab.dataset.detailTab;
+          tabs.forEach((t) => t.classList.toggle("is-active", t === tab));
+          panes.forEach((p) =>
+            p.classList.toggle("is-active", p.dataset.detailPane === name),
+          );
+        });
+      });
+    });
+
+    // User codex entries (localStorage)
+    const userCodexRoot = document.querySelector("[data-user-codex]");
+    const codexKey = `nc:codex:${novelId}`;
+    const typeLabels = {
+      character: "Characters",
+      location: "Locations",
+      lore: "Lore",
+      other: "Others",
+    };
+
+    function loadUserCodex() {
+      try {
+        return JSON.parse(localStorage.getItem(codexKey) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function saveUserCodex(entries) {
+      localStorage.setItem(codexKey, JSON.stringify(entries));
+    }
+
+    function initials(name) {
+      return name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? "")
+        .join("") || "??";
+    }
+
+    function renderUserCodex() {
+      if (!userCodexRoot) return;
+      const entries = loadUserCodex();
+      userCodexRoot.innerHTML = "";
+
+      const grouped = entries.reduce((acc, entry) => {
+        (acc[entry.type] ??= []).push(entry);
+        return acc;
+      }, {});
+
+      Object.entries(grouped).forEach(([type, items]) => {
+        const section = document.createElement("section");
+        section.className = "nc-cx-group";
+        section.dataset.cxGroup = type;
+        section.innerHTML = `
+          <div class="nc-cx-group__head" data-cx-toggle>
+            <h4>${typeLabels[type] || "Others"}</h4>
+            <span class="nc-cx-group__count">${items.length} entries</span>
+            <svg class="nc-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="nc-cx-list"></div>
+        `;
+        const list = section.querySelector(".nc-cx-list");
+        items.forEach((entry) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "nc-cx-item";
+          btn.dataset.userEntry = entry.id;
+          btn.dataset.name = entry.name.toLowerCase();
+          btn.innerHTML = `
+            <span class="nc-cx-av">${entry.initials}</span>
+            <span class="nc-cx-body">
+              <p class="nc-cx-name">${entry.name}</p>
+              <p class="nc-cx-sum">${entry.summary || "Custom entry"}</p>
+            </span>
+          `;
+          btn.addEventListener("click", () => openUserDetail(entry, btn));
+          list.appendChild(btn);
+        });
+        section.querySelector("[data-cx-toggle]")?.addEventListener("click", () =>
+          section.classList.toggle("is-collapsed"),
+        );
+        userCodexRoot.appendChild(section);
+      });
+    }
+
+    // New entry modal
+    const entryModal = document.querySelector("[data-entry-modal]");
+    const entryBackdrop = document.querySelector("[data-entry-modal-backdrop]");
+    const entryForm = document.querySelector("[data-entry-form]");
+
+    function openEntryModal() {
+      entryModal?.removeAttribute("hidden");
+      entryBackdrop?.removeAttribute("hidden");
+      entryModal?.classList.add("is-open");
+      entryBackdrop?.classList.add("is-open");
+    }
+
+    function closeEntryModal() {
+      entryModal?.classList.remove("is-open");
+      entryBackdrop?.classList.remove("is-open");
+      entryModal?.setAttribute("hidden", "");
+      entryBackdrop?.setAttribute("hidden", "");
+      entryForm?.reset();
+    }
+
+    document.querySelector("[data-new-entry]")?.addEventListener("click", openEntryModal);
+    document.querySelectorAll("[data-entry-modal-close]").forEach((btn) =>
+      btn.addEventListener("click", closeEntryModal),
+    );
+    entryBackdrop?.addEventListener("click", closeEntryModal);
+
+    entryForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = new FormData(entryForm);
+      const name = String(data.get("name") || "").trim();
+      if (!name) return;
+      const entry = {
+        id: `user-${Date.now()}`,
+        type: String(data.get("type") || "other"),
+        name,
+        initials: initials(name),
+        summary: String(data.get("summary") || "").trim(),
+        description: String(data.get("description") || "").trim(),
+      };
+      const entries = loadUserCodex();
+      entries.push(entry);
+      saveUserCodex(entries);
+      renderUserCodex();
+      closeEntryModal();
+      showToast(`Saved “${name}” to your Codex.`);
+    });
+
+    renderUserCodex();
+
+    // Export manuscript
+    document.querySelector("[data-export]")?.addEventListener("click", () => {
+      const manuscript = document.querySelector(".nc-manuscript");
+      const lines = [`# ${novelTitle}`, ""];
+      manuscript
+        ?.querySelectorAll(".nc-ms-chapter-title, .nc-ms-scene")
+        .forEach((node) => {
+          if (node.classList.contains("nc-ms-chapter-title")) {
+            lines.push(`## ${node.textContent?.trim() || "Chapter"}`, "");
+            return;
+          }
+          const text = (node.innerText || "").trim();
+          if (text) lines.push(text, "");
+        });
+      const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${novelTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.txt`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast("Manuscript exported.");
+    });
+
+    // Manuscript editor persistence + live word count + import
+    const ms = document.querySelector(".nc-manuscript");
+    const wordsLabel = document.querySelector(".nc-ws__toolright span");
     if (ms) {
-      const novelId = ms.dataset.novel!;
-      const scenes = ms.querySelectorAll<HTMLElement>(".nc-ms-scene");
-      const key = (sceneId: string) => `nc:${novelId}:${sceneId}`;
-      scenes.forEach((sc) => {
-        const saved = localStorage.getItem(key(sc.dataset.scene!));
-        if (saved !== null) sc.innerHTML = saved;
+      const scenes = ms.querySelectorAll(".nc-ms-scene");
+      const key = (sceneId) => `nc:${novelId}:${sceneId}`;
+      const importKey = `nc:import:${novelId}`;
+      const imported = localStorage.getItem(importKey);
+
+      scenes.forEach((sc, index) => {
+        const saved = localStorage.getItem(key(sc.dataset.scene));
+        if (saved !== null) {
+          sc.innerHTML = saved;
+        } else if (imported && index === 0) {
+          const paragraphs = imported.split(/\n{2,}/).filter(Boolean);
+          sc.innerHTML = paragraphs.map((p) => `<p>${p}</p>`).join("") || `<p>${imported}</p>`;
+          localStorage.setItem(key(sc.dataset.scene), sc.innerHTML);
+          localStorage.removeItem(importKey);
+          showToast("Imported text loaded into Write mode.");
+        }
         sc.addEventListener("input", () => {
-          localStorage.setItem(key(sc.dataset.scene!), sc.innerHTML);
+          localStorage.setItem(key(sc.dataset.scene), sc.innerHTML);
           updateCount();
         });
       });
+
       function updateCount() {
         let n = 0;
         scenes.forEach((sc) => {
@@ -386,6 +700,11 @@ function avatarStyle(seed: string): string {
         if (wordsLabel) wordsLabel.textContent = `${n.toLocaleString()} words`;
       }
       updateCount();
+
+      if (initialMode === "write") {
+        const firstScene = scenes[0];
+        firstScene?.focus();
+      }
     }
   </script>
 </NovelcrafterLayout>
