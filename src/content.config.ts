@@ -21,6 +21,10 @@ const posts = defineCollection({
   loader: glob({ pattern: "**/*.(md|mdx)", base: "./src/content/posts" }),
 });
 
+const research = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/research" }),
+});
+
 const team = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/team" }),
 });
@@ -36,5 +40,6 @@ export const collections = {
   legal,
   helpcenter,
   posts,
+  research,
   integrations,
 };
