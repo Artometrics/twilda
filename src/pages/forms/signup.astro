@@ -3,11 +3,13 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import Text from "@/components/fundations/elements/Text.astro";
 import Button from "@/components/fundations/elements/Button.astro";
 import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton.astro";
 
 export const prerender = false;
 
 const plan = Astro.url.searchParams.get("plan") ?? "free";
 const email = Astro.url.searchParams.get("email") ?? "";
+const redirect = plan === "free" ? "/novels/" : `/account/billing/?plan=${plan}`;
 ---
 
 <BaseLayout hideNav={true} hideFooter={true}>
@@ -25,7 +27,15 @@ const email = Astro.url.searchParams.get("email") ?? "";
           Create your Twilda account
         </Text>
         <p class="mt-4 text-center text-accent-900 hidden" data-auth-message></p>
-        <form class="mt-6" data-signup-form>
+        <div class="mt-6 space-y-4">
+          <GoogleSignInButton redirect={redirect} label="Sign up with Google" />
+          <div class="flex items-center gap-3 text-sm text-accent-800">
+            <span class="h-px flex-1 bg-accent-900/20" aria-hidden="true"></span>
+            <span>or sign up with email</span>
+            <span class="h-px flex-1 bg-accent-900/20" aria-hidden="true"></span>
+          </div>
+        </div>
+        <form class="mt-4" data-signup-form>
           <input type="hidden" name="plan" value={plan} />
           <div class="space-y-6">
             <div
