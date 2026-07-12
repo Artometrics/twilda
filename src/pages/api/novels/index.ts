@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { createSupabaseServerClient } from "@/lib/supabase/ssr";
 import { dbErrorMessage } from "@/lib/auth/guards";
 import { ensureUserProfile } from "@/lib/auth/profile";
+import { assertCanCreateNovel } from "@/lib/billing/limits";
 import { createNovel, ensureStarterNovels } from "@/lib/novels/service";
 
 export const prerender = false;
@@ -18,6 +19,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
   try {
     await ensureUserProfile(supabase, user);
     await ensureStarterNovels(supabase, user.id);
+    await assertCanCreateNovel(supabase, user.id);
     const body = await request.json().catch(() => ({}));
     const id = await createNovel(supabase, user.id, body);
     return new Response(JSON.stringify({ id }), {
@@ -25,9 +27,11 @@ export const POST: APIRoute = async ({ cookies, request }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
+    const message = dbErrorMessage(err);
+    const status = message.includes("Free plan allows") ? 402 : 500;
     return new Response(
-      JSON.stringify({ error: dbErrorMessage(err) }),
-      { status: 500 },
+      JSON.stringify({ error: message }),
+      { status },
     );
   }
 };

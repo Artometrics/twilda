@@ -239,7 +239,12 @@ const recent = [...novels]
         if (!res.ok) throw new Error(data.error || "Create failed");
         window.location.href = `/novels/${data.id}/?mode=write`;
       } catch (err) {
-        showToast(err instanceof Error ? err.message : "Could not create novel");
+        const msg = err instanceof Error ? err.message : "Could not create novel";
+        if (msg.includes("Free plan allows")) {
+          showToast(`${msg} Upgrade at /account/billing/`);
+        } else {
+          showToast(msg);
+        }
         createBtn.removeAttribute("disabled");
       }
     });

@@ -117,7 +117,10 @@ const redirect = plan === "free" ? "/novels/" : `/account/billing/?plan=${plan}`
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const redirectTo = `${window.location.origin}/auth/callback/?next=/novels/`;
+      const plan = data.get("plan")?.toString() ?? "free";
+      const afterAuth =
+        plan === "free" ? "/novels/" : `/account/billing/?plan=${plan}`;
+      const redirectTo = `${window.location.origin}/auth/callback/?next=${encodeURIComponent(afterAuth)}`;
       const { data: signUpData, error } = await supabase.auth.signUp({
         email,
         password,
@@ -129,7 +132,7 @@ const redirect = plan === "free" ? "/novels/" : `/account/billing/?plan=${plan}`
       if (error) throw error;
 
       if (signUpData.session) {
-        window.location.href = "/novels/";
+        window.location.href = afterAuth;
         return;
       }
 

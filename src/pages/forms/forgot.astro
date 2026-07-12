@@ -64,7 +64,7 @@ import Wrapper from "@/components/fundations/containers/Wrapper.astro";
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const redirectTo = `${window.location.origin}/auth/callback/?next=/forms/login/`;
+      const redirectTo = `${window.location.origin}/forms/reset-password/`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) throw error;
       if (message) {

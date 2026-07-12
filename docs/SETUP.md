@@ -65,6 +65,39 @@ npm run build
 
 Push to `main` → production deploy. Or `npx netlify deploy --prod`.
 
-## 5. Cursor
+## 5. Stripe billing (optional until you enable paid plans)
+
+Twilda uses **Stripe** for Pro subscriptions. Supabase does not process payments; Polar is not wired in this repo.
+
+1. [Stripe Dashboard](https://dashboard.stripe.com/) → create products:
+   - **Pro** — $19/mo recurring → copy **Price ID**
+   - **Studio** — contact/sales (no self-serve checkout in app)
+2. Netlify env (server-only):
+
+```bash
+npx netlify env:set STRIPE_SECRET_KEY "sk_live_..." --secret
+npx netlify env:set STRIPE_WEBHOOK_SECRET "whsec_..." --secret
+npx netlify env:set STRIPE_PRICE_PRO "price_..." --secret
+# Optional if you add Studio self-serve later:
+npx netlify env:set STRIPE_PRICE_STUDIO "price_..." --secret
+```
+
+3. Stripe → **Developers → Webhooks** → Add endpoint:
+   - URL: your `PUBLIC_SITE_URL` + `/api/billing/webhook/`
+   - Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`
+4. Stripe → **Settings → Billing → Customer portal** → enable (cancel, update payment method).
+5. Test: sign up with `?plan=pro` → `/account/billing/` auto-starts Checkout → return → **Manage subscription** opens portal.
+
+## 6. Google OAuth
+
+1. Supabase → **Authentication → Providers → Google** → enable, paste Client ID + Secret from Google Cloud Console.
+2. Google Cloud → OAuth client → Authorized redirect URI:
+   - `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`
+3. Supabase → **Authentication → URL Configuration**:
+   - Site URL: same value as `PUBLIC_SITE_URL`
+   - Redirect URLs: add `/auth/callback/` and `/forms/reset-password/` on prod and localhost
+4. Publish OAuth consent screen (or add test users while in Testing).
+
+## 7. Cursor
 
 Rules in `.cursor/rules/`. Never paste service-role keys into chat.

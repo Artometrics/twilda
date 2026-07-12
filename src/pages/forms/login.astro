@@ -10,6 +10,7 @@ export const prerender = false;
 
 const redirect = getRedirectParam(Astro.url);
 const error = Astro.url.searchParams.get("error");
+const reset = Astro.url.searchParams.get("reset");
 ---
 
 <BaseLayout hideNav={true} hideFooter={true}>
@@ -27,6 +28,11 @@ const error = Astro.url.searchParams.get("error");
           Sign in to Twilda
         </Text>
         {error && <p class="mt-4 text-center text-red-700">{error}</p>}
+        {reset && (
+          <p class="mt-4 text-center text-accent-800">
+            Password updated. Sign in with your new password.
+          </p>
+        )}
         <p class="mt-4 text-center text-accent-900 hidden" data-auth-message></p>
         <div class="mt-6 space-y-4">
           <GoogleSignInButton redirect={redirect} />
