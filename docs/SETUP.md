@@ -42,6 +42,8 @@ npx supabase gen types typescript --project-id <ref> > src/lib/supabase/database
 
 Successful sign-in redirects to `/novels/`. Contact form stays on **Netlify Forms** (`/forms/contact`).
 
+OAuth (Google, GitHub, Apple, Microsoft): see **`docs/OAUTH_SETUP.md`**.
+
 ## 3. Netlify
 
 - Site: **twilda** — deploys from GitHub `kylesmcauliffe/twilda` on push to `main`
