@@ -20,3 +20,9 @@
   for = "/api/*"
   [headers.values]
     Cache-Control = "no-store"
+
+[[redirects]]
+  from = "/blog/*"
+  to = "/research/"
+  status = 301
+
