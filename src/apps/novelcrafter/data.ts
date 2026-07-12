@@ -21,6 +21,10 @@ export interface CodexEntry {
 export interface Scene {
   title: string;
   text: string;
+  /** Present when loaded from database */
+  id?: string;
+  /** HTML content from database */
+  content?: string;
 }
 
 export interface Chapter {
@@ -403,6 +407,7 @@ const cardinal: Novel = {
   ],
 };
 
+export { gatsby };
 export const novels: Novel[] = [gatsby, trinity, cardinal];
 
 export function getNovel(id: string): Novel | undefined {

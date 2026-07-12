@@ -1,90 +1,37 @@
 ---
-page: Privacy
-pubDate: 2024-01-01
+page: Privacy Policy
+pubDate: 2026-01-01
 ---
-If you are a California resident, the California Consumer Privacy Act, as amended by the California Privacy Rights Act of 2020 (“**CCPA**”), requires us to provide some additional information to California residents. This Section only applies to you if you are a California resident, although please note that this information and the rights afforded herein are the same as offered to our other users in our main Privacy Policy. This Section does not apply to personal information we collect from our employees and job applicants in their capacity as employees and job applicants, as such information practices are described in separate policies.
 
-The following chart details these activities:
+Artometrics ("we", "us") operates Twilda at twilda.com. This Privacy Policy explains how we collect, use, and protect your information.
 
-**Category of personal information**
+### Information we collect
 
-**Purposes of use**
+- **Account data:** email address, display name, and authentication identifiers when you sign up.
+- **Content:** novels, chapters, scenes, Codex entries, snippets, and chat messages you create in the app.
+- **Usage data:** feature usage, AI credit consumption, and technical logs needed to operate and secure the service.
+- **Payment data:** processed by Stripe; we store subscription status and customer references, not full card numbers.
 
-**Categories of Third Parties Information**
+### How we use information
 
-**Categories of Third Parties**
+We use your information to provide Twilda, sync your work across devices, enforce plan limits, process payments, improve the product, and respond to support requests. AI features send relevant manuscript and Codex context to our AI providers only when you invoke those features.
 
-Contact information (such as your full name, phone number, email address)
+### Storage and security
 
-Provide the Services; Communicate with you; Analyze use of and improve the services; With your consent; Comply with law or defend our legal rights; Security/fraud prevention
+Data is stored in Supabase (PostgreSQL) with row-level security. Access is restricted to your account unless you explicitly share content in future collaboration features. We use industry-standard practices to protect data in transit and at rest.
 
-Affiliated entities; Service providers; Entities for legal purposes
+### Third parties
 
-We do not share/sell
+We use Supabase (auth and database), Netlify (hosting), and Stripe (billing). AI requests may be processed via Netlify AI Gateway. Each provider operates under its own privacy terms.
 
-Customer service interaction information (including optional surveys and when you ask for help)
+### Your rights
 
-Provide the Services; Communicate with you; Analyze use of and improve the services; With your consent; Comply with law or defend our legal rights; Security/fraud prevention
+You may access, export, or delete your account data from your account settings or by contacting us. EU/UK users may have additional rights under applicable law.
 
-Affiliated entities; Service providers; Entities for legal purposes
+### Retention
 
-We do not share/sell
+We retain account and content data while your account is active. Deleted accounts are purged within a reasonable period except where retention is required by law.
 
-Product interaction information
+### Contact
 
-Provide the Services; Communicate with you; Analyze use of and improve the services; With your consent; Comply with law or defend our legal rights; Security/fraud prevention
-
-Affiliated entities; Service providers; Entities for legal purposes
-
-We do not share/sell
-
-Internet network and device information (such as mobile device information, IP address, and information about your interaction with the services)
-
-Provide the Services; Analyze use of and improve the services; With your consent; Comply with law or defend our legal rights; Security/fraud prevention
-
-Affiliated entities; Service providers; Entities for legal purposes;
-
-We do not share/sell
-
-Login information (such as your username and password)
-
-Provide the Services; Comply with law or defend our legal rights; Security/fraud prevention; Comply with law or defend our legal rights
-
-Affiliated entities; Service providers; Entities for legal purposes
-
-We do not share/sell
-
-Professional or employment information (such as the name and address of the company you work for and your title)
-
-Provide the Services; Communicate with you; Analyze use of and improve the services; With your consent; Comply with law or defend our legal rights; Security/fraud prevention
-
-Affiliated entities; Service providers; Entities for legal purposes;
-
-We do not share/sell
-
-Other information (any other information you choose to provide directly to us, including optional profile photos)
-
-Provide the Services; Communicate with you; Analyze use of and improve the services; With your consent; Comply with law or defend our legal rights; Security/fraud prevention
-
-Affiliated entities; Service providers; Entities for legal purposes;
-
-We do not sell/share
-
-For more information about each category of personal information, purpose of use, and third parties to which we disclose personal information, please see the "What we collect and why," and "When we access or disclose you information" sections of our Privacy Policy.
-
-**Your Choices Regarding “Sharing” and “Selling”**: You have the right to opt out of our sale/sharing of your personal information for purposes of online analytics and advertising. Currently, we do not sell or share your data as defined by the CCPA and we have not done so over the past 12 months from the effective date of this Privacy Policy.
-
-**Other CCPA Rights.** If we ever offer any financial incentives in exchange for your personal information, we will provide you with appropriate information about such incentives.
-
-The CCPA also allows you to limit the use or disclosure of your “sensitive personal information” (as defined in the CCPA) if your sensitive personal information is used for certain purposes. Please note that we do not use or disclose sensitive personal information other than for business purposes for which you cannot opt out under the CCPA.
-
-Please see the “Your rights with respect to your information” section of our Policy above for information about the additional rights you have with respect to your personal information under California law and how to exercise them.
-
-Retention of Your Personal Information. Please see the “Retention Of Your Information” section belowof our Privacy Policy for more information.
-
-Shine the Light Disclosure
---------------------------
-
-The California "Shine the Light" law gives residents of California the right under certain circumstances to request information from us regarding the manner in which we disclose certain categories of personal information (as defined in the Shine the Light law) with third parties for their direct marketing purposes. We currently do not disclose your personal information to third parties for their own direct marketing purposes.
-
-
+Privacy questions: contact Artometrics via twilda.com/forms/contact/.

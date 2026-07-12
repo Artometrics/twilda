@@ -1,0 +1,58 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+
+export const prerender = false;
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect("/forms/login/?redirect=/account/billing/");
+
+const supabase = Astro.locals.supabase!;
+const { data: subscription } = await supabase
+  .from("subscriptions")
+  .select("*")
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+const success = Astro.url.searchParams.get("success");
+---
+
+<BaseLayout>
+  <Wrapper variant="standard" class="py-24">
+    <Text tag="h1" variant="displayMD" class="font-semibold text-accent-900">
+      Billing
+    </Text>
+    {success && (
+      <p class="mt-4 p-4 border-2 border-accent-500 rounded-xl bg-accent-100 text-accent-900">
+        Subscription updated. Thank you!
+      </p>
+    )}
+    <div class="mt-8 max-w-lg p-6 border-2 border-accent-900 rounded-2xl bg-white space-y-4">
+      <p class="text-lg font-semibold text-accent-900 capitalize">
+        Current plan: {subscription?.plan ?? "free"}
+      </p>
+      <p class="text-accent-800">
+        AI credits: {subscription?.ai_credits_remaining ?? 5} remaining of {subscription?.ai_credits_monthly ?? 5} / month
+      </p>
+      <div class="flex flex-wrap gap-3">
+        <Button size="md" variant="accent" data-upgrade="pro">Upgrade to Pro</Button>
+        <Button size="md" variant="default" data-upgrade="studio">Upgrade to Studio</Button>
+        <Button isLink={true} href="/account/" size="md" variant="muted">Back to account</Button>
+      </div>
+    </div>
+  </Wrapper>
+</BaseLayout>
+
+<script>
+  document.querySelectorAll("[data-upgrade]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const plan = btn.getAttribute("data-upgrade");
+      const res = await fetch(`/api/billing/checkout/?plan=${plan}`, { method: "POST" });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert(data.error || "Checkout unavailable");
+    });
+  });
+</script>

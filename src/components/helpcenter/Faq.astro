@@ -6,44 +6,44 @@ import Wrapper from "@/components/fundations/containers/Wrapper.astro";
 import Plus from "@/components/fundations/icons/Plus.astro";
 const faqs = [
   {
-    question: "How fast can we get set up?",
+    question: "How do I get started?",
     answer:
-      "Most teams launch in a day using our templates. We’ll help import your existing forms, spreadsheets, or tickets.",
+      "Sign up for a free account, open your library, and start a new novel or explore the sample manuscript we add on first visit.",
   },
   {
-    question: "Do you integrate with our tools?",
+    question: "Does Twilda autosave my work?",
     answer:
-      "Yes. Send updates to Slack or Teams, sync tasks to Jira/Linear/Trello, and connect HRIS and SSO with a few clicks.",
+      "Yes. Scene edits in Write mode save automatically to your account. You can also export your manuscript anytime.",
   },
   {
-    question: "Can we enforce approvals and SLAs?",
+    question: "What is the Codex?",
     answer:
-      "You can build multi-step approvals with fallbacks, set SLA timers, and trigger escalations automatically.",
+      "The Codex is your story bible—characters, locations, lore, and notes that stay linked to your novel while you draft.",
   },
   {
-    question: "Is our data secure?",
+    question: "How do AI credits work?",
     answer:
-      "We offer SSO, role-based access, audit logs, and encryption in transit and at rest. Data residency options are available on Enterprise.",
+      "Free plans include 5 Chat and Review credits per month. Pro and Studio plans include more. Credits reset each billing cycle.",
   },
   {
-    question: "Who can submit requests?",
+    question: "Can I import an existing draft?",
     answer:
-      "Anyone you invite: employees, vendors, or contractors. Share forms publicly or keep queues private with permissions.",
+      "Yes. Use Import on your library page to upload plain text. Twilda creates a new novel with your content in the first scene.",
   },
   {
-    question: "Does it work on mobile?",
+    question: "Is my writing private?",
     answer:
-      "Yes. Review, approve, and update requests from mobile web or our app—no laptop required.",
+      "Your novels are scoped to your account with row-level security in Supabase. Only you can access your manuscripts.",
   },
   {
-    question: "Can we export our data?",
+    question: "Can I export my novel?",
     answer:
-      "Absolutely. Export to CSV/JSON anytime, or pipe updates into your own systems via webhooks.",
+      "Absolutely. Use Export in the workspace sidebar to download .txt, or call the export API for markdown-friendly output.",
   },
   {
-    question: "Do you offer onboarding help?",
+    question: "How do I upgrade my plan?",
     answer:
-      "Growth and Enterprise plans include implementation support, office hours, and best-practice templates tailored to your teams.",
+      "Choose Pro or Studio on the pricing page, or open Account → Billing after you sign in to start Stripe checkout.",
   },
 ];
 ---
@@ -67,7 +67,7 @@ const faqs = [
             variant="textLG"
             class="mt-4 text-accent-900 text-balance"
           >
-            Answers to commonly asked questions about our platform
+            Answers to commonly asked questions about Twilda
           </Text>
         </div>
       </div>

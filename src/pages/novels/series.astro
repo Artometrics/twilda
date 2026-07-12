@@ -1,18 +1,35 @@
 ---
+export const prerender = false;
+
 import NovelcrafterLayout from "@/layouts/NovelcrafterLayout.astro";
 import NovelsTopbar from "@/components/novels/NovelsTopbar.astro";
 import Cover from "@/apps/novelcrafter/Cover.astro";
-import { novels } from "@/apps/novelcrafter/data";
+import { listNovels, formatUpdated } from "@/lib/novels/service";
+
+const user = Astro.locals.user!;
+const supabase = Astro.locals.supabase!;
+const novels = await listNovels(supabase, user.id);
+
+const { data: subscription } = await supabase
+  .from("subscriptions")
+  .select("ai_credits_remaining, ai_credits_monthly")
+  .eq("user_id", user.id)
+  .maybeSingle();
 
 const grouped = novels.reduce<Record<string, typeof novels>>((acc, novel) => {
-  const key = novel.series ?? "No Series";
+  const key = novel.series_name ?? "No Series";
   (acc[key] ??= []).push(novel);
   return acc;
 }, {});
 ---
 
 <NovelcrafterLayout title="Series · Twilda">
-  <NovelsTopbar active="series" />
+  <NovelsTopbar
+    active="series"
+    userEmail={user.email}
+    credits={subscription?.ai_credits_remaining ?? 5}
+    creditsMax={subscription?.ai_credits_monthly ?? 5}
+  />
 
   <main class="nc-library">
     <div class="nc-library__head">
@@ -21,8 +38,6 @@ const grouped = novels.reduce<Record<string, typeof novels>>((acc, novel) => {
     </div>
 
     <div class="nc-toolbar">
-      <button class="nc-btn nc-btn--primary" type="button" data-series-create>+ Create Series</button>
-      <div class="nc-toolbar__spacer"></div>
       <a class="nc-btn" href="/novels/">Back to Novels</a>
     </div>
 
@@ -36,10 +51,10 @@ const grouped = novels.reduce<Record<string, typeof novels>>((acc, novel) => {
             {items.map((n) => (
               <a class="nc-book" href={`/novels/${n.id}/`}>
                 <div class="nc-book__cover">
-                  <Cover kind={n.cover} title={n.title} author={n.author} />
+                  <Cover kind={n.cover_kind} title={n.title} author={n.author} />
                 </div>
                 <p class="nc-book__title">{n.title}</p>
-                <p class="nc-book__date">{n.updated}</p>
+                <p class="nc-book__date">{formatUpdated(n.updated_at)}</p>
               </a>
             ))}
           </div>
@@ -47,22 +62,4 @@ const grouped = novels.reduce<Record<string, typeof novels>>((acc, novel) => {
       ))
     }
   </main>
-
-  <div class="nc-toast" data-toast hidden></div>
-
-  <script>
-    document.querySelector("[data-series-create]")?.addEventListener("click", () => {
-      const toast = document.querySelector<HTMLElement>("[data-toast]");
-      if (!toast) return;
-      toast.textContent = "Series creation opens from any novel's Settings → Metadata.";
-      toast.hidden = false;
-      toast.classList.add("is-visible");
-      window.setTimeout(() => {
-        toast.classList.remove("is-visible");
-        window.setTimeout(() => {
-          toast.hidden = true;
-        }, 300);
-      }, 3200);
-    });
-  </script>
 </NovelcrafterLayout>

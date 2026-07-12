@@ -1,31 +1,29 @@
 ---
-// Components
 import Text from "@/components/fundations/elements/Text.astro";
 import Wrapper from "@/components/fundations/containers/Wrapper.astro";
 import Button from "@/components/fundations/elements/Button.astro";
-// Icons
 import Check from "@/components/fundations/icons/Check.astro";
+
 const pricingOptions = [
   {
     cardClass: "bg-white",
     primaryTextColor: "text-accent-900",
     secondaryTextColor: "text-accent-900",
     featuresBorderColor: "border-accent-900",
-    title: "Team",
-    monthly: "$29.00",
-    description: "For small teams standardizing intake, routing, and approvals.",
+    title: "Free",
+    monthly: "$0",
+    description: "For writers starting their first manuscript.",
     button: {
       text: "Start free",
       variant: "default",
+      href: "/forms/signup/",
     },
     features: [
-      { text: "Unlimited request types and forms" },
-      { text: "Routing rules and assignees" },
-      { text: "Board and calendar views" },
-      { text: "SLA timers and reminders" },
-      { text: "Checklists and comment threads" },
-      { text: "Email + in-app notifications" },
-      { text: "CSV export" },
+      { text: "Up to 2 novels" },
+      { text: "Plan, Write, and Codex" },
+      { text: "5 AI credits per month" },
+      { text: "Export to .txt and .md" },
+      { text: "Writing prompts library" },
     ],
   },
   {
@@ -33,24 +31,21 @@ const pricingOptions = [
     primaryTextColor: "text-accent-900",
     secondaryTextColor: "text-accent-900",
     featuresBorderColor: "border-accent-900",
-    title: "Growth",
-    monthly: "$69.00",
-    description: "For departments coordinating operations across IT, HR, and finance.",
+    title: "Pro",
+    monthly: "$19",
+    description: "For serious writers who need AI and unlimited projects.",
     button: {
-      text: "Start trial",
+      text: "Start Pro trial",
       variant: "default",
+      href: "/forms/signup/?plan=pro",
     },
     features: [
-      { text: "Conditional form logic" },
-      { text: "Multi-step approvals with fallbacks" },
-      { text: "Team queues and private queues" },
-      { text: "Advanced automations" },
-      { text: "Knowledge base and snippets" },
-      { text: "Dashboards for cycle time and volume" },
-      { text: "Slack/Teams notifications" },
-      { text: "Jira/Linear/Trello sync" },
-      { text: "HRIS + SSO (Google/Okta)" },
-      { text: "Chat + email support" },
+      { text: "Unlimited novels" },
+      { text: "50 AI credits per month" },
+      { text: "Story-aware Chat and Review" },
+      { text: "Snippets and saved chats" },
+      { text: "Series organization" },
+      { text: "Priority support" },
     ],
   },
   {
@@ -58,22 +53,21 @@ const pricingOptions = [
     primaryTextColor: "text-white",
     secondaryTextColor: "text-white",
     featuresBorderColor: "border-accent-900",
-    title: "Enterprise",
-    monthly: "$99.00",
-    description:
-      "For organizations with compliance needs and complex workflows.",
+    title: "Studio",
+    monthly: "$49",
+    description: "For authors and small teams with advanced workflows.",
     button: {
-      text: "Talk to sales",
+      text: "Talk to us",
       variant: "default",
+      href: "/forms/contact/?subject=studio",
     },
     features: [
-      { text: "Custom SLA policies and escalation paths" },
-      { text: "Audit trail exports and retention controls" },
-      { text: "SCIM provisioning + SSO enforcement" },
-      { text: "Data residency options" },
-      { text: "Dedicated environment and sandbox" },
-      { text: "Security reviews and DPA" },
-      { text: "Named customer success + onboarding" },
+      { text: "Everything in Pro" },
+      { text: "200 AI credits per month" },
+      { text: "Collaboration (coming soon)" },
+      { text: "Custom export formats" },
+      { text: "Dedicated onboarding" },
+      { text: "SLA and invoicing" },
     ],
   },
 ];
@@ -87,41 +81,50 @@ const pricingOptions = [
         variant="displayLG"
         class="font-semibold tracking-tight text-accent-900"
       >
-        Plans for teams that need requests to move
+        Plans for writers at every stage
       </Text>
       <Text tag="p" variant="textLG" class="mt-4 text-accent-900">
-        Start free. Scale as intake, approvals, and automations expand across teams.
+        Start free with cloud save. Upgrade for more AI credits and unlimited novels.
       </Text>
+      <Button
+        isLink={true}
+        href="/forms/signup/?plan=pro"
+        size="sm"
+        variant="accent"
+        class="mt-6"
+        data-checkout-pro
+      >
+        Start Pro trial
+      </Button>
     </div>
-    <!-- Pricing Cards -->
 
     <div
       class="mt-24 border-t-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y-8 divide-accent-900 lg:divide-y-0 lg:divide-x-8"
     >
       {
         pricingOptions.map((tier) => (
-          <div
-            class={`flex flex-col h-full justify-between  ${tier.cardClass}`}
-          >
-            <div class="flex flex-col ">
-              <div class="p-8 ">
+          <div class={`flex flex-col h-full justify-between ${tier.cardClass}`}>
+            <div class="flex flex-col">
+              <div class="p-8">
                 <Text
                   tag="h3"
                   variant="displaySM"
-                  class={`font-medium text-accent-900 ${tier.primaryTextColor}`}
+                  class={`font-medium ${tier.primaryTextColor}`}
                 >
                   {tier.title}
                 </Text>
                 <Text
                   variant="displayXL"
-                  class={`font-semibold flex items-baseline tracking-tight  mt-12 ${tier.primaryTextColor}`}
+                  class={`font-semibold flex items-baseline tracking-tight mt-12 ${tier.primaryTextColor}`}
                 >
                   <span>{tier.monthly}</span>
-                  <span
-                    class={`text-sm font-normal tracking-normal ${tier.secondaryTextColor}`}
-                  >
-                    /month
-                  </span>
+                  {tier.monthly !== "$0" && (
+                    <span
+                      class={`text-sm font-normal tracking-normal ${tier.secondaryTextColor}`}
+                    >
+                      /month
+                    </span>
+                  )}
                 </Text>
                 <Text
                   tag="p"
@@ -131,7 +134,7 @@ const pricingOptions = [
                   {tier.description}
                 </Text>
               </div>
-              <div class={`mt-4 p-8 border-t-4 ${tier.featuresBorderColor}  `}>
+              <div class={`mt-4 p-8 border-t-4 ${tier.featuresBorderColor}`}>
                 <Text
                   tag="p"
                   variant="textXL"
@@ -140,7 +143,7 @@ const pricingOptions = [
                   What's included:
                 </Text>
                 <ul
-                  class={`flex flex-col mt-4 text-lg font-medium  gap-y-2 ${tier.primaryTextColor}`}
+                  class={`flex flex-col mt-4 text-lg font-medium gap-y-2 ${tier.primaryTextColor}`}
                   role="list"
                 >
                   {tier.features.map((feature) => (
@@ -155,8 +158,14 @@ const pricingOptions = [
                 </ul>
               </div>
             </div>
-            <div class=" p-8">
-              <Button class="w-full" variant={tier.button.variant} size="xl">
+            <div class="p-8">
+              <Button
+                isLink={true}
+                href={tier.button.href}
+                class="w-full"
+                variant={tier.button.variant}
+                size="xl"
+              >
                 {tier.button.text}
               </Button>
             </div>
@@ -166,3 +175,16 @@ const pricingOptions = [
     </div>
   </Wrapper>
 </section>
+
+<script>
+  document.querySelector("[data-checkout-pro]")?.addEventListener("click", async (event) => {
+    event.preventDefault();
+    const res = await fetch("/api/billing/checkout/?plan=pro", { method: "POST" });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+      return;
+    }
+    window.location.href = "/forms/signup/?plan=pro";
+  });
+</script>

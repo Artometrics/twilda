@@ -1,14 +1,30 @@
 ---
+export const prerender = false;
+
 import NovelcrafterLayout from "@/layouts/NovelcrafterLayout.astro";
 import NovelsTopbar from "@/components/novels/NovelsTopbar.astro";
 import { prompts } from "@/apps/novelcrafter/prompts";
-import { novels } from "@/apps/novelcrafter/data";
+import { listNovels } from "@/lib/novels/service";
 
-const defaultNovel = novels[0]?.id ?? "the-great-gatsby";
+const user = Astro.locals.user!;
+const supabase = Astro.locals.supabase!;
+const novels = await listNovels(supabase, user.id);
+const defaultNovel = novels[0]?.id;
+
+const { data: subscription } = await supabase
+  .from("subscriptions")
+  .select("ai_credits_remaining, ai_credits_monthly")
+  .eq("user_id", user.id)
+  .maybeSingle();
 ---
 
 <NovelcrafterLayout title="Prompts · Twilda">
-  <NovelsTopbar active="prompts" />
+  <NovelsTopbar
+    active="prompts"
+    userEmail={user.email}
+    credits={subscription?.ai_credits_remaining ?? 5}
+    creditsMax={subscription?.ai_credits_monthly ?? 5}
+  />
 
   <main class="nc-library">
     <div class="nc-library__head">
@@ -27,12 +43,16 @@ const defaultNovel = novels[0]?.id ?? "the-great-gatsby";
               <button class="nc-btn" type="button" data-copy-prompt={prompt.text}>
                 Copy
               </button>
-              <a
-                class="nc-btn nc-btn--primary"
-                href={`/novels/${defaultNovel}/?mode=chat&prompt=${prompt.id}`}
-              >
-                Use in Chat
-              </a>
+              {defaultNovel ? (
+                <a
+                  class="nc-btn nc-btn--primary"
+                  href={`/novels/${defaultNovel}/?mode=chat&prompt=${prompt.id}`}
+                >
+                  Use in Chat
+                </a>
+              ) : (
+                <a class="nc-btn nc-btn--primary" href="/novels/">Create a novel first</a>
+              )}
             </div>
           </article>
         ))
@@ -43,28 +63,24 @@ const defaultNovel = novels[0]?.id ?? "the-great-gatsby";
   <div class="nc-toast" data-toast hidden></div>
 
   <script>
-    const toast = document.querySelector<HTMLElement>("[data-toast]");
-    function showToast(message: string) {
+    const toast = document.querySelector("[data-toast]");
+    function showToast(message) {
       if (!toast) return;
       toast.textContent = message;
       toast.hidden = false;
       toast.classList.add("is-visible");
       window.setTimeout(() => {
         toast.classList.remove("is-visible");
-        window.setTimeout(() => {
-          toast.hidden = true;
-        }, 300);
+        window.setTimeout(() => { toast.hidden = true; }, 300);
       }, 2200);
     }
-
-    document.querySelectorAll<HTMLButtonElement>("[data-copy-prompt]").forEach((btn) => {
+    document.querySelectorAll("[data-copy-prompt]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        const text = btn.dataset.copyPrompt ?? "";
         try {
-          await navigator.clipboard.writeText(text);
-          showToast("Prompt copied to clipboard.");
+          await navigator.clipboard.writeText(btn.dataset.copyPrompt ?? "");
+          showToast("Prompt copied.");
         } catch {
-          showToast("Could not copy — select the text manually.");
+          showToast("Could not copy.");
         }
       });
     });

@@ -1,9 +1,14 @@
 ---
-// Fundations
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Text from "@/components/fundations/elements/Text.astro";
 import Button from "@/components/fundations/elements/Button.astro";
 import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import { getRedirectParam } from "@/lib/auth/session";
+
+export const prerender = false;
+
+const redirect = getRedirectParam(Astro.url);
+const error = Astro.url.searchParams.get("error");
 ---
 
 <BaseLayout hideNav={true} hideFooter={true}>
@@ -18,34 +23,26 @@ import Wrapper from "@/components/fundations/containers/Wrapper.astro";
           variant="displayXL"
           class="font-semibold text-accent-900 text-center"
         >
-          Sign in
+          Sign in to Twilda
         </Text>
-        <form class="mt-6">
-          <input
-            autocomplete="off"
-            name="hidden"
-            type="text"
-            style="display: none"
-            aria-hidden="true"
-            tabindex="-1"
-          />
-          <input type="hidden" name="_redirect" value="#" />
+        {error && <p class="mt-4 text-center text-red-700">{error}</p>}
+        <p class="mt-4 text-center text-accent-900 hidden" data-auth-message></p>
+        <form class="mt-6" data-login-form>
+          <input type="hidden" name="redirect" value={redirect} />
           <div class="space-y-6">
             <div
               class="overflow-hidden border-2 border-accent-900 shadow divide-y-2 divide-accent-900 rounded-xl"
             >
               <div>
-                <label for="login" class="sr-only"
-                  >User name or email address</label
-                >
+                <label for="email" class="sr-only">Email address</label>
                 <input
-                  id="login"
-                  name="login"
-                  type="text"
-                  placeholder="User name or email address"
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Email address"
                   required
-                  autocomplete="username"
-                  class="block w-full px-3 py-4 text-xl text-accent-900 placeholder-black border-2 border-transparent border-accent-900 appearance-none focus:border-accent-900 focus:bg-accent-300 focus:outline-none focus:ring-black sm:text-sm"
+                  autocomplete="email"
+                  class="block w-full px-3 py-4 text-xl text-accent-900 placeholder-black border-2 border-transparent appearance-none focus:border-accent-900 focus:bg-accent-300 focus:outline-none sm:text-sm"
                 />
               </div>
               <div>
@@ -54,58 +51,66 @@ import Wrapper from "@/components/fundations/containers/Wrapper.astro";
                   id="password"
                   name="password"
                   type="password"
-                  placeholder="Type password here..."
+                  placeholder="Password"
                   required
                   autocomplete="current-password"
-                  class="block w-full px-3 py-4 text-xl text-accent-900 placeholder-black border-2 border-transparent border-accent-900 appearance-none focus:border-accent-900 focus:bg-accent-300 focus:outline-none focus:ring-black sm:text-sm"
+                  class="block w-full px-3 py-4 text-xl text-accent-900 placeholder-black border-2 border-transparent appearance-none focus:border-accent-900 focus:bg-accent-300 focus:outline-none sm:text-sm"
                 />
               </div>
             </div>
             <div class="flex items-center justify-between">
-              <div class="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember"
-                  type="checkbox"
-                  class="w-4 h-4 text-accent-900 border-2 border-accent-900 rounded-full focus:ring-black"
-                />
-                <label
-                  for="remember-me"
-                  class="ml-2 text-accent-900 lg:text-2xl">Remember me</label
-                >
-              </div>
-              <div>
-                <a
-                  href="/forgot"
-                  class="text-accent-900 lg:text-2xl hover:text-accent-900"
-                >
-                  Forgot your password?
-                </a>
-              </div>
+              <a href="/forms/forgot/" class="text-accent-900 lg:text-lg hover:underline">
+                Forgot your password?
+              </a>
             </div>
-            <Button
-              type="submit"
-              size="xl"
-              variant="default"
-              class="w-full mt-8"
-            >
+            <Button type="submit" size="xl" variant="default" class="w-full" data-submit-btn>
               Sign in
             </Button>
-
-            <div>
-              <p class="text-sm text-accent-900 lg:text-2xl font-medium">
-                Not a member?
-                <a
-                  href="/forms/signup"
-                  class="ml-3 text-accent-900 underline lg:text-2xl hover:text-accent-900"
-                >
-                  Sign up now
-                </a>
-              </p>
-            </div>
+            <p class="text-sm text-accent-900 lg:text-lg font-medium text-center">
+              Not a member?
+              <a href="/forms/signup/" class="ml-2 underline hover:text-accent-700">Sign up</a>
+            </p>
           </div>
         </form>
       </div>
     </Wrapper>
   </section>
 </BaseLayout>
+
+<script>
+  import { createSupabaseBrowserClient } from "@/lib/supabase/ssr";
+
+  const form = document.querySelector("[data-login-form]");
+  const message = document.querySelector("[data-auth-message]");
+  const submitBtn = document.querySelector("[data-submit-btn]");
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const email = data.get("email")?.toString().trim();
+    const password = data.get("password")?.toString() ?? "";
+    const redirect = data.get("redirect")?.toString() || "/novels/";
+
+    if (!email || !password) return;
+
+    submitBtn?.setAttribute("disabled", "true");
+    if (message) {
+      message.textContent = "Signing in…";
+      message.classList.remove("hidden");
+    }
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      window.location.href = redirect;
+    } catch (err) {
+      if (message) {
+        message.textContent = err instanceof Error ? err.message : "Sign in failed.";
+        message.classList.remove("hidden");
+      }
+    } finally {
+      submitBtn?.removeAttribute("disabled");
+    }
+  });
+</script>

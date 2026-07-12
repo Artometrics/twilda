@@ -10,13 +10,10 @@ import Menu from "@/components/fundations/icons/Menu.astro";
 
 const navigationLinks = [
   { title: "Novels", href: "/novels/" },
-  { title: "Overview", href: "/system/overview" },
-  { title: "Pricing", href: "#pricing" },
-  { title: "Changelog", href: "/changelog/" },
-  { title: "Customers", href: "/customers/" },
+  { title: "Pricing", href: "#pricing-section" },
   { title: "Help Center", href: "/helpcenter/" },
-  { title: "Integrations", href: "/integrations/" },
   { title: "Blog", href: "/blog/" },
+  { title: "Changelog", href: "/changelog/" },
 ];
 ---
 
@@ -87,14 +84,24 @@ const navigationLinks = [
             }
           </div>
 
-          <Button
-            isLink="true"
-            size="sm"
-            variant="default"
-            href="https://lexingtonthemes.com/templates/ellamae"
-          >
-            Buy Ellamae
-          </Button>
+          <div class="flex flex-col gap-2 md:flex-row md:gap-3">
+            <Button
+              isLink={true}
+              size="sm"
+              variant="muted"
+              href="/forms/login/"
+            >
+              Log in
+            </Button>
+            <Button
+              isLink={true}
+              size="sm"
+              variant="default"
+              href="/forms/signup/"
+            >
+              Sign up
+            </Button>
+          </div>
         </div>
       </nav>
     </div>

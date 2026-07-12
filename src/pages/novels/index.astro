@@ -1,15 +1,43 @@
 ---
+export const prerender = false;
+
 import NovelcrafterLayout from "@/layouts/NovelcrafterLayout.astro";
 import NovelsTopbar from "@/components/novels/NovelsTopbar.astro";
 import Cover from "@/apps/novelcrafter/Cover.astro";
-import { novels } from "@/apps/novelcrafter/data";
+import {
+  listNovels,
+  ensureStarterNovels,
+  formatUpdated,
+} from "@/lib/novels/service";
 
-const recent = [...novels].sort((a, b) => b.sortKey - a.sortKey).slice(0, 3);
-const blankTemplateId = novels.find((n) => n.blank)?.id ?? novels[0].id;
+const user = Astro.locals.user!;
+const supabase = Astro.locals.supabase!;
+
+await ensureStarterNovels(supabase, user.id);
+const novels = await listNovels(supabase, user.id);
+
+const { data: subscription } = await supabase
+  .from("subscriptions")
+  .select("ai_credits_remaining, ai_credits_monthly")
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+const recent = [...novels]
+  .sort((a, b) => {
+    const aT = new Date(a.last_opened_at ?? a.updated_at).getTime();
+    const bT = new Date(b.last_opened_at ?? b.updated_at).getTime();
+    return bT - aT;
+  })
+  .slice(0, 3);
 ---
 
 <NovelcrafterLayout title="Your Novels · Twilda">
-  <NovelsTopbar active="novels" />
+  <NovelsTopbar
+    active="novels"
+    userEmail={user.email}
+    credits={subscription?.ai_credits_remaining ?? 5}
+    creditsMax={subscription?.ai_credits_monthly ?? 5}
+  />
 
   <main class="nc-library">
     <div class="nc-library__head">
@@ -17,28 +45,32 @@ const blankTemplateId = novels.find((n) => n.blank)?.id ?? novels[0].id;
       <p>This is your personal library of novels. Which one do you want to work on today?</p>
     </div>
 
-    <p class="nc-section-label">CONTINUE WHERE YOU LEFT OFF</p>
-    <div class="nc-continue">
-      {
-        recent.map((n) => (
-          <a class="nc-continue__card" href={`/novels/${n.id}/`}>
-            <span class="nc-continue__thumb">
-              <Cover kind={n.cover} title={n.title} author={n.author} />
-            </span>
-            <span class="nc-continue__meta">
-              <strong>{n.title}</strong>
-              <span>{n.author}</span>
-              <em>{n.updated}</em>
-            </span>
-          </a>
-        ))
-      }
-    </div>
+    {
+      recent.length > 0 && (
+        <>
+          <p class="nc-section-label">CONTINUE WHERE YOU LEFT OFF</p>
+          <div class="nc-continue">
+            {recent.map((n) => (
+              <a class="nc-continue__card" href={`/novels/${n.id}/`}>
+                <span class="nc-continue__thumb">
+                  <Cover kind={n.cover_kind} title={n.title} author={n.author} />
+                </span>
+                <span class="nc-continue__meta">
+                  <strong>{n.title}</strong>
+                  <span>{n.author}</span>
+                  <em>{formatUpdated(n.last_opened_at ?? n.updated_at)}</em>
+                </span>
+              </a>
+            ))}
+          </div>
+        </>
+      )
+    }
 
     <div class="nc-toolbar">
-      <a class="nc-btn nc-btn--primary" href={`/novels/${blankTemplateId}/?mode=write`}>
+      <button class="nc-btn nc-btn--primary" type="button" data-create-novel>
         + Create Novel
-      </a>
+      </button>
       <button class="nc-btn" type="button" data-import-trigger>Import</button>
       <input type="file" accept=".txt,.md,.markdown" data-import-input hidden />
       <div class="nc-toolbar__spacer"></div>
@@ -69,7 +101,7 @@ const blankTemplateId = novels.find((n) => n.blank)?.id ?? novels[0].id;
     </div>
 
     <h2 class="nc-group-title" data-library-count>
-      No Series <span>{novels.length} books</span>
+      Your library <span>{novels.length} book{novels.length === 1 ? "" : "s"}</span>
     </h2>
     <div class="nc-grid" data-library-grid>
       {
@@ -79,15 +111,15 @@ const blankTemplateId = novels.find((n) => n.blank)?.id ?? novels[0].id;
             href={`/novels/${n.id}/`}
             data-book
             data-title={n.title.toLowerCase()}
-            data-sort-key={n.sortKey}
-            data-series={(n.series ?? "no series").toLowerCase()}
+            data-sort-key={new Date(n.last_opened_at ?? n.updated_at).getTime()}
+            data-series={(n.series_name ?? "no series").toLowerCase()}
           >
             <div class="nc-book__cover">
-              <Cover kind={n.cover} title={n.title} author={n.author} />
+              <Cover kind={n.cover_kind} title={n.title} author={n.author} />
             </div>
             <div class="nc-book__meta">
               <p class="nc-book__title">{n.title}</p>
-              <p class="nc-book__date">{n.updated}</p>
+              <p class="nc-book__date">{formatUpdated(n.updated_at)}</p>
               <p class="nc-book__author">{n.author}</p>
             </div>
           </a>
@@ -101,7 +133,7 @@ const blankTemplateId = novels.find((n) => n.blank)?.id ?? novels[0].id;
 
   <div class="nc-toast" data-toast hidden></div>
 
-  <script define:vars={{ blankTemplateId }}>
+  <script>
     const grid = document.querySelector("[data-library-grid]");
     const search = document.querySelector("[data-library-search]");
     const sort = document.querySelector("[data-library-sort]");
@@ -110,6 +142,7 @@ const blankTemplateId = novels.find((n) => n.blank)?.id ?? novels[0].id;
     const countLabel = document.querySelector("[data-library-count] span");
     const importTrigger = document.querySelector("[data-import-trigger]");
     const importInput = document.querySelector("[data-import-input]");
+    const createBtn = document.querySelector("[data-create-novel]");
     const toast = document.querySelector("[data-toast]");
 
     function showToast(message) {
@@ -133,7 +166,6 @@ const blankTemplateId = novels.find((n) => n.blank)?.id ?? novels[0].id;
       const q = (search?.value ?? "").trim().toLowerCase();
       const books = getBooks();
       let visible = 0;
-
       books.forEach((book) => {
         const title = book.dataset.title ?? "";
         const series = book.dataset.series ?? "";
@@ -141,7 +173,6 @@ const blankTemplateId = novels.find((n) => n.blank)?.id ?? novels[0].id;
         book.style.display = match ? "" : "none";
         if (match) visible += 1;
       });
-
       if (emptyState) emptyState.hidden = visible > 0;
       if (countLabel) countLabel.textContent = `${visible} book${visible === 1 ? "" : "s"}`;
     }
@@ -174,17 +205,40 @@ const blankTemplateId = novels.find((n) => n.blank)?.id ?? novels[0].id;
       grid?.classList.toggle("nc-grid--list", target.dataset.view === "list");
     });
 
+    createBtn?.addEventListener("click", async () => {
+      createBtn.setAttribute("disabled", "true");
+      try {
+        const res = await fetch("/api/novels/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: "Untitled Novel" }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Create failed");
+        window.location.href = `/novels/${data.id}/?mode=write`;
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Could not create novel");
+        createBtn.removeAttribute("disabled");
+      }
+    });
+
     importTrigger?.addEventListener("click", () => importInput?.click());
 
     importInput?.addEventListener("change", async () => {
       const file = importInput.files?.[0];
       if (!file) return;
-      const text = await file.text();
-      localStorage.setItem(`nc:import:${blankTemplateId}`, text);
-      showToast(`Imported “${file.name}”. Opening Write mode…`);
-      window.setTimeout(() => {
-        window.location.href = `/novels/${blankTemplateId}/?mode=write`;
-      }, 700);
+      const form = new FormData();
+      form.append("file", file);
+      form.append("title", file.name.replace(/\.[^.]+$/, ""));
+      showToast(`Importing “${file.name}”…`);
+      try {
+        const res = await fetch("/api/novels/import/", { method: "POST", body: form });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Import failed");
+        window.location.href = `/novels/${data.id}/?mode=write`;
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Import failed");
+      }
       importInput.value = "";
     });
 

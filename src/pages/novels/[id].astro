@@ -1,9 +1,9 @@
 ---
+export const prerender = false;
+
 import NovelcrafterLayout from "@/layouts/NovelcrafterLayout.astro";
 import Cover from "@/apps/novelcrafter/Cover.astro";
 import {
-  novels,
-  getNovel,
   codexOrder,
   paragraphs,
   wordCount,
@@ -11,16 +11,33 @@ import {
   type CodexEntry,
 } from "@/apps/novelcrafter/data";
 import { prompts } from "@/apps/novelcrafter/prompts";
+import { getNovelFull, dbNovelToLegacy, listSnippets, listChatThreads } from "@/lib/novels/service";
 
-export function getStaticPaths() {
-  return novels.map((n) => ({ params: { id: n.id } }));
+const user = Astro.locals.user!;
+const supabase = Astro.locals.supabase!;
+const { id } = Astro.params;
+
+const dbNovel = await getNovelFull(supabase, user.id, id!);
+if (!dbNovel) {
+  return Astro.redirect("/novels/");
 }
 
-const { id } = Astro.params;
-const novel = getNovel(id!)!;
+const novel = dbNovelToLegacy(dbNovel);
 const totalWords = novelWordCount(novel);
 const pages = Math.max(1, Math.round(totalWords / 250));
 const readMin = Math.max(1, Math.round(totalWords / 250));
+
+const { data: subscription } = await supabase
+  .from("subscriptions")
+  .select("ai_credits_remaining, ai_credits_monthly")
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+const creditsRemaining = subscription?.ai_credits_remaining ?? 5;
+const creditsMax = subscription?.ai_credits_monthly ?? 5;
+
+const snippets = await listSnippets(supabase, user.id, id!);
+const chatThreads = await listChatThreads(supabase, user.id, id!);
 
 const entriesByType = (t: string): CodexEntry[] =>
   novel.codex.filter((e) => e.type === t);
@@ -132,27 +149,58 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
                 })
               )
             }
-            <div data-user-codex></div>
           </div>
         </div>
 
         <!-- Snippets tab -->
         <div class="nc-side__pane" data-side-pane="snippets" style="display:none;flex:1;">
-          <div class="nc-side__empty" style="padding-top:60px;">
-            <p>No snippets yet.<br/>Save reusable text fragments here.</p>
-          </div>
+          {
+            snippets.length === 0 ? (
+              <div class="nc-side__empty" style="padding-top:60px;">
+                <p>No snippets yet.<br/>Save reusable text fragments here.</p>
+              </div>
+            ) : (
+              <div class="nc-side__scroll">
+                {snippets.map((s) => (
+                  <div class="nc-snippet">
+                    <p class="nc-snippet__title">{s.title}</p>
+                    <p class="nc-snippet__body">{s.content}</p>
+                  </div>
+                ))}
+              </div>
+            )
+          }
+          <form class="nc-snippet-form" data-snippet-form>
+            <input class="nc-input" name="title" placeholder="Snippet title" />
+            <textarea class="nc-textarea" name="content" rows="3" placeholder="Snippet text"></textarea>
+            <button class="nc-btn nc-btn--primary" type="submit">Save snippet</button>
+          </form>
         </div>
 
         <!-- Chats tab -->
         <div class="nc-side__pane" data-side-pane="chats" style="display:none;flex:1;">
-          <div class="nc-side__empty" style="padding-top:60px;">
-            <p>No saved chats yet.</p>
-          </div>
+          {
+            chatThreads.length === 0 ? (
+              <div class="nc-side__empty" style="padding-top:60px;">
+                <p>No saved chats yet.<br/>Start a conversation in Chat mode.</p>
+              </div>
+            ) : (
+              <div class="nc-side__scroll">
+                {chatThreads.map((t) => (
+                  <button class="nc-chat-thread" type="button" data-thread-id={t.id}>
+                    {t.title}
+                  </button>
+                ))}
+              </div>
+            )
+          }
         </div>
 
         <div class="nc-side__foot">
-          <span class="nc-avatar-sm" style="width:24px;height:24px;font-size:11px;">K</span>
-          <span class="nc-credits" style="padding:2px 8px;">3/5</span>
+          <span class="nc-avatar-sm" style="width:24px;height:24px;font-size:11px;">
+            {(user.email?.[0] ?? "U").toUpperCase()}
+          </span>
+          <span class="nc-credits" style="padding:2px 8px;">{creditsRemaining}/{creditsMax}</span>
           <a href="/helpcenter/">Help</a>
           <button class="nc-btn nc-btn--ghost" type="button" data-export>Export</button>
         </div>
@@ -163,15 +211,22 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
         <!-- PLAN -->
         <section class="nc-mode-panel is-active" data-mode="plan">
           <div class="nc-plan">
+            <div class="nc-plan__actions">
+              <button class="nc-btn" type="button" data-add-chapter>+ Add chapter</button>
+            </div>
             {
-              novel.chapters.map((ch) => {
+              novel.chapters.map((ch, ci) => {
                 const cw = ch.scenes.reduce((s, sc) => s + wordCount(sc.text), 0);
+                const chapterId = dbNovel.chapters[ci]?.id;
                 return (
-                  <article class="nc-chapter">
+                  <article class="nc-chapter" data-chapter-id={chapterId}>
                     <div class="nc-chapter__head">
                       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                       <h3>{ch.title}</h3>
                       <span class="nc-chapter__meta">{ch.scenes.length} scene{ch.scenes.length === 1 ? "" : "s"} · {cw.toLocaleString()} words</span>
+                      {chapterId && (
+                        <button class="nc-btn nc-btn--ghost" type="button" data-add-scene={chapterId}>+ Scene</button>
+                      )}
                     </div>
                     {ch.scenes.map((sc) => {
                       const preview = paragraphs(sc.text)[0] ?? "";
@@ -209,11 +264,16 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
                       class="nc-ms-scene"
                       contenteditable="true"
                       spellcheck="false"
-                      data-scene={`${ci}-${si}`}
+                      data-scene-id={sc.id}
+                      data-scene-index={`${ci}-${si}`}
                     >
-                      {paragraphs(sc.text).length > 0
-                        ? paragraphs(sc.text).map((p) => (<p>{p}</p>))
-                        : (<p><br /></p>)}
+                      {sc.content ? (
+                        <div set:html={sc.content} />
+                      ) : paragraphs(sc.text).length > 0 ? (
+                        paragraphs(sc.text).map((p) => (<p>{p}</p>))
+                      ) : (
+                        <p><br /></p>
+                      )}
                     </div>
                   ))}
                 </>
@@ -224,12 +284,17 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
 
         <!-- CHAT -->
         <section class="nc-mode-panel" data-mode="chat">
-          <div class="nc-placeholder">
+          <div class="nc-placeholder nc-chat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <h2>Chat with your story</h2>
-            <p data-chat-intro>Brainstorm, ask questions about your Codex, or co-write scenes with an AI assistant that knows your novel. Connect a model to begin.</p>
+            <p data-chat-intro>Brainstorm with an assistant that knows your novel synopsis and Codex.</p>
             <p class="nc-chat-prompt" data-chat-prompt hidden></p>
-            <a class="nc-btn nc-btn--primary" href="/novels/prompts/">Browse prompts</a>
+            <div class="nc-chat-log" data-chat-log></div>
+            <form class="nc-chat-form" data-chat-form>
+              <input class="nc-input" type="text" placeholder="Ask about your story…" data-chat-input />
+              <button class="nc-btn nc-btn--primary" type="submit">Send</button>
+            </form>
+            <a class="nc-btn" href="/novels/prompts/">Browse prompts</a>
           </div>
         </section>
 
@@ -238,7 +303,9 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
           <div class="nc-placeholder">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
             <h2>Review your manuscript</h2>
-            <p>Run consistency checks, get feedback, and track edits across {novel.chapters.length} chapter{novel.chapters.length === 1 ? "" : "s"} — {totalWords.toLocaleString()} words, ~{pages} pages, {readMin} min read.</p>
+            <p>Run consistency checks across {novel.chapters.length} chapter{novel.chapters.length === 1 ? "" : "s"} — {totalWords.toLocaleString()} words, ~{pages} pages.</p>
+            <button class="nc-btn nc-btn--primary" type="button" data-review-run>Run review</button>
+            <pre class="nc-review-output" data-review-output></pre>
           </div>
         </section>
 
@@ -247,14 +314,27 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
           <div class="nc-plan">
             <article class="nc-chapter">
               <div class="nc-chapter__head"><h3>Metadata</h3></div>
-              <div class="nc-scene">
-                <p class="nc-scene__title">Novel Title</p>
-                <div class="nc-detail__field">{novel.title}</div>
-                <p class="nc-scene__title" style="margin-top:14px;">Author / Pen name</p>
-                <div class="nc-detail__field">{novel.author}</div>
-                <p class="nc-scene__title" style="margin-top:14px;">Synopsis</p>
-                <div class="nc-detail__field">{novel.synopsis}</div>
-              </div>
+              <form class="nc-settings-form" data-settings-form>
+                <div class="nc-scene">
+                  <label class="nc-field">
+                    <span class="nc-scene__title">Novel Title</span>
+                    <input class="nc-input" name="title" value={novel.title} />
+                  </label>
+                  <label class="nc-field">
+                    <span class="nc-scene__title">Author / Pen name</span>
+                    <input class="nc-input" name="author" value={novel.author} />
+                  </label>
+                  <label class="nc-field">
+                    <span class="nc-scene__title">Series</span>
+                    <input class="nc-input" name="series_name" value={novel.series ?? ""} placeholder="Optional series name" />
+                  </label>
+                  <label class="nc-field">
+                    <span class="nc-scene__title">Synopsis</span>
+                    <textarea class="nc-textarea" name="synopsis" rows="5">{novel.synopsis}</textarea>
+                  </label>
+                  <button class="nc-btn nc-btn--primary" type="submit">Save metadata</button>
+                </div>
+              </form>
             </article>
           </div>
         </section>
@@ -515,84 +595,6 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
       });
     });
 
-    // User codex entries (localStorage)
-    const userCodexRoot = document.querySelector("[data-user-codex]");
-    const codexKey = `nc:codex:${novelId}`;
-    const typeLabels = {
-      character: "Characters",
-      location: "Locations",
-      lore: "Lore",
-      other: "Others",
-    };
-
-    function loadUserCodex() {
-      try {
-        return JSON.parse(localStorage.getItem(codexKey) || "[]");
-      } catch {
-        return [];
-      }
-    }
-
-    function saveUserCodex(entries) {
-      localStorage.setItem(codexKey, JSON.stringify(entries));
-    }
-
-    function initials(name) {
-      return name
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase() ?? "")
-        .join("") || "??";
-    }
-
-    function renderUserCodex() {
-      if (!userCodexRoot) return;
-      const entries = loadUserCodex();
-      userCodexRoot.innerHTML = "";
-
-      const grouped = entries.reduce((acc, entry) => {
-        (acc[entry.type] ??= []).push(entry);
-        return acc;
-      }, {});
-
-      Object.entries(grouped).forEach(([type, items]) => {
-        const section = document.createElement("section");
-        section.className = "nc-cx-group";
-        section.dataset.cxGroup = type;
-        section.innerHTML = `
-          <div class="nc-cx-group__head" data-cx-toggle>
-            <h4>${typeLabels[type] || "Others"}</h4>
-            <span class="nc-cx-group__count">${items.length} entries</span>
-            <svg class="nc-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </div>
-          <div class="nc-cx-list"></div>
-        `;
-        const list = section.querySelector(".nc-cx-list");
-        items.forEach((entry) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "nc-cx-item";
-          btn.dataset.userEntry = entry.id;
-          btn.dataset.name = entry.name.toLowerCase();
-          btn.innerHTML = `
-            <span class="nc-cx-av">${entry.initials}</span>
-            <span class="nc-cx-body">
-              <p class="nc-cx-name">${entry.name}</p>
-              <p class="nc-cx-sum">${entry.summary || "Custom entry"}</p>
-            </span>
-          `;
-          btn.addEventListener("click", () => openUserDetail(entry, btn));
-          list.appendChild(btn);
-        });
-        section.querySelector("[data-cx-toggle]")?.addEventListener("click", () =>
-          section.classList.toggle("is-collapsed"),
-        );
-        userCodexRoot.appendChild(section);
-      });
-    }
-
-    // New entry modal
     const entryModal = document.querySelector("[data-entry-modal]");
     const entryBackdrop = document.querySelector("[data-entry-modal-backdrop]");
     const entryForm = document.querySelector("[data-entry-form]");
@@ -618,78 +620,42 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
     );
     entryBackdrop?.addEventListener("click", closeEntryModal);
 
-    entryForm?.addEventListener("submit", (event) => {
+    entryForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
       const data = new FormData(entryForm);
       const name = String(data.get("name") || "").trim();
       if (!name) return;
-      const entry = {
-        id: `user-${Date.now()}`,
-        type: String(data.get("type") || "other"),
-        name,
-        initials: initials(name),
-        summary: String(data.get("summary") || "").trim(),
-        description: String(data.get("description") || "").trim(),
-      };
-      const entries = loadUserCodex();
-      entries.push(entry);
-      saveUserCodex(entries);
-      renderUserCodex();
-      closeEntryModal();
-      showToast(`Saved “${name}” to your Codex.`);
-    });
-
-    renderUserCodex();
-
-    // Export manuscript
-    document.querySelector("[data-export]")?.addEventListener("click", () => {
-      const manuscript = document.querySelector(".nc-manuscript");
-      const lines = [`# ${novelTitle}`, ""];
-      manuscript
-        ?.querySelectorAll(".nc-ms-chapter-title, .nc-ms-scene")
-        .forEach((node) => {
-          if (node.classList.contains("nc-ms-chapter-title")) {
-            lines.push(`## ${node.textContent?.trim() || "Chapter"}`, "");
-            return;
-          }
-          const text = (node.innerText || "").trim();
-          if (text) lines.push(text, "");
+      try {
+        const res = await fetch(`/api/novels/${novelId}/codex/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: String(data.get("type") || "other"),
+            name,
+            summary: String(data.get("summary") || "").trim(),
+            description: String(data.get("description") || "").trim(),
+          }),
         });
-      const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${novelTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.txt`;
-      link.click();
-      URL.revokeObjectURL(url);
-      showToast("Manuscript exported.");
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || "Save failed");
+        closeEntryModal();
+        showToast(`Saved “${name}” to your Codex.`);
+        window.setTimeout(() => window.location.reload(), 600);
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Could not save entry");
+      }
     });
 
-    // Manuscript editor persistence + live word count + import
+    document.querySelector("[data-export]")?.addEventListener("click", () => {
+      window.location.href = `/api/novels/${novelId}/export/`;
+      showToast("Downloading manuscript…");
+    });
+
     const ms = document.querySelector(".nc-manuscript");
     const wordsLabel = document.querySelector(".nc-ws__toolright span");
     if (ms) {
       const scenes = ms.querySelectorAll(".nc-ms-scene");
-      const key = (sceneId) => `nc:${novelId}:${sceneId}`;
-      const importKey = `nc:import:${novelId}`;
-      const imported = localStorage.getItem(importKey);
-
-      scenes.forEach((sc, index) => {
-        const saved = localStorage.getItem(key(sc.dataset.scene));
-        if (saved !== null) {
-          sc.innerHTML = saved;
-        } else if (imported && index === 0) {
-          const paragraphs = imported.split(/\n{2,}/).filter(Boolean);
-          sc.innerHTML = paragraphs.map((p) => `<p>${p}</p>`).join("") || `<p>${imported}</p>`;
-          localStorage.setItem(key(sc.dataset.scene), sc.innerHTML);
-          localStorage.removeItem(importKey);
-          showToast("Imported text loaded into Write mode.");
-        }
-        sc.addEventListener("input", () => {
-          localStorage.setItem(key(sc.dataset.scene), sc.innerHTML);
-          updateCount();
-        });
-      });
+      const saveTimers = new Map();
 
       function updateCount() {
         let n = 0;
@@ -699,12 +665,149 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
         });
         if (wordsLabel) wordsLabel.textContent = `${n.toLocaleString()} words`;
       }
-      updateCount();
 
-      if (initialMode === "write") {
-        const firstScene = scenes[0];
-        firstScene?.focus();
-      }
+      scenes.forEach((sc) => {
+        sc.addEventListener("input", () => {
+          updateCount();
+          const sceneId = sc.dataset.sceneId;
+          if (!sceneId) return;
+          if (saveTimers.has(sceneId)) window.clearTimeout(saveTimers.get(sceneId));
+          saveTimers.set(
+            sceneId,
+            window.setTimeout(async () => {
+              try {
+                await fetch(`/api/novels/${novelId}/scenes/${sceneId}/`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ content: sc.innerHTML }),
+                });
+              } catch {
+                showToast("Autosave failed — check your connection.");
+              }
+            }, 800),
+          );
+        });
+      });
+
+      updateCount();
+      if (initialMode === "write") scenes[0]?.focus();
     }
+
+    // Chat send
+    const chatForm = document.querySelector("[data-chat-form]");
+    chatForm?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const input = chatForm.querySelector("[data-chat-input]");
+      const message = input?.value?.trim();
+      if (!message) return;
+      const log = document.querySelector("[data-chat-log]");
+      if (log) {
+        const userLine = document.createElement("p");
+        userLine.className = "nc-chat-line nc-chat-line--user";
+        userLine.textContent = message;
+        log.appendChild(userLine);
+      }
+      input.value = "";
+      try {
+        const res = await fetch(`/api/novels/${novelId}/chat/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, promptId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Chat failed");
+        if (log) {
+          const aiLine = document.createElement("p");
+          aiLine.className = "nc-chat-line nc-chat-line--assistant";
+          aiLine.textContent = data.reply;
+          log.appendChild(aiLine);
+        }
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Chat failed");
+      }
+    });
+
+    document.querySelector("[data-review-run]")?.addEventListener("click", async () => {
+      const out = document.querySelector("[data-review-output]");
+      if (out) out.textContent = "Running review…";
+      try {
+        const res = await fetch(`/api/novels/${novelId}/review/`, { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Review failed");
+        if (out) out.textContent = data.feedback;
+      } catch (err) {
+        if (out) out.textContent = err instanceof Error ? err.message : "Review failed";
+      }
+    });
+
+    document.querySelector("[data-add-chapter]")?.addEventListener("click", async () => {
+      try {
+        const res = await fetch(`/api/novels/${novelId}/chapters/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+        if (!res.ok) throw new Error("Could not add chapter");
+        window.location.reload();
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Add chapter failed");
+      }
+    });
+
+    document.querySelectorAll("[data-add-scene]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const chapterId = btn.getAttribute("data-add-scene");
+        try {
+          const res = await fetch(`/api/novels/${novelId}/chapters/${chapterId}/scenes/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
+          });
+          if (!res.ok) throw new Error("Could not add scene");
+          window.location.reload();
+        } catch (err) {
+          showToast(err instanceof Error ? err.message : "Add scene failed");
+        }
+      });
+    });
+
+    document.querySelector("[data-settings-form]")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.target;
+      const data = new FormData(form);
+      try {
+        const res = await fetch(`/api/novels/${novelId}/`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: String(data.get("title") || "").trim(),
+            author: String(data.get("author") || "").trim(),
+            synopsis: String(data.get("synopsis") || "").trim(),
+            series_name: String(data.get("series_name") || "").trim() || null,
+          }),
+        });
+        if (!res.ok) throw new Error("Save failed");
+        showToast("Metadata saved.");
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Save failed");
+      }
+    });
+
+    document.querySelector("[data-snippet-form]")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.target;
+      const data = new FormData(form);
+      const title = String(data.get("title") || "").trim();
+      const content = String(data.get("content") || "").trim();
+      if (!content) return;
+      try {
+        const res = await fetch(`/api/novels/${novelId}/snippets/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: title || "Untitled snippet", content }),
+        });
+        if (!res.ok) throw new Error("Save failed");
+        showToast("Snippet saved.");
+        window.setTimeout(() => window.location.reload(), 500);
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Snippet failed");
+      }
+    });
   </script>
 </NovelcrafterLayout>

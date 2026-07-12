@@ -1,8 +1,18 @@
 ---
 interface Props {
   active?: "novels" | "series" | "prompts";
+  userEmail?: string | null;
+  credits?: number;
+  creditsMax?: number;
 }
-const { active = "novels" } = Astro.props;
+const {
+  active = "novels",
+  userEmail = null,
+  credits = 5,
+  creditsMax = 5,
+} = Astro.props;
+
+const initial = userEmail?.[0]?.toUpperCase() ?? "?";
 ---
 
 <header class="nc-topbar">
@@ -21,7 +31,28 @@ const { active = "novels" } = Astro.props;
   <div class="nc-topbar__spacer"></div>
   <div class="nc-topbar__right">
     <a href="/helpcenter/">Help</a>
-    <span class="nc-credits">3/5</span>
-    <span class="nc-avatar-sm">K</span>
+    <span class="nc-credits">{credits}/{creditsMax}</span>
+    {
+      userEmail ? (
+        <>
+          <a href="/account/" class="nc-topbar__account">{userEmail}</a>
+          <span class="nc-avatar-sm">{initial}</span>
+        </>
+      ) : (
+        <>
+          <a href="/forms/login/?redirect=/novels/">Log in</a>
+          <a href="/forms/signup/">Sign up</a>
+        </>
+      )
+    }
   </div>
 </header>
+
+<style>
+  .nc-topbar__account {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+</style>

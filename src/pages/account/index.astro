@@ -1,0 +1,99 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+
+export const prerender = false;
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/forms/login/?redirect=/account/");
+}
+
+const supabase = Astro.locals.supabase!;
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("display_name, pen_name")
+  .eq("id", user.id)
+  .maybeSingle();
+
+const { data: subscription } = await supabase
+  .from("subscriptions")
+  .select("plan, ai_credits_remaining, ai_credits_monthly, status")
+  .eq("user_id", user.id)
+  .maybeSingle();
+---
+
+<BaseLayout>
+  <Wrapper variant="standard" class="py-24">
+    <Text tag="h1" variant="displayMD" class="font-semibold text-accent-900">
+      Account
+    </Text>
+    <div class="mt-8 max-w-lg space-y-6">
+      <div class="p-6 border-2 border-accent-900 rounded-2xl bg-white">
+        <p class="text-sm font-semibold uppercase tracking-wide text-base-600">Email</p>
+        <p class="mt-1 text-lg text-accent-900">{user.email}</p>
+        {profile?.display_name && (
+          <>
+            <p class="mt-4 text-sm font-semibold uppercase tracking-wide text-base-600">Display name</p>
+            <p class="mt-1 text-lg text-accent-900">{profile.display_name}</p>
+          </>
+        )}
+      </div>
+
+      <div class="p-6 border-2 border-accent-900 rounded-2xl bg-accent-100">
+        <p class="text-sm font-semibold uppercase tracking-wide text-base-600">Plan</p>
+        <p class="mt-1 text-lg font-semibold text-accent-900 capitalize">
+          {subscription?.plan ?? "free"}
+        </p>
+        <p class="mt-2 text-base text-accent-800">
+          AI credits: {subscription?.ai_credits_remaining ?? 5} / {subscription?.ai_credits_monthly ?? 5}
+        </p>
+        <Button isLink={true} href="/account/billing/" size="sm" variant="accent" class="mt-4">
+          Manage billing
+        </Button>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <Button isLink={true} href="/novels/" size="md" variant="default">
+          Open library
+        </Button>
+        <Button size="md" variant="muted" data-export-data>
+          Export my data
+        </Button>
+        <Button size="md" variant="muted" data-delete-account>
+          Delete account
+        </Button>
+        <Button size="md" variant="muted" data-sign-out>
+          Sign out
+        </Button>
+      </div>
+    </div>
+  </Wrapper>
+</BaseLayout>
+
+<script>
+  import { createSupabaseBrowserClient } from "@/lib/supabase/ssr";
+
+  document.querySelector("[data-sign-out]")?.addEventListener("click", async () => {
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  });
+
+  document.querySelector("[data-export-data]")?.addEventListener("click", async () => {
+    window.location.href = "/api/account/export/";
+  });
+
+  document.querySelector("[data-delete-account]")?.addEventListener("click", async () => {
+    if (!confirm("Delete your account and all novels? This cannot be undone.")) return;
+    const res = await fetch("/api/account/", { method: "DELETE" });
+    if (res.ok) {
+      window.location.href = "/";
+      return;
+    }
+    const data = await res.json();
+    alert(data.error || "Could not delete account");
+  });
+</script>

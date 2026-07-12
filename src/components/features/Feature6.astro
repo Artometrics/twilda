@@ -5,58 +5,58 @@ import Button from "@/components/fundations/elements/Button.astro";
 import Wrapper from "@/components/fundations/containers/Wrapper.astro";
 const platformFeatures = [
   {
-    title: "Intake forms",
+    title: "Cloud library",
     description:
-      "Collect required details with conditional logic and file uploads so requests start complete.",
+      "Every novel syncs to your account so you can write on any device and return later.",
   },
   {
-    title: "Automations",
-    description: "Route by team, priority, or category without manual triage.",
+    title: "Autosave",
+    description: "Scene edits save automatically while you write—no manual save button.",
   },
   {
-    title: "Approvals",
+    title: "Import & export",
     description:
-      "Multi-step approvals with roles, fallbacks, and clear owners.",
+      "Bring in plain-text drafts and export finished manuscripts as .txt or .md.",
   },
   {
-    title: "SLA tracking",
+    title: "Writing prompts",
     description:
-      "Response timers, risk alerts, and escalations before deadlines slip.",
+      "Browse curated prompts and send them straight into Chat for your current novel.",
   },
   {
-    title: "Playbooks",
-    description: "Reusable checklists and snippets for consistent answers.",
-  },
-  {
-    title: "Notifications",
+    title: "AI credits",
     description:
-      "Smart updates via email and chat so stakeholders always know status.",
+      "Monthly Chat and Review credits scale with your plan—upgrade when you need more.",
   },
   {
-    title: "Permissions",
-    description: "Role-based access, requester controls, and private queues.",
+    title: "Series view",
+    description: "Group novels into series and manage multiple projects in one place.",
   },
   {
-    title: "Audit trail",
-    description: "Every change, comment, and decision logged with timestamps.",
+    title: "Secure auth",
+    description: "Email sign-in with optional OAuth and row-level security on all data.",
   },
   {
-    title: "Dashboards",
-    description: "Track volume, cycle time, and bottlenecks at a glance.",
+    title: "Billing portal",
+    description: "Upgrade, manage, or cancel your subscription from your account.",
   },
   {
-    title: "Live support",
+    title: "Help center",
+    description: "Guides for getting started, Codex, exports, billing, and AI features.",
+  },
+  {
+    title: "Dark workspace",
+    description: "A calm, low-glare editor designed for long writing sessions.",
+  },
+  {
+    title: "Starter novel",
     description:
-      "Ops specialists to help design flows and troubleshoot edge cases.",
+      "New accounts get a sample manuscript so you can explore Plan, Write, and Codex.",
   },
   {
-    title: "Mobile app",
-    description: "Review, approve, and update requests from your phone.",
-  },
-  {
-    title: "Integrations",
+    title: "Netlify hosting",
     description:
-      "Connect chat, ticketing, HRIS, and finance tools without code.",
+      "Fast global delivery with SSR where it matters—auth, library, and autosave APIs.",
   },
 ];
 ---
@@ -74,27 +74,25 @@ const platformFeatures = [
               variant="displayLG"
               class="font-semibold tracking-tight text-accent-900 text-balance"
             >
-              Build and run your ops workspace
+              Build and run your writing workspace
             </Text>
             <Text
               tag="p"
               variant="textLG"
               class="max-w-md mt-4 text-lg text-accent-900 xl:text-xl"
             >
-              Operate with controls real teams use. Manage roles, approvals,
-              SLAs, and dashboards without extra tabs or guesswork.
+              Plan, draft, and revise in one place. Keep characters and lore in your Codex, autosave every scene, and use AI when you need a nudge.
               <br />
               <br />
-              From day-one setup to daily ops, Ellamae keeps every request calm,
-              auditable, and fast.
+              From first signup to final export, Twilda keeps your novel calm, organized, and always in sync.
             </Text>
 
             <Button
               isLink={true}
-              href="/"
+              href="/forms/signup/"
               size="xl"
               variant="default"
-              class="mt-8 w-fit">Get started</Button
+              class="mt-8 w-fit">Start writing free</Button
             >
           </div>
         </div>

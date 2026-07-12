@@ -14,6 +14,10 @@ export const GET: APIRoute = async () => {
       reachable: supabase.reachable,
       ...(supabase.error ? { error: supabase.error } : {}),
     },
+    billing: {
+      stripe: Boolean(import.meta.env.STRIPE_SECRET_KEY),
+      webhook: Boolean(import.meta.env.STRIPE_WEBHOOK_SECRET),
+    },
   };
 
   return new Response(JSON.stringify(body, null, 2), {
