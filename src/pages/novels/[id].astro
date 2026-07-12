@@ -11,13 +11,15 @@ import {
   type CodexEntry,
 } from "@/apps/novelcrafter/data";
 import { prompts } from "@/apps/novelcrafter/prompts";
-import { getNovelFull, dbNovelToLegacy, listSnippets, listChatThreads } from "@/lib/novels/service";
+import { getNovelFull, dbNovelToLegacy, listSnippets, listChatThreads, seedTrinityIfEmpty } from "@/lib/novels/service";
 import { requireAuth } from "@/lib/auth/guards";
 
 const auth = requireAuth(Astro);
 if (auth instanceof Response) return auth;
 const { user, supabase } = auth;
 const { id } = Astro.params;
+
+await seedTrinityIfEmpty(supabase, user.id, id!);
 
 const dbNovel = await getNovelFull(supabase, user.id, id!);
 if (!dbNovel) {
