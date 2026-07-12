@@ -50,8 +50,8 @@ async function callAi(system: string, userMessage: string): Promise<string> {
   return json.choices?.[0]?.message?.content ?? "No response generated.";
 }
 
-export const POST: APIRoute = async ({ cookies, params, request }) => {
-  const supabase = createSupabaseServerClient(cookies);
+export const POST: APIRoute = async ({ cookies, request, params }) => {
+  const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();

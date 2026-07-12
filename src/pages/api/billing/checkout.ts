@@ -10,7 +10,7 @@ export const POST: APIRoute = async ({ cookies, request, url }) => {
     return new Response(JSON.stringify({ error: "Billing not configured" }), { status: 503 });
   }
 
-  const supabase = createSupabaseServerClient(cookies);
+  const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();

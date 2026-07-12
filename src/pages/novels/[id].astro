@@ -12,9 +12,11 @@ import {
 } from "@/apps/novelcrafter/data";
 import { prompts } from "@/apps/novelcrafter/prompts";
 import { getNovelFull, dbNovelToLegacy, listSnippets, listChatThreads } from "@/lib/novels/service";
+import { requireAuth } from "@/lib/auth/guards";
 
-const user = Astro.locals.user!;
-const supabase = Astro.locals.supabase!;
+const auth = requireAuth(Astro);
+if (auth instanceof Response) return auth;
+const { user, supabase } = auth;
 const { id } = Astro.params;
 
 const dbNovel = await getNovelFull(supabase, user.id, id!);

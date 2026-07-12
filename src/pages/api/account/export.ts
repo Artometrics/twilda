@@ -4,8 +4,8 @@ import { exportNovelText, listNovels } from "@/lib/novels/service";
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ cookies }) => {
-  const supabase = createSupabaseServerClient(cookies);
+export const GET: APIRoute = async ({ cookies, request }) => {
+  const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();

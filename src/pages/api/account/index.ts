@@ -4,8 +4,8 @@ import { createServerClient } from "@/lib/supabase/server";
 
 export const prerender = false;
 
-export const DELETE: APIRoute = async ({ cookies }) => {
-  const supabase = createSupabaseServerClient(cookies);
+export const DELETE: APIRoute = async ({ cookies, request }) => {
+  const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();

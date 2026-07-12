@@ -5,7 +5,7 @@ import { importNovelFromText } from "@/lib/novels/service";
 export const prerender = false;
 
 export const POST: APIRoute = async ({ cookies, request }) => {
-  const supabase = createSupabaseServerClient(cookies);
+  const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();

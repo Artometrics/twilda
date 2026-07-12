@@ -21,8 +21,8 @@ async function decrementCredit(userId: string): Promise<boolean> {
   return true;
 }
 
-export const POST: APIRoute = async ({ cookies, params }) => {
-  const supabase = createSupabaseServerClient(cookies);
+export const POST: APIRoute = async ({ cookies, request, params }) => {
+  const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();

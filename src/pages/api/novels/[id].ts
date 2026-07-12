@@ -4,8 +4,8 @@ import { exportNovelText, getNovelFull, updateNovelMetadata } from "@/lib/novels
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ cookies, params }) => {
-  const supabase = createSupabaseServerClient(cookies);
+export const GET: APIRoute = async ({ cookies, request, params }) => {
+  const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -19,8 +19,8 @@ export const GET: APIRoute = async ({ cookies, params }) => {
   });
 };
 
-export const PATCH: APIRoute = async ({ cookies, params, request }) => {
-  const supabase = createSupabaseServerClient(cookies);
+export const PATCH: APIRoute = async ({ cookies, request, params }) => {
+  const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -33,8 +33,8 @@ export const PATCH: APIRoute = async ({ cookies, params, request }) => {
   });
 };
 
-export const DELETE: APIRoute = async ({ cookies, params }) => {
-  const supabase = createSupabaseServerClient(cookies);
+export const DELETE: APIRoute = async ({ cookies, request, params }) => {
+  const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();

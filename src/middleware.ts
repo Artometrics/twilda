@@ -1,9 +1,5 @@
 import { defineMiddleware } from "astro:middleware";
-import {
-  createSupabaseServerClient,
-  cookiesSupported,
-  isSupabaseConfigured,
-} from "@/lib/supabase/ssr";
+import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/ssr";
 
 const PROTECTED_PREFIXES = ["/novels", "/account"];
 
@@ -11,11 +7,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.user = null;
   context.locals.supabase = null;
 
-  if (!isSupabaseConfigured() || !cookiesSupported(context.cookies)) {
+  if (!isSupabaseConfigured()) {
     return next();
   }
 
-  const supabase = createSupabaseServerClient(context.cookies);
+  const supabase = createSupabaseServerClient(context.cookies, context.request);
   const {
     data: { user },
   } = await supabase.auth.getUser();

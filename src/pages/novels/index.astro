@@ -9,12 +9,21 @@ import {
   ensureStarterNovels,
   formatUpdated,
 } from "@/lib/novels/service";
+import { requireAuth, dbErrorMessage, isDbSetupError } from "@/lib/auth/guards";
 
-const user = Astro.locals.user!;
-const supabase = Astro.locals.supabase!;
+const auth = requireAuth(Astro);
+if (auth instanceof Response) return auth;
+const { user, supabase } = auth;
 
-await ensureStarterNovels(supabase, user.id);
-const novels = await listNovels(supabase, user.id);
+let novels: Awaited<ReturnType<typeof listNovels>> = [];
+let dbError: string | null = null;
+
+try {
+  await ensureStarterNovels(supabase, user.id);
+  novels = await listNovels(supabase, user.id);
+} catch (error) {
+  dbError = dbErrorMessage(error);
+}
 
 const { data: subscription } = await supabase
   .from("subscriptions")
@@ -40,6 +49,17 @@ const recent = [...novels]
   />
 
   <main class="nc-library">
+    {
+      dbError && (
+        <div class="nc-library__alert" role="alert">
+          <p>
+            {isDbSetupError(dbError)
+              ? "Your library database is not set up yet. Apply supabase/migrations/001_initial_schema.sql to your Supabase project, then refresh."
+              : `Could not load your library: ${dbError}`}
+          </p>
+        </div>
+      )
+    }
     <div class="nc-library__head">
       <h1>Your Novels</h1>
       <p>This is your personal library of novels. Which one do you want to work on today?</p>

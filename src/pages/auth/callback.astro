@@ -7,7 +7,7 @@ const code = Astro.url.searchParams.get("code");
 const next = Astro.url.searchParams.get("next") ?? "/novels/";
 
 if (code) {
-  const supabase = createSupabaseServerClient(Astro.cookies);
+  const supabase = createSupabaseServerClient(Astro.cookies, Astro.request);
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return Astro.redirect(`/forms/login/?error=${encodeURIComponent(error.message)}`);

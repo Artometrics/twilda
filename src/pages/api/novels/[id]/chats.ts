@@ -4,8 +4,8 @@ import { listChatThreads } from "@/lib/novels/service";
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ cookies, params }) => {
-  const supabase = createSupabaseServerClient(cookies);
+export const GET: APIRoute = async ({ cookies, request, params }) => {
+  const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();

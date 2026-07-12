@@ -4,8 +4,8 @@ import { updateSceneContent } from "@/lib/novels/service";
 
 export const prerender = false;
 
-export const PATCH: APIRoute = async ({ cookies, params, request }) => {
-  const supabase = createSupabaseServerClient(cookies);
+export const PATCH: APIRoute = async ({ cookies, request, params }) => {
+  const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();

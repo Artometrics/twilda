@@ -2,9 +2,9 @@ import type { User } from "@supabase/supabase-js";
 import type { AstroCookies } from "astro";
 import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/ssr";
 
-export async function getSessionUser(cookies: AstroCookies): Promise<User | null> {
+export async function getSessionUser(cookies: AstroCookies, request?: Request): Promise<User | null> {
   if (!isSupabaseConfigured()) return null;
-  const supabase = createSupabaseServerClient(cookies);
+  const supabase = createSupabaseServerClient(cookies, request);
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) return null;
   return data.user;
