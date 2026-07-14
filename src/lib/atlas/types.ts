@@ -43,6 +43,10 @@ export interface AtlasEntity {
   peerSet?: string;
   valueNote?: string;
   provenance?: AtlasProvenance[];
+  /** Optional portrait for map callouts (people) */
+  portraitUrl?: string;
+  /** Short label on callout (defaults to name) */
+  calloutLabel?: string;
   aliases?: string[];
 }
 
@@ -54,6 +58,22 @@ export interface AtlasLink {
   year?: number;
   yearEnd?: number;
   note?: string;
+}
+
+/** A curated map snapshot — “who was near” in one place and year. */
+export interface AtlasScene {
+  id: string;
+  title: string;
+  subtitle: string;
+  year: number;
+  center: AtlasCoords;
+  zoom: number;
+  /** Badge text e.g. "Vienna 1913" */
+  badge: string;
+  /** Person (and optional place) ids shown as callouts */
+  calloutIds: string[];
+  /** Default focused entity when opening the scene */
+  focusId: string;
 }
 
 export const RELATION_LABELS: Record<AtlasRelation, string> = {
