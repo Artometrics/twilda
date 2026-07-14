@@ -11,22 +11,38 @@ import {
   type CodexEntry,
 } from "@/apps/novelcrafter/data";
 import { prompts } from "@/apps/novelcrafter/prompts";
-import { getNovelFull, dbNovelToLegacy, listSnippets, listChatThreads, seedTrinityIfEmpty } from "@/lib/novels/service";
+import {
+  getNovelFull,
+  dbNovelToLegacy,
+  listSnippets,
+  listChatThreads,
+  ensureTrinityDrafts,
+} from "@/lib/novels/service";
+import { listDraftReferences, ensureDefaultDraft } from "@/lib/novels/drafts";
 import { requireAuth } from "@/lib/auth/guards";
 
 const auth = requireAuth(Astro);
 if (auth instanceof Response) return auth;
 const { user, supabase } = auth;
 const { id } = Astro.params;
+const draftParam = Astro.url.searchParams.get("draft");
 
-await seedTrinityIfEmpty(supabase, user.id, id!);
+await ensureTrinityDrafts(supabase, user.id, id!);
+await ensureDefaultDraft(supabase, user.id, id!);
 
-const dbNovel = await getNovelFull(supabase, user.id, id!);
+const dbNovel = await getNovelFull(supabase, user.id, id!, draftParam);
 if (!dbNovel) {
   return Astro.redirect("/novels/");
 }
 
 const novel = dbNovelToLegacy(dbNovel);
+const drafts = dbNovel.drafts;
+const activeDraft = dbNovel.active_draft;
+const draftRefs = activeDraft
+  ? await listDraftReferences(supabase, user.id, id!, activeDraft.id)
+  : [];
+const otherDrafts = drafts.filter((d) => d.id !== activeDraft?.id);
+
 const totalWords = novelWordCount(novel);
 const pages = Math.max(1, Math.round(totalWords / 250));
 const readMin = Math.max(1, Math.round(totalWords / 250));
@@ -75,6 +91,22 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
             <span>{novel.author}</span>
           </span>
         </a>
+        <div class="nc-drafts" data-drafts>
+          <label class="nc-drafts__label" for="draft-select">Draft / timeline</label>
+          <div class="nc-drafts__row">
+            <select class="nc-input nc-drafts__select" id="draft-select" data-draft-select>
+              {
+                drafts.map((d) => (
+                  <option value={d.id} selected={d.id === activeDraft?.id}>
+                    {d.name}
+                  </option>
+                ))
+              }
+            </select>
+            <button class="nc-btn" type="button" data-new-draft title="New draft or timeline">+ Draft</button>
+          </div>
+          {activeDraft?.summary && <p class="nc-drafts__sum">{activeDraft.summary}</p>}
+        </div>
       </div>
 
       <div class="nc-modes" role="tablist">
@@ -107,6 +139,7 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
         <div class="nc-side__tabs">
           <button class="is-active" data-side-tab="codex" type="button">Codex</button>
           <button data-side-tab="snippets" type="button">Snippets</button>
+          <button data-side-tab="refs" type="button">Refs</button>
           <button data-side-tab="chats" type="button">Chats</button>
         </div>
 
@@ -179,6 +212,57 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
             <textarea class="nc-textarea" name="content" rows="3" placeholder="Snippet text"></textarea>
             <button class="nc-btn nc-btn--primary" type="submit">Save snippet</button>
           </form>
+        </div>
+
+        <!-- Refs tab — cross-draft timelines -->
+        <div class="nc-side__pane" data-side-pane="refs" style="display:none;flex:1;flex-direction:column;min-height:0;">
+          <div class="nc-side__scroll">
+            <p class="nc-refs__intro">Pin another draft or timeline so you can consult it while writing in this one.</p>
+            {
+              draftRefs.length === 0 ? (
+                <div class="nc-side__empty" style="padding-top:24px;">
+                  <p>No references yet.<br/>Browse another timeline below and pin it.</p>
+                </div>
+              ) : (
+                draftRefs.map((r) => (
+                  <div class="nc-ref-item" data-ref-id={r.id}>
+                    <p class="nc-ref-item__type">{r.source_type} · {r.source_draft_name}</p>
+                    <p class="nc-ref-item__name">{r.source_label}</p>
+                    {r.source_summary && <p class="nc-ref-item__sum">{r.source_summary}</p>}
+                    {r.note && <p class="nc-ref-item__note">{r.note}</p>}
+                    <button class="nc-btn nc-btn--ghost" type="button" data-unref={r.id}>Remove</button>
+                  </div>
+                ))
+              )
+            }
+            {
+              otherDrafts.length > 0 && (
+                <div class="nc-refs__browse">
+                  <p class="nc-refs__browse-title">Reference another timeline</p>
+                  {otherDrafts.map((d) => (
+                    <div class="nc-refs__source">
+                      <div class="nc-refs__source-head">
+                        <strong>{d.name}</strong>
+                        <button
+                          class="nc-btn"
+                          type="button"
+                          data-ref-draft={d.id}
+                          data-ref-name={d.name}
+                        >
+                          Pin timeline
+                        </button>
+                      </div>
+                      {d.summary && <p class="nc-refs__source-sum">{d.summary}</p>}
+                      <button class="nc-btn nc-btn--ghost" type="button" data-browse-draft={d.id}>
+                        Browse entries…
+                      </button>
+                      <div class="nc-refs__library" data-browse-panel={d.id} hidden></div>
+                    </div>
+                  ))}
+                </div>
+              )
+            }
+          </div>
         </div>
 
         <!-- Chats tab -->
@@ -459,7 +543,7 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
 
   <div class="nc-toast" data-toast hidden></div>
 
-  <script define:vars={{ novelId: novel.id, novelTitle: novel.title, promptMap }}>
+  <script define:vars={{ novelId: novel.id, novelTitle: novel.title, promptMap, activeDraftId: activeDraft?.id ?? null }}>
     const toast = document.querySelector("[data-toast]");
     function showToast(message) {
       if (!toast) return;
@@ -473,6 +557,138 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
         }, 300);
       }, 2400);
     }
+
+    // Draft / timeline switcher
+    document.querySelector("[data-draft-select]")?.addEventListener("change", async (event) => {
+      const draftId = event.target.value;
+      try {
+        const res = await fetch(`/api/novels/${novelId}/drafts/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "activate", draft_id: draftId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Could not switch draft");
+        const url = new URL(window.location.href);
+        url.searchParams.set("draft", draftId);
+        window.location.href = url.toString();
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Draft switch failed");
+      }
+    });
+
+    document.querySelector("[data-new-draft]")?.addEventListener("click", async () => {
+      const name = window.prompt("Name this draft or timeline", "New timeline");
+      if (!name) return;
+      try {
+        const res = await fetch(`/api/novels/${novelId}/drafts/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, setActive: true }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Could not create draft");
+        const url = new URL(window.location.href);
+        url.searchParams.set("draft", data.id);
+        window.location.href = url.toString();
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Create draft failed");
+      }
+    });
+
+    async function pinReference(payload) {
+      if (!activeDraftId) {
+        showToast("No active draft");
+        return;
+      }
+      try {
+        const res = await fetch(`/api/novels/${novelId}/references/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ draft_id: activeDraftId, ...payload }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Could not pin reference");
+        showToast("Referenced in this draft");
+        window.setTimeout(() => window.location.reload(), 400);
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Reference failed");
+      }
+    }
+
+    document.querySelectorAll("[data-ref-draft]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        pinReference({
+          source_draft_id: btn.getAttribute("data-ref-draft"),
+          source_type: "draft",
+          note: `Consulting ${btn.getAttribute("data-ref-name") || "timeline"}`,
+        });
+      });
+    });
+
+    document.querySelectorAll("[data-unref]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-unref");
+        try {
+          const res = await fetch(`/api/novels/${novelId}/references/?id=${encodeURIComponent(id)}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) throw new Error("Could not remove reference");
+          window.location.reload();
+        } catch (err) {
+          showToast(err instanceof Error ? err.message : "Remove failed");
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-browse-draft]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const sourceId = btn.getAttribute("data-browse-draft");
+        const panel = document.querySelector(`[data-browse-panel="${sourceId}"]`);
+        if (!panel) return;
+        if (!panel.hasAttribute("hidden") && panel.innerHTML.trim()) {
+          panel.setAttribute("hidden", "");
+          return;
+        }
+        panel.textContent = "Loading…";
+        panel.removeAttribute("hidden");
+        try {
+          const res = await fetch(
+            `/api/novels/${novelId}/references/?browse=${encodeURIComponent(sourceId)}`,
+          );
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Browse failed");
+          panel.innerHTML = "";
+          const addBtn = (label, payload) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "nc-btn nc-btn--ghost nc-refs__pin";
+            b.textContent = label;
+            b.addEventListener("click", () => pinReference(payload));
+            panel.appendChild(b);
+          };
+          (data.codex || []).forEach((e) => {
+            addBtn(`Pin codex: ${e.name}`, {
+              source_draft_id: sourceId,
+              source_type: "codex",
+              source_id: e.id,
+            });
+          });
+          (data.snippets || []).forEach((s) => {
+            addBtn(`Pin snippet: ${s.title || "Untitled"}`, {
+              source_draft_id: sourceId,
+              source_type: "snippet",
+              source_id: s.id,
+            });
+          });
+          if (!panel.childNodes.length) {
+            panel.textContent = "No entries in this timeline yet.";
+          }
+        } catch (err) {
+          panel.textContent = err instanceof Error ? err.message : "Browse failed";
+        }
+      });
+    });
 
     // Mode tabs (Plan / Write / Chat / Review / Settings)
     const modeBtns = document.querySelectorAll("[data-mode-btn]");

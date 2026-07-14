@@ -77,6 +77,7 @@ export interface Database {
           cover_kind: "gatsby" | "cardinal" | "trinity";
           series_name: string | null;
           is_template: boolean;
+          active_draft_id: string | null;
           last_opened_at: string | null;
           created_at: string;
           updated_at: string;
@@ -90,6 +91,7 @@ export interface Database {
           cover_kind?: "gatsby" | "cardinal" | "trinity";
           series_name?: string | null;
           is_template?: boolean;
+          active_draft_id?: string | null;
           last_opened_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -103,15 +105,81 @@ export interface Database {
           cover_kind?: "gatsby" | "cardinal" | "trinity";
           series_name?: string | null;
           is_template?: boolean;
+          active_draft_id?: string | null;
           last_opened_at?: string | null;
           created_at?: string;
           updated_at?: string;
+        };
+      };
+      novel_drafts: {
+        Row: {
+          id: string;
+          novel_id: string;
+          name: string;
+          slug: string;
+          summary: string;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          novel_id: string;
+          name?: string;
+          slug?: string;
+          summary?: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          novel_id?: string;
+          name?: string;
+          slug?: string;
+          summary?: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      draft_references: {
+        Row: {
+          id: string;
+          novel_id: string;
+          draft_id: string;
+          source_draft_id: string;
+          source_type: "codex" | "snippet" | "draft";
+          source_id: string | null;
+          note: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          novel_id: string;
+          draft_id: string;
+          source_draft_id: string;
+          source_type: "codex" | "snippet" | "draft";
+          source_id?: string | null;
+          note?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          novel_id?: string;
+          draft_id?: string;
+          source_draft_id?: string;
+          source_type?: "codex" | "snippet" | "draft";
+          source_id?: string | null;
+          note?: string;
+          created_at?: string;
         };
       };
       chapters: {
         Row: {
           id: string;
           novel_id: string;
+          draft_id: string | null;
           sort_order: number;
           title: string;
           created_at: string;
@@ -120,6 +188,7 @@ export interface Database {
         Insert: {
           id?: string;
           novel_id: string;
+          draft_id?: string | null;
           sort_order?: number;
           title?: string;
           created_at?: string;
@@ -128,6 +197,7 @@ export interface Database {
         Update: {
           id?: string;
           novel_id?: string;
+          draft_id?: string | null;
           sort_order?: number;
           title?: string;
           created_at?: string;
@@ -167,6 +237,7 @@ export interface Database {
         Row: {
           id: string;
           novel_id: string;
+          draft_id: string | null;
           type: "character" | "location" | "lore" | "other";
           name: string;
           initials: string;
@@ -181,6 +252,7 @@ export interface Database {
         Insert: {
           id?: string;
           novel_id: string;
+          draft_id?: string | null;
           type?: "character" | "location" | "lore" | "other";
           name: string;
           initials?: string;
@@ -195,6 +267,7 @@ export interface Database {
         Update: {
           id?: string;
           novel_id?: string;
+          draft_id?: string | null;
           type?: "character" | "location" | "lore" | "other";
           name?: string;
           initials?: string;
@@ -211,6 +284,7 @@ export interface Database {
         Row: {
           id: string;
           novel_id: string;
+          draft_id: string | null;
           title: string;
           content: string;
           created_at: string;
@@ -219,6 +293,7 @@ export interface Database {
         Insert: {
           id?: string;
           novel_id: string;
+          draft_id?: string | null;
           title?: string;
           content?: string;
           created_at?: string;
@@ -227,6 +302,7 @@ export interface Database {
         Update: {
           id?: string;
           novel_id?: string;
+          draft_id?: string | null;
           title?: string;
           content?: string;
           created_at?: string;
@@ -237,6 +313,7 @@ export interface Database {
         Row: {
           id: string;
           novel_id: string;
+          draft_id: string | null;
           title: string;
           created_at: string;
           updated_at: string;
@@ -244,6 +321,7 @@ export interface Database {
         Insert: {
           id?: string;
           novel_id: string;
+          draft_id?: string | null;
           title?: string;
           created_at?: string;
           updated_at?: string;
@@ -251,6 +329,7 @@ export interface Database {
         Update: {
           id?: string;
           novel_id?: string;
+          draft_id?: string | null;
           title?: string;
           created_at?: string;
           updated_at?: string;

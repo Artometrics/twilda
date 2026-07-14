@@ -1,7 +1,8 @@
 // Novelcrafter-style data layer.
-// Gatsby is a fully populated example; Trinity and Cardinal are blank templates.
+// Gatsby is a fully populated example; Trinity and Cardinal are seeded templates.
 
 import { trinitySeed as trinity } from "@/lib/novels/trinity-seed";
+import { cardinalSeed } from "@/lib/novels/cardinal-seed";
 
 export type CodexType = "character" | "location" | "lore" | "other";
 
@@ -376,23 +377,7 @@ const gatsby: Novel = {
 export { gatsby };
 export { trinitySeed as trinity } from "@/lib/novels/trinity-seed";
 
-const cardinal: Novel = {
-  id: "cardinal",
-  title: "Cardinal",
-  author: "KSM",
-  updated: "May 24",
-  sortKey: 1,
-  synopsis: "A Subliminal History of Silicon Valley.",
-  cover: "cardinal",
-  blank: true,
-  codex: [],
-  chapters: [
-    {
-      title: "Chapter I",
-      scenes: [{ title: "Scene 1", text: "" }],
-    },
-  ],
-};
+const cardinal: Novel = cardinalSeed;
 
 export const novels: Novel[] = [gatsby, trinity, cardinal];
 

@@ -2,7 +2,22 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { CodexEntry, CoverKind, Novel } from "@/apps/novelcrafter/data";
 import { gatsbySeed } from "@/lib/novels/seed";
-import { trinitySeed, trinitySnippets } from "@/lib/novels/trinity-seed";
+import { cardinalSeed, cardinalDraftMeta } from "@/lib/novels/cardinal-seed";
+import {
+  trinityV2Seed,
+  trinityV2Snippets,
+  trinityV2DraftMeta,
+} from "@/lib/novels/trinity-seed";
+import { trinityV1Seed, trinityV1Snippets, trinityV1DraftMeta } from "@/lib/novels/trinity-v1-seed";
+import {
+  addDraftReference,
+  ensureDefaultDraft,
+  getActiveDraftId,
+  listDrafts,
+  seedDraftContent,
+  setActiveDraft,
+  type DbDraft,
+} from "@/lib/novels/drafts";
 
 type Client = SupabaseClient<Database>;
 
@@ -13,6 +28,7 @@ export interface DbNovelSummary {
   synopsis: string;
   cover_kind: CoverKind;
   series_name: string | null;
+  active_draft_id: string | null;
   updated_at: string;
   last_opened_at: string | null;
 }
@@ -28,6 +44,7 @@ export interface DbScene {
 export interface DbChapter {
   id: string;
   novel_id: string;
+  draft_id: string | null;
   sort_order: number;
   title: string;
   scenes: DbScene[];
@@ -36,6 +53,8 @@ export interface DbChapter {
 export interface DbNovelFull extends DbNovelSummary {
   chapters: DbChapter[];
   codex: CodexEntry[];
+  active_draft: DbDraft | null;
+  drafts: DbDraft[];
 }
 
 function mapCodexRow(row: Database["public"]["Tables"]["codex_entries"]["Row"]): CodexEntry {
@@ -56,7 +75,9 @@ function mapCodexRow(row: Database["public"]["Tables"]["codex_entries"]["Row"]):
 export async function listNovels(supabase: Client, userId: string): Promise<DbNovelSummary[]> {
   const { data, error } = await supabase
     .from("novels")
-    .select("id, title, author, synopsis, cover_kind, series_name, updated_at, last_opened_at")
+    .select(
+      "id, title, author, synopsis, cover_kind, series_name, active_draft_id, updated_at, last_opened_at",
+    )
     .eq("user_id", userId)
     .eq("is_template", false)
     .order("last_opened_at", { ascending: false, nullsFirst: false });
@@ -69,10 +90,13 @@ export async function getNovelFull(
   supabase: Client,
   userId: string,
   novelId: string,
+  draftId?: string | null,
 ): Promise<DbNovelFull | null> {
   const { data: novel, error } = await supabase
     .from("novels")
-    .select("id, title, author, synopsis, cover_kind, series_name, updated_at, last_opened_at")
+    .select(
+      "id, title, author, synopsis, cover_kind, series_name, active_draft_id, updated_at, last_opened_at",
+    )
     .eq("id", novelId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -80,10 +104,26 @@ export async function getNovelFull(
   if (error) throw error;
   if (!novel) return null;
 
+  const drafts = await listDrafts(supabase, userId, novelId);
+  let active =
+    (draftId ? drafts.find((d) => d.id === draftId) : null) ??
+    drafts.find((d) => d.id === novel.active_draft_id) ??
+    drafts[0] ??
+    null;
+
+  if (!active) {
+    active = await ensureDefaultDraft(supabase, userId, novelId);
+  } else if (draftId && draftId !== novel.active_draft_id) {
+    await setActiveDraft(supabase, userId, novelId, active.id);
+  } else if (!novel.active_draft_id) {
+    await setActiveDraft(supabase, userId, novelId, active.id);
+  }
+
   const { data: chapters, error: chErr } = await supabase
     .from("chapters")
-    .select("id, novel_id, sort_order, title")
+    .select("id, novel_id, draft_id, sort_order, title")
     .eq("novel_id", novelId)
+    .eq("draft_id", active.id)
     .order("sort_order");
 
   if (chErr) throw chErr;
@@ -104,6 +144,7 @@ export async function getNovelFull(
     .from("codex_entries")
     .select("*")
     .eq("novel_id", novelId)
+    .eq("draft_id", active.id)
     .order("name");
   if (cxErr) throw cxErr;
 
@@ -119,33 +160,23 @@ export async function getNovelFull(
 
   return {
     ...(novel as DbNovelSummary),
+    active_draft_id: active.id,
     chapters: chaptersWithScenes,
     codex: (codexRows ?? []).map(mapCodexRow),
+    active_draft: active,
+    drafts: await listDrafts(supabase, userId, novelId),
   };
 }
 
-export async function createNovel(
+async function createBlankChapter(
   supabase: Client,
-  userId: string,
-  input?: Partial<{ title: string; author: string; cover_kind: CoverKind }>,
-): Promise<string> {
-  const { data: novel, error } = await supabase
-    .from("novels")
-    .insert({
-      user_id: userId,
-      title: input?.title ?? "Untitled Novel",
-      author: input?.author ?? "",
-      cover_kind: input?.cover_kind ?? "cardinal",
-      synopsis: "",
-    })
-    .select("id")
-    .single();
-
-  if (error) throw error;
-
+  novelId: string,
+  draftId: string,
+  title = "Chapter I",
+) {
   const { data: chapter, error: chErr } = await supabase
     .from("chapters")
-    .insert({ novel_id: novel.id, sort_order: 0, title: "Chapter I" })
+    .insert({ novel_id: novelId, draft_id: draftId, sort_order: 0, title })
     .select("id")
     .single();
   if (chErr) throw chErr;
@@ -157,13 +188,38 @@ export async function createNovel(
     content: "",
   });
   if (scErr) throw scErr;
+  return chapter.id;
+}
 
+export async function createNovel(
+  supabase: Client,
+  userId: string,
+  input?: Partial<{ title: string; author: string; cover_kind: CoverKind }>,
+): Promise<string> {
   const title = input?.title ?? "Untitled Novel";
   const coverKind = input?.cover_kind ?? "cardinal";
+
+  const { data: novel, error } = await supabase
+    .from("novels")
+    .insert({
+      user_id: userId,
+      title,
+      author: input?.author ?? "",
+      cover_kind: coverKind,
+      synopsis: "",
+    })
+    .select("id")
+    .single();
+
+  if (error) throw error;
+
   if (isTrinityNovel(title, coverKind)) {
-    await seedTrinityIfEmpty(supabase, userId, novel.id);
+    await ensureTrinityDrafts(supabase, userId, novel.id);
+    return novel.id;
   }
 
+  const draft = await ensureDefaultDraft(supabase, userId, novel.id);
+  await createBlankChapter(supabase, novel.id, draft.id);
   return novel.id;
 }
 
@@ -171,79 +227,131 @@ function isTrinityNovel(title: string, coverKind: CoverKind): boolean {
   return coverKind === "trinity" || title.toLowerCase().includes("trinity");
 }
 
-async function insertCodexSeed(
+/** Seed both Trinity timelines (v1 metafiction + v2 series bible) when missing. */
+export async function ensureTrinityDrafts(
   supabase: Client,
+  userId: string,
   novelId: string,
-  entries: CodexEntry[],
-) {
-  if (entries.length === 0) return;
-  const rows = entries.map((e) => ({
-    novel_id: novelId,
-    type: e.type,
-    name: e.name,
-    initials: e.initials,
-    tags: e.tags,
-    aliases: e.aliases ?? [],
-    summary: e.summary,
-    description: e.description,
-    mentions: e.mentions ?? 0,
-  }));
-  const { error } = await supabase.from("codex_entries").insert(rows);
+): Promise<boolean> {
+  const { data: novel, error } = await supabase
+    .from("novels")
+    .select("id, title, author, cover_kind, synopsis, series_name")
+    .eq("id", novelId)
+    .eq("user_id", userId)
+    .maybeSingle();
   if (error) throw error;
+  if (!novel) return false;
+  if (!isTrinityNovel(novel.title, novel.cover_kind as CoverKind)) return false;
+
+  let drafts = await listDrafts(supabase, userId, novelId);
+  // First open after migration: wrap leftover content into Main
+  if (drafts.length === 0) {
+    await ensureDefaultDraft(supabase, userId, novelId);
+    drafts = await listDrafts(supabase, userId, novelId);
+  }
+
+  let changed = false;
+  let v1 = drafts.find((d) => d.slug === trinityV1DraftMeta.slug);
+  let v2 = drafts.find((d) => d.slug === trinityV2DraftMeta.slug);
+
+  if (!v1) {
+    const { data: draft, error: dErr } = await supabase
+      .from("novel_drafts")
+      .insert({
+        novel_id: novelId,
+        name: trinityV1DraftMeta.name,
+        slug: trinityV1DraftMeta.slug,
+        summary: trinityV1DraftMeta.summary,
+        sort_order: 0,
+      })
+      .select("id, novel_id, name, slug, summary, sort_order, created_at, updated_at")
+      .single();
+    if (dErr) throw dErr;
+    v1 = draft as DbDraft;
+    await seedDraftContent(supabase, novelId, v1.id, {
+      codex: trinityV1Seed.codex,
+      snippets: trinityV1Snippets,
+      chapters: trinityV1Seed.chapters,
+    });
+    changed = true;
+  }
+
+  if (!v2) {
+    const { data: draft, error: dErr } = await supabase
+      .from("novel_drafts")
+      .insert({
+        novel_id: novelId,
+        name: trinityV2DraftMeta.name,
+        slug: trinityV2DraftMeta.slug,
+        summary: trinityV2DraftMeta.summary,
+        sort_order: 1,
+      })
+      .select("id, novel_id, name, slug, summary, sort_order, created_at, updated_at")
+      .single();
+    if (dErr) throw dErr;
+    v2 = draft as DbDraft;
+    await seedDraftContent(supabase, novelId, v2.id, {
+      codex: trinityV2Seed.codex,
+      snippets: trinityV2Snippets,
+      chapters: trinityV2Seed.chapters,
+    });
+    changed = true;
+  }
+
+  // Prefer v2 as active; remove empty leftover Main if both timelines exist
+  await setActiveDraft(supabase, userId, novelId, v2!.id);
+
+  const main = drafts.find((d) => d.slug === "main");
+  if (main && v1 && v2) {
+    const { count } = await supabase
+      .from("codex_entries")
+      .select("id", { count: "exact", head: true })
+      .eq("draft_id", main.id);
+    const { count: chCount } = await supabase
+      .from("chapters")
+      .select("id", { count: "exact", head: true })
+      .eq("draft_id", main.id);
+    if ((count ?? 0) === 0 && (chCount ?? 0) <= 1) {
+      await supabase.from("novel_drafts").delete().eq("id", main.id);
+      changed = true;
+    }
+  }
+
+  await supabase
+    .from("novels")
+    .update({
+      synopsis: trinityV2Seed.synopsis,
+      series_name: trinityV2Seed.series ?? "Trinity",
+      author: trinityV2Seed.author || novel.author,
+    })
+    .eq("id", novelId)
+    .eq("user_id", userId);
+
+  // Cross-reference: v2 pins the v1 timeline for browsing
+  if (v1 && v2) {
+    try {
+      await addDraftReference(supabase, userId, novelId, {
+        draft_id: v2.id,
+        source_draft_id: v1.id,
+        source_type: "draft",
+        note: "Earlier metafiction timeline — consult when crossing timelines.",
+      });
+      changed = true;
+    } catch {
+      /* already referenced */
+    }
+  }
+
+  return changed;
 }
 
-async function insertSnippetSeed(
-  supabase: Client,
-  novelId: string,
-  snippets: { title: string; content: string }[],
-) {
-  if (snippets.length === 0) return;
-  const rows = snippets.map((s) => ({
-    novel_id: novelId,
-    title: s.title,
-    content: s.content,
-  }));
-  const { error } = await supabase.from("snippets").insert(rows);
-  if (error) throw error;
-}
-
-/** Seed Trinity codex + snippets when novel is empty (idempotent). */
+/** @deprecated use ensureTrinityDrafts */
 export async function seedTrinityIfEmpty(
   supabase: Client,
   userId: string,
   novelId: string,
 ): Promise<boolean> {
-  const novel = await getNovelFull(supabase, userId, novelId);
-  if (!novel) return false;
-  if (!isTrinityNovel(novel.title, novel.cover_kind)) return false;
-
-  const { count: snippetCount } = await supabase
-    .from("snippets")
-    .select("id", { count: "exact", head: true })
-    .eq("novel_id", novelId);
-
-  const needsCodex = novel.codex.length === 0;
-  const needsSnippets = (snippetCount ?? 0) === 0;
-  if (!needsCodex && !needsSnippets) return false;
-
-  if (needsCodex) {
-    await insertCodexSeed(supabase, novelId, trinitySeed.codex);
-    await supabase
-      .from("novels")
-      .update({
-        synopsis: trinitySeed.synopsis,
-        series_name: trinitySeed.series ?? "Trinity Cycle",
-        author: trinitySeed.author,
-      })
-      .eq("id", novelId)
-      .eq("user_id", userId);
-  }
-
-  if (needsSnippets) {
-    await insertSnippetSeed(supabase, novelId, trinitySnippets);
-  }
-
-  return true;
+  return ensureTrinityDrafts(supabase, userId, novelId);
 }
 
 export async function updateNovelMetadata(
@@ -307,12 +415,17 @@ export async function createCodexEntry(
 ) {
   const { data: novel, error: nErr } = await supabase
     .from("novels")
-    .select("id")
+    .select("id, active_draft_id")
     .eq("id", novelId)
     .eq("user_id", userId)
     .maybeSingle();
   if (nErr) throw nErr;
   if (!novel) throw new Error("Unauthorized");
+
+  let draftId = novel.active_draft_id;
+  if (!draftId) {
+    draftId = (await ensureDefaultDraft(supabase, userId, novelId)).id;
+  }
 
   const initials =
     entry.name
@@ -326,6 +439,7 @@ export async function createCodexEntry(
     .from("codex_entries")
     .insert({
       novel_id: novelId,
+      draft_id: draftId,
       type: entry.type,
       name: entry.name,
       initials,
@@ -345,11 +459,14 @@ export async function importNovelFromText(
   text: string,
 ): Promise<string> {
   const novelId = await createNovel(supabase, userId, { title });
+  const draftId = (await getActiveDraftId(supabase, novelId)) ??
+    (await ensureDefaultDraft(supabase, userId, novelId)).id;
 
   const { data: chapter, error: chErr } = await supabase
     .from("chapters")
     .select("id")
     .eq("novel_id", novelId)
+    .eq("draft_id", draftId)
     .order("sort_order")
     .limit(1)
     .maybeSingle();
@@ -378,6 +495,9 @@ export async function exportNovelText(
   if (!novel) throw new Error("Novel not found");
 
   const lines = [`# ${novel.title}`, ""];
+  if (novel.active_draft) {
+    lines.push(`> Draft: ${novel.active_draft.name}`, "");
+  }
   for (const ch of novel.chapters) {
     lines.push(`## ${ch.title}`, "");
     for (const sc of ch.scenes) {
@@ -388,65 +508,94 @@ export async function exportNovelText(
   return lines.join("\n");
 }
 
-/** Copy Gatsby demo into user library if they have no novels yet. */
-export async function ensureStarterNovels(supabase: Client, userId: string) {
-  const existing = await listNovels(supabase, userId);
-  if (existing.length > 0) return;
-
+async function seedNovelShell(
+  supabase: Client,
+  userId: string,
+  seed: Novel,
+  draftMeta: { name: string; slug: string; summary: string },
+  options?: { withCodex?: boolean; withChapters?: boolean },
+): Promise<string> {
   const { data: novel, error } = await supabase
     .from("novels")
     .insert({
       user_id: userId,
-      title: gatsbySeed.title,
-      author: gatsbySeed.author,
-      synopsis: gatsbySeed.synopsis,
-      cover_kind: gatsbySeed.cover,
+      title: seed.title,
+      author: seed.author,
+      synopsis: seed.synopsis,
+      cover_kind: seed.cover,
+      series_name: seed.series ?? null,
       is_template: false,
     })
     .select("id")
     .single();
   if (error) throw error;
 
-  for (const [ci, chapter] of gatsbySeed.chapters.entries()) {
-    const { data: ch, error: chErr } = await supabase
-      .from("chapters")
-      .insert({ novel_id: novel.id, sort_order: ci, title: chapter.title })
-      .select("id")
-      .single();
-    if (chErr) throw chErr;
+  const { data: draft, error: dErr } = await supabase
+    .from("novel_drafts")
+    .insert({
+      novel_id: novel.id,
+      name: draftMeta.name,
+      slug: draftMeta.slug,
+      summary: draftMeta.summary,
+      sort_order: 0,
+    })
+    .select("id")
+    .single();
+  if (dErr) throw dErr;
 
-    for (const [si, scene] of chapter.scenes.entries()) {
-      const html = scene.text
-        ? scene.text
-            .split(/\n{2,}/)
-            .filter(Boolean)
-            .map((p) => `<p>${p}</p>`)
-            .join("")
-        : "";
-      const { error: scErr } = await supabase.from("scenes").insert({
-        chapter_id: ch.id,
-        sort_order: si,
-        title: scene.title,
-        content: html,
-      });
-      if (scErr) throw scErr;
-    }
+  await supabase.from("novels").update({ active_draft_id: draft.id }).eq("id", novel.id);
+
+  if (options?.withChapters !== false) {
+    await seedDraftContent(supabase, novel.id, draft.id, {
+      chapters: seed.chapters,
+      codex: options?.withCodex === false ? [] : seed.codex,
+    });
   }
 
-  if (gatsbySeed.codex.length > 0) {
-    const rows = gatsbySeed.codex.map((e) => ({
-      novel_id: novel.id,
-      type: e.type,
-      name: e.name,
-      initials: e.initials,
-      tags: e.tags,
-      aliases: e.aliases ?? [],
-      summary: e.summary,
-      description: e.description,
-      mentions: e.mentions ?? 0,
-    }));
-    const { error: cxErr } = await supabase.from("codex_entries").insert(rows);
-    if (cxErr) throw cxErr;
+  return novel.id;
+}
+
+/** Ensure Gatsby, Trinity (both drafts), and Cardinal exist in the library. */
+export async function ensureStarterNovels(supabase: Client, userId: string) {
+  const existing = await listNovels(supabase, userId);
+  const covers = new Set(existing.map((n) => n.cover_kind));
+
+  if (!covers.has("gatsby")) {
+    await seedNovelShell(
+      supabase,
+      userId,
+      gatsbySeed,
+      { name: "Main", slug: "main", summary: "Gatsby demo manuscript" },
+      { withCodex: true, withChapters: true },
+    );
+  }
+
+  if (!covers.has("trinity")) {
+    const { data: novel, error } = await supabase
+      .from("novels")
+      .insert({
+        user_id: userId,
+        title: trinityV2Seed.title,
+        author: trinityV2Seed.author,
+        synopsis: trinityV2Seed.synopsis,
+        cover_kind: "trinity",
+        series_name: trinityV2Seed.series ?? "Trinity",
+        is_template: false,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    await ensureTrinityDrafts(supabase, userId, novel.id);
+  } else {
+    const trinity = existing.find((n) => n.cover_kind === "trinity");
+    if (trinity) await ensureTrinityDrafts(supabase, userId, trinity.id);
+  }
+
+  if (!covers.has("cardinal")) {
+    await seedNovelShell(supabase, userId, cardinalSeed, cardinalDraftMeta, {
+      withCodex: false,
+      withChapters: true,
+    });
   }
 }
 
@@ -463,12 +612,14 @@ export async function createChapter(
 ): Promise<string> {
   const novel = await getNovelFull(supabase, userId, novelId);
   if (!novel) throw new Error("Novel not found");
+  const draftId = novel.active_draft?.id ?? (await ensureDefaultDraft(supabase, userId, novelId)).id;
 
   const sortOrder = novel.chapters.length;
   const { data, error } = await supabase
     .from("chapters")
     .insert({
       novel_id: novelId,
+      draft_id: draftId,
       sort_order: sortOrder,
       title: title ?? `Chapter ${sortOrder + 1}`,
     })
@@ -534,17 +685,23 @@ export async function createScene(
 export async function listSnippets(supabase: Client, userId: string, novelId: string) {
   const { data: novel, error: nErr } = await supabase
     .from("novels")
-    .select("id")
+    .select("id, active_draft_id")
     .eq("id", novelId)
     .eq("user_id", userId)
     .maybeSingle();
   if (nErr) throw nErr;
   if (!novel) throw new Error("Unauthorized");
 
+  let draftId = novel.active_draft_id;
+  if (!draftId) {
+    draftId = (await ensureDefaultDraft(supabase, userId, novelId)).id;
+  }
+
   const { data, error } = await supabase
     .from("snippets")
     .select("id, title, content, updated_at")
     .eq("novel_id", novelId)
+    .eq("draft_id", draftId)
     .order("updated_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
@@ -558,16 +715,26 @@ export async function createSnippet(
 ) {
   const { data: novel, error: nErr } = await supabase
     .from("novels")
-    .select("id")
+    .select("id, active_draft_id")
     .eq("id", novelId)
     .eq("user_id", userId)
     .maybeSingle();
   if (nErr) throw nErr;
   if (!novel) throw new Error("Unauthorized");
 
+  let draftId = novel.active_draft_id;
+  if (!draftId) {
+    draftId = (await ensureDefaultDraft(supabase, userId, novelId)).id;
+  }
+
   const { data, error } = await supabase
     .from("snippets")
-    .insert({ novel_id: novelId, title: input.title, content: input.content })
+    .insert({
+      novel_id: novelId,
+      draft_id: draftId,
+      title: input.title,
+      content: input.content,
+    })
     .select("id, title, content")
     .single();
   if (error) throw error;
@@ -577,17 +744,23 @@ export async function createSnippet(
 export async function listChatThreads(supabase: Client, userId: string, novelId: string) {
   const { data: novel, error: nErr } = await supabase
     .from("novels")
-    .select("id")
+    .select("id, active_draft_id")
     .eq("id", novelId)
     .eq("user_id", userId)
     .maybeSingle();
   if (nErr) throw nErr;
   if (!novel) throw new Error("Unauthorized");
 
+  let draftId = novel.active_draft_id;
+  if (!draftId) {
+    draftId = (await ensureDefaultDraft(supabase, userId, novelId)).id;
+  }
+
   const { data, error } = await supabase
     .from("chat_threads")
     .select("id, title, updated_at")
     .eq("novel_id", novelId)
+    .eq("draft_id", draftId)
     .order("updated_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
@@ -601,12 +774,17 @@ export async function getOrCreateChatThread(
 ) {
   const { data: novel, error: nErr } = await supabase
     .from("novels")
-    .select("id")
+    .select("id, active_draft_id")
     .eq("id", novelId)
     .eq("user_id", userId)
     .maybeSingle();
   if (nErr) throw nErr;
   if (!novel) throw new Error("Unauthorized");
+
+  let draftId = novel.active_draft_id;
+  if (!draftId) {
+    draftId = (await ensureDefaultDraft(supabase, userId, novelId)).id;
+  }
 
   if (threadId) {
     const { data, error } = await supabase
@@ -621,7 +799,7 @@ export async function getOrCreateChatThread(
 
   const { data, error } = await supabase
     .from("chat_threads")
-    .insert({ novel_id: novelId, title: "Chat" })
+    .insert({ novel_id: novelId, draft_id: draftId, title: "Chat" })
     .select("id, title")
     .single();
   if (error) throw error;
@@ -650,16 +828,11 @@ export async function appendChatMessage(
     content,
   });
   if (error) throw error;
-  await supabase.from("chat_threads").update({ updated_at: new Date().toISOString() }).eq("id", threadId);
-}
 
-function htmlToPlain(html: string): string {
-  return html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  await supabase
+    .from("chat_threads")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", threadId);
 }
 
 export function dbNovelToLegacy(novel: DbNovelFull): Novel {
@@ -683,4 +856,13 @@ export function dbNovelToLegacy(novel: DbNovelFull): Novel {
       })),
     })),
   };
+}
+
+function htmlToPlain(html: string): string {
+  return html
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }

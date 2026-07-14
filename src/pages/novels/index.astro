@@ -56,7 +56,7 @@ const recent = [...novels]
         <div class="nc-library__alert" role="alert">
           <p>
             {isDbSetupError(dbError)
-              ? "Your library database is not set up yet. Apply supabase/migrations/001_initial_schema.sql to your Supabase project, then refresh."
+              ? "Your library database is not set up yet. Apply supabase/migrations/001_initial_schema.sql and 003_novel_drafts.sql to your Supabase project, then refresh."
               : `Could not load your library: ${dbError}`}
           </p>
         </div>
