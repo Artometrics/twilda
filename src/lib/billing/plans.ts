@@ -8,7 +8,8 @@ export type PaidPlan = "pro" | "studio";
 export type PlanId = keyof typeof PLAN_CREDITS;
 
 export const PLAN_NOVEL_LIMITS: Record<PlanId, number | null> = {
-  free: 2,
+  /** Room for Gatsby + Trinity + Cardinal starters plus a new project. */
+  free: 5,
   pro: null,
   studio: null,
 };

@@ -3,10 +3,12 @@
 ## Run this on Supabase
 
 1. Open Supabase Dashboard → **SQL Editor** → **New query**
-2. Copy the entire contents of **`001_initial_schema.sql`**
-3. Paste and click **Run**
+2. Run **`001_initial_schema.sql`** (full base schema), then **`003_novel_drafts.sql`** (drafts / timelines)
+3. Paste and click **Run** for each
 
-The script is **idempotent** (safe to re-run). It creates or upgrades:
+The scripts are **idempotent** (safe to re-run).
+
+`001` creates or upgrades:
 
 - `profiles`, `subscriptions`
 - `novels`, `chapters`, `scenes`
@@ -14,15 +16,24 @@ The script is **idempotent** (safe to re-run). It creates or upgrades:
 - `chat_threads`, `chat_messages`
 - RLS policies and `updated_at` triggers
 
+`003` adds:
+
+- `novel_drafts` (named drafts / timelines per novel)
+- `draft_references` (cross-draft pins)
+- `active_draft_id` on novels; `draft_id` on chapters, codex, snippets, chats
+- Backfill of a Main draft for existing novels
+
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `001_initial_schema.sql` | **Canonical** full schema — use this |
+| `001_initial_schema.sql` | **Canonical** full base schema — use this first |
 | `002_fix_partial_schema.sql` | Pointer only (legacy recovery name) |
+| `003_novel_drafts.sql` | Drafts / timelines + cross-draft references |
 
 ## After migration
 
 - Enable Google auth in Supabase → Authentication → Providers
 - Set URL Configuration: Site URL + `/auth/callback/` redirect
 - Sign in at `/forms/login/` → library at `/novels/`
+- Starters: Gatsby, Trinity (v1 + v2 drafts), and Cardinal are seeded automatically

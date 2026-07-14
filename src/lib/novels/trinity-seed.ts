@@ -534,3 +534,14 @@ export const trinitySeed: Novel = {
   codex: trinityCodex,
   chapters: trinityChapters,
 };
+
+/** Alias for draft seeding — Series Bible v2 (Kane / Animus / Cole). */
+export const trinityV2Seed = trinitySeed;
+export const trinityV2Snippets = trinitySnippets;
+
+export const trinityV2DraftMeta = {
+  name: "v2 — Series Bible",
+  slug: "v2-series-bible",
+  summary:
+    "Revised timeline: Marcus Aldric Kane, the Animus, and seasons The Cull / The Many / The Handler. Cole planted from S1E2.",
+} as const;
