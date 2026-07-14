@@ -207,7 +207,51 @@ async function insertSnippetSeed(
   if (error) throw error;
 }
 
-/** Seed Trinity codex + snippets when novel is empty (idempotent). */
+function isEmptyDefaultChapterStructure(novel: {
+  chapters: { title: string; scenes: { title: string; content: string }[] }[];
+}): boolean {
+  if (novel.chapters.length !== 1) return false;
+  const ch = novel.chapters[0];
+  if (ch.title !== "Chapter I") return false;
+  if (ch.scenes.length !== 1) return false;
+  const sc = ch.scenes[0];
+  return sc.title === "Scene 1" && !(sc.content ?? "").trim();
+}
+
+async function insertChapterSeed(
+  supabase: Client,
+  novelId: string,
+  chapters: typeof trinitySeed.chapters,
+) {
+  for (const [ci, chapter] of chapters.entries()) {
+    const title = chapter.label ? `${chapter.title} — ${chapter.label}` : chapter.title;
+    const { data: ch, error: chErr } = await supabase
+      .from("chapters")
+      .insert({ novel_id: novelId, sort_order: ci, title })
+      .select("id")
+      .single();
+    if (chErr) throw chErr;
+
+    for (const [si, scene] of chapter.scenes.entries()) {
+      const html = scene.text
+        ? scene.text
+            .split(/\n{2,}/)
+            .filter(Boolean)
+            .map((p) => `<p>${p}</p>`)
+            .join("")
+        : "";
+      const { error: scErr } = await supabase.from("scenes").insert({
+        chapter_id: ch.id,
+        sort_order: si,
+        title: scene.title,
+        content: html,
+      });
+      if (scErr) throw scErr;
+    }
+  }
+}
+
+/** Seed Trinity codex, snippets, and outline chapters when novel is empty (idempotent). */
 export async function seedTrinityIfEmpty(
   supabase: Client,
   userId: string,
@@ -224,7 +268,8 @@ export async function seedTrinityIfEmpty(
 
   const needsCodex = novel.codex.length === 0;
   const needsSnippets = (snippetCount ?? 0) === 0;
-  if (!needsCodex && !needsSnippets) return false;
+  const needsChapters = isEmptyDefaultChapterStructure(novel);
+  if (!needsCodex && !needsSnippets && !needsChapters) return false;
 
   if (needsCodex) {
     await insertCodexSeed(supabase, novelId, trinitySeed.codex);
@@ -232,7 +277,7 @@ export async function seedTrinityIfEmpty(
       .from("novels")
       .update({
         synopsis: trinitySeed.synopsis,
-        series_name: trinitySeed.series ?? "Trinity Cycle",
+        series_name: trinitySeed.series ?? "Trinity",
         author: trinitySeed.author,
       })
       .eq("id", novelId)
@@ -241,6 +286,15 @@ export async function seedTrinityIfEmpty(
 
   if (needsSnippets) {
     await insertSnippetSeed(supabase, novelId, trinitySnippets);
+  }
+
+  if (needsChapters) {
+    const oldIds = novel.chapters.map((c) => c.id);
+    if (oldIds.length > 0) {
+      const { error: delErr } = await supabase.from("chapters").delete().in("id", oldIds);
+      if (delErr) throw delErr;
+    }
+    await insertChapterSeed(supabase, novelId, trinitySeed.chapters);
   }
 
   return true;
