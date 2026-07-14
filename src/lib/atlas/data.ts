@@ -1,9 +1,12 @@
 import { fridaEntities, fridaLinks } from "@/lib/atlas/seed-frida";
-import type { AtlasEntity, AtlasKind, AtlasLink } from "@/lib/atlas/types";
+import { viennaEntities, viennaLinks, vienna1913Scene } from "@/lib/atlas/seed-vienna";
+import { fridaMexicoScene } from "@/lib/atlas/seed-scenes";
+import type { AtlasEntity, AtlasKind, AtlasLink, AtlasScene } from "@/lib/atlas/types";
 import { RELATION_LABELS } from "@/lib/atlas/types";
 
-export const atlasEntities: AtlasEntity[] = [...fridaEntities];
-export const atlasLinks: AtlasLink[] = [...fridaLinks];
+export const atlasEntities: AtlasEntity[] = [...fridaEntities, ...viennaEntities];
+export const atlasLinks: AtlasLink[] = [...fridaLinks, ...viennaLinks];
+export const atlasScenes: AtlasScene[] = [vienna1913Scene, fridaMexicoScene];
 
 const byId = Object.fromEntries(atlasEntities.map((e) => [e.id, e]));
 
@@ -11,11 +14,17 @@ export function getEntity(id: string): AtlasEntity | undefined {
   return byId[id];
 }
 
+export function getScene(id: string): AtlasScene | undefined {
+  return atlasScenes.find((s) => s.id === id);
+}
+
 export function linksFor(id: string): AtlasLink[] {
   return atlasLinks.filter((l) => l.from === id || l.to === id);
 }
 
-export function relatedEntities(id: string): { link: AtlasLink; entity: AtlasEntity; direction: "out" | "in" }[] {
+export function relatedEntities(
+  id: string,
+): { link: AtlasLink; entity: AtlasEntity; direction: "out" | "in" }[] {
   const out: { link: AtlasLink; entity: AtlasEntity; direction: "out" | "in" }[] = [];
   for (const link of linksFor(id)) {
     const otherId = link.from === id ? link.to : link.from;
@@ -43,16 +52,10 @@ export function focusPins(entityId: string): { entity: AtlasEntity; role: string
   if (focus.coords) add(focus, focus.kind === "work" ? "Current location" : "Here");
 
   for (const { link, entity } of relatedEntities(entityId)) {
-    if (entity.coords) {
-      add(entity, RELATION_LABELS[link.rel]);
-    }
-    // If linked to a work, also pin the work's house
-    if (entity.kind === "work" && entity.coords) {
-      add(entity, "Work");
-    }
+    if (entity.coords) add(entity, RELATION_LABELS[link.rel]);
+    if (entity.kind === "work" && entity.coords) add(entity, "Work");
   }
 
-  // Provenance places for works
   if (focus.provenance) {
     for (const p of focus.provenance) {
       add(byId[p.placeId], `${p.year}: ${p.note}`);
@@ -62,8 +65,12 @@ export function focusPins(entityId: string): { entity: AtlasEntity; role: string
   return pins;
 }
 
+export function sceneCallouts(scene: AtlasScene): AtlasEntity[] {
+  return scene.calloutIds.map((id) => byId[id]).filter(Boolean) as AtlasEntity[];
+}
+
 export function timelineBounds(entities = atlasEntities): { min: number; max: number } {
-  let min = 1900;
+  let min = 1880;
   let max = 1960;
   for (const e of entities) {
     if (e.startYear != null) min = Math.min(min, e.startYear);
@@ -73,37 +80,12 @@ export function timelineBounds(entities = atlasEntities): { min: number; max: nu
   return { min: min - 5, max: max + 5 };
 }
 
-export function entitiesInYearRange(
-  from: number,
-  to: number,
-  entities = atlasEntities,
-): AtlasEntity[] {
-  return entities.filter((e) => {
-    const start = e.startYear ?? e.endYear;
-    const end = e.endYear ?? e.startYear;
-    if (start == null) return e.kind === "place" || e.kind === "idea";
-    return start <= to && (end ?? start) >= from;
-  });
-}
-
 export function peerRanking(entityId: string): AtlasEntity[] {
   const e = byId[entityId];
   if (!e?.peerSet) return [];
   return atlasEntities
     .filter((x) => x.peerSet === e.peerSet && x.rank != null)
     .sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
-}
-
-export function searchEntities(query: string): AtlasEntity[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return atlasEntities;
-  return atlasEntities.filter(
-    (e) =>
-      e.name.toLowerCase().includes(q) ||
-      e.summary.toLowerCase().includes(q) ||
-      e.tags.some((t) => t.includes(q)) ||
-      e.aliases?.some((a) => a.toLowerCase().includes(q)),
-  );
 }
 
 export function countByKind(): Record<AtlasKind, number> {

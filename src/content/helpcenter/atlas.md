@@ -21,4 +21,6 @@ faq:
 
 Atlas sits beside your novels: a Pantheon-like research layer with geography.
 
-Signed-in writers can open **Atlas** from the product top bar. Select an entry to highlight related pins on the map, read Wikipedia-style context, follow provenance for artworks, and compare soft rankings among peer works.
+Open **Atlas** and start with the **Vienna 1913** scene — portrait callouts on an aged map show who shared the city that year (Freud, Trotsky, Stalin, Hitler, Franz Joseph, Café Central). Switch to **Mexico City 1939** for Frida Kahlo’s orbit. Click a callout for encyclopedia context, then follow connections to places and works.
+
+Signed-in writers open Atlas from the product top bar.

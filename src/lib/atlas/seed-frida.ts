@@ -10,6 +10,7 @@ export const fridaEntities: AtlasEntity[] = [
     id: "frida-kahlo",
     kind: "person",
     name: "Frida Kahlo",
+    calloutLabel: "Frida Kahlo",
     aliases: ["Magdalena Carmen Frida Kahlo y Calderón"],
     summary:
       "Mexican painter whose self-portraits fused personal injury, politics, and Mexican folk symbolism into a global language of intimate witness.",
@@ -20,19 +21,26 @@ She married Diego Rivera twice, traveled with him to the United States, and move
 Atlas tracks her places, her paintings' current homes, and the people and ideas that clustered around her — not as a timeline of genius alone, but as a network of presence.`,
     startYear: 1907,
     endYear: 1954,
+    coords: { lat: 19.3551, lng: -99.1627 },
     tags: ["painter", "mexico", "modernism", "self-portrait"],
+    portraitUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Frida_Kahlo%2C_by_Guillermo_Kahlo.jpg/330px-Frida_Kahlo%2C_by_Guillermo_Kahlo.jpg",
   },
   {
     id: "diego-rivera",
     kind: "person",
     name: "Diego Rivera",
+    calloutLabel: "Diego Rivera",
     summary:
       "Monumental muralist and Kahlo's partner; his public frescoes and her private canvases formed a contentious dual orbit of Mexican modernism.",
     description:
       "Rivera's murals for Detroit, San Francisco, and Mexico City made him an international figure. His marriage to Kahlo drew both artists through US cities in the early 1930s and kept them politically and geographically entangled until her death.",
     startYear: 1886,
     endYear: 1957,
+    coords: { lat: 19.4326, lng: -99.1332 },
     tags: ["muralist", "mexico", "modernism"],
+    portraitUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Diego_Rivera_-_Google_Art_Project_%28cropped%29.jpg/330px-Diego_Rivera_-_Google_Art_Project_%28cropped%29.jpg",
   },
   {
     id: "casa-azul",
