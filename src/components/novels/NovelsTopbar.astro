@@ -1,6 +1,6 @@
 ---
 interface Props {
-  active?: "novels" | "series" | "prompts";
+  active?: "novels" | "series" | "prompts" | "atlas";
   userEmail?: string | null;
   credits?: number;
   creditsMax?: number;
@@ -27,6 +27,7 @@ const initial = userEmail?.[0]?.toUpperCase() ?? "?";
     <a class:list={[{ "is-active": active === "novels" }]} href="/novels/">Novels</a>
     <a class:list={[{ "is-active": active === "series" }]} href="/novels/series/">Series</a>
     <a class:list={[{ "is-active": active === "prompts" }]} href="/novels/prompts/">Prompts</a>
+    <a class:list={[{ "is-active": active === "atlas" }]} href="/atlas/">Atlas</a>
   </nav>
   <div class="nc-topbar__spacer"></div>
   <div class="nc-topbar__right">
