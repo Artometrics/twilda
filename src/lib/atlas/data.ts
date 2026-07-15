@@ -4,6 +4,7 @@ import { fridaMexicoScene } from "@/lib/atlas/seed-scenes";
 import { monarchyEntities, monarchyLinks, monarchiesScene } from "@/lib/atlas/seed-monarchies";
 import { egyptEntities, egyptLinks, egyptScene } from "@/lib/atlas/seed-egypt";
 import { languageEntities, languageLinks, languagesScene } from "@/lib/atlas/seed-languages";
+import { metEntities, metLinks, metMuseumScene } from "@/lib/atlas/seed-met";
 import type { AtlasEntity, AtlasKind, AtlasLink, AtlasScene } from "@/lib/atlas/types";
 import { RELATION_LABELS } from "@/lib/atlas/types";
 
@@ -13,6 +14,7 @@ export const atlasEntities: AtlasEntity[] = [
   ...monarchyEntities,
   ...egyptEntities,
   ...languageEntities,
+  ...metEntities,
 ];
 
 export const atlasLinks: AtlasLink[] = [
@@ -21,6 +23,7 @@ export const atlasLinks: AtlasLink[] = [
   ...monarchyLinks,
   ...egyptLinks,
   ...languageLinks,
+  ...metLinks,
 ];
 
 export const atlasScenes: AtlasScene[] = [
@@ -29,6 +32,7 @@ export const atlasScenes: AtlasScene[] = [
   monarchiesScene,
   egyptScene,
   languagesScene,
+  metMuseumScene,
 ];
 
 const byId = Object.fromEntries(atlasEntities.map((e) => [e.id, e]));

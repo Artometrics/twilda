@@ -57,6 +57,16 @@ export interface AtlasEntity {
   /** Short label on callout (defaults to name) */
   calloutLabel?: string;
   aliases?: string[];
+  /** Met Collection object ID (numeric string) or accession number */
+  metObjectId?: string;
+  /** Wikidata Q-id when known */
+  wikidataId?: string;
+  /** Canonical collection / catalog page */
+  sourceUrl?: string;
+  /** e.g. "CC0" for Met Open Access */
+  license?: string;
+  attribution?: string;
+  imageCredit?: string;
 }
 
 export interface AtlasLink {
