@@ -47,9 +47,8 @@ function yearsLabel(e: AtlasEntity): string {
 
 const totalKinds = Object.values(counts).reduce((a, b) => a + b, 0);
 
+/* Keep payload lean — do not ship the full entity catalog to the client. */
 const clientPayload = {
-  entities: atlasEntities,
-  scenes: atlasScenes,
   sceneId: scene.id,
   focusId: focus.id,
   bounds,
@@ -69,7 +68,7 @@ const clientPayload = {
 ---
 
 <NovelcrafterLayout title="Atlas · Twilda">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" crossorigin="" />
+  <!-- MapLibre CSS is imported from the client script below -->
 
   <!-- SVG liquid-glass displacement filter (Chromium bonus) -->
   <svg width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden;">
@@ -230,18 +229,14 @@ const clientPayload = {
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.min.js" crossorigin=""></script>
-  <script define:vars={{ clientPayload }}>
-    const PIN_COLORS = {
-      person: "#c4a574",
-      deity: "#e8b860",
-      place: "#7d9b8a",
-      work: "#d4a090",
-      event: "#8a9bb8",
-      idea: "#a090b8",
-      dynasty: "#9b8a70",
-      concept: "#7a9ba0",
-    };
+  <script type="application/json" id="atlas-boot-data" is:inline set:html={JSON.stringify(clientPayload)} />
+  <script>
+    import maplibregl from "maplibre-gl";
+    import "maplibre-gl/dist/maplibre-gl.css";
+    import { darkBasemapStyle } from "@/lib/atlas/basemap";
+
+    const raw = document.getElementById("atlas-boot-data")?.textContent ?? "{}";
+    const clientPayload = JSON.parse(raw);
 
     function go(opts) {
       const url = new URL(window.location.href);
@@ -279,7 +274,9 @@ const clientPayload = {
     search?.addEventListener("input", filterResults);
     search?.addEventListener("focus", filterResults);
     document.addEventListener("click", (e) => {
-      if (!e.target?.closest("[data-atlas-search]") && !e.target?.closest("[data-atlas-results]")) {
+      const t = e.target;
+      if (!(t instanceof Element)) return;
+      if (!t.closest("[data-atlas-search]") && !t.closest("[data-atlas-results]")) {
         results?.classList.remove("is-open");
       }
     });
@@ -314,7 +311,6 @@ const clientPayload = {
     yearInput?.addEventListener("input", () => updateTimeline(yearInput.value));
     if (yearInput) updateTimeline(yearInput.value);
 
-    // Callout HTML builder
     function calloutHtml(c, isFocus) {
       const label = c.calloutLabel || c.name;
       const focusClass = isFocus ? " is-focus" : "";
@@ -344,67 +340,51 @@ const clientPayload = {
       </div>`;
     }
 
-    // Boot MapLibre
     function bootMap() {
-      const ML = window.maplibregl;
-      if (!ML) { setTimeout(bootMap, 30); return; }
-      const el = document.getElementById("atlas-map");
-      if (!el || el._atlasBooted) return;
-      el._atlasBooted = true;
+      const host = document.getElementById("atlas-map");
+      if (!host || host.dataset.booted === "1") return;
+      host.dataset.booted = "1";
 
-      const map = new ML.Map({
-        container: el,
-        style: {
-          version: 8,
-          sources: {
-            osm: {
-              type: "raster",
-              tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-              tileSize: 256,
-              attribution: "&copy; OpenStreetMap contributors",
-              maxzoom: 18,
-            },
-          },
-          layers: [{ id: "osm", type: "raster", source: "osm" }],
-        },
+      const map = new maplibregl.Map({
+        container: host,
+        style: darkBasemapStyle,
         center: [clientPayload.center.lng, clientPayload.center.lat],
         zoom: clientPayload.zoom,
         scrollZoom: true,
+      });
+
+      map.on("error", (e) => {
+        console.warn("[atlas map]", e?.error ?? e);
       });
 
       const boundsArr = [];
       clientPayload.callouts.forEach((c) => {
         if (!c.coords) return;
         const isFocus = c.id === clientPayload.focusId;
-        const el = document.createElement("div");
-        el.innerHTML = calloutHtml(c, isFocus);
-        const inner = el.firstElementChild;
+        const wrap = document.createElement("div");
+        wrap.innerHTML = calloutHtml(c, isFocus);
+        const inner = wrap.firstElementChild;
         inner?.addEventListener("click", () => go({ e: c.id, scene: clientPayload.sceneId }));
-        const noPhoto = ["place", "concept", "dynasty", "idea"].includes(c.kind);
-        new ML.Marker({ element: inner, anchor: "bottom" })
+        new maplibregl.Marker({ element: inner, anchor: "bottom" })
           .setLngLat([c.coords.lng, c.coords.lat])
           .addTo(map);
         boundsArr.push([c.coords.lng, c.coords.lat]);
       });
 
-      if (boundsArr.length > 1) {
-        const bounds = boundsArr.reduce(
-          (b, p) => [[Math.min(b[0][0], p[0]), Math.min(b[0][1], p[1])], [Math.max(b[1][0], p[0]), Math.max(b[1][1], p[1])]],
-          [[180, 90], [-180, -90]]
-        );
-        map.fitBounds(bounds, { padding: 90, maxZoom: 14 });
-      }
+      map.on("load", () => {
+        map.resize();
+        if (boundsArr.length > 1) {
+          const bounds = boundsArr.reduce(
+            (b, p) => [[Math.min(b[0][0], p[0]), Math.min(b[0][1], p[1])], [Math.max(b[1][0], p[0]), Math.max(b[1][1], p[1])]],
+            [[180, 90], [-180, -90]],
+          );
+          map.fitBounds(bounds, { padding: 90, maxZoom: 14 });
+        }
+      });
 
-      setTimeout(() => map.resize(), 100);
+      requestAnimationFrame(() => map.resize());
     }
 
-    // Wait for MapLibre CDN script
-    let attempts = 0;
-    const waitML = setInterval(() => {
-      if (window.maplibregl || ++attempts > 100) {
-        clearInterval(waitML);
-        bootMap();
-      }
-    }, 50);
+    bootMap();
   </script>
 </NovelcrafterLayout>

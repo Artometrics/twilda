@@ -86,7 +86,7 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
 ---
 
 <NovelcrafterLayout title="GOTHA · Twilda">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" crossorigin="" />
+  <!-- MapLibre CSS imported from the client script -->
 
   <!-- Liquid-glass SVG filter -->
   <svg width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden;">
@@ -126,6 +126,11 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
             persons.length === 0 ? (
               <div class="gotha-empty">
                 <p>No people yet.<br />Add yourself first, then build your tree generation by generation.</p>
+                {dbReady && (
+                  <button class="gotha-btn gotha-btn--primary" type="button" data-load-sample style="margin-top:12px;width:100%;justify-content:center;">
+                    Load Habsburg sample
+                  </button>
+                )}
               </div>
             ) : (
               persons.map((p: any) => (
@@ -194,6 +199,7 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
       <!-- CENTER — map (birth pins + migrations) -->
       <div class="gotha-map-wrap">
         <div class="gotha-map" id="gotha-map"></div>
+        <div class="gotha-map-veil" aria-hidden="true"></div>
 
         <!-- SVG family tree overlay on mobile / detail -->
         {
@@ -243,8 +249,13 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
             <div class="gotha-empty">
               <p style="font-family:var(--gt-serif);font-size:22px;margin:0 0 10px;color:var(--gt-text);">GOTHA</p>
               <p>Inspired by the Almanach de Gotha — the old German reference for European royal lineages — this is your personal genealogy and mythological ancestry explorer.</p>
-              <p style="margin-top:12px;">Add yourself to begin. Then add parents, grandparents, and connect them to places on the map and figures in Atlas history.</p>
+              <p style="margin-top:12px;">Add yourself to begin — or load the Habsburg sample to see how the map and tree work together.</p>
               <p style="margin-top:12px;">Each person shows their western zodiac, Celtic Ogham tree, Chinese year animal, and family name origin via Wikidata.</p>
+              {dbReady && (
+                <button class="gotha-btn gotha-btn--primary" type="button" data-load-sample style="margin-top:14px;justify-content:center;width:100%;">
+                  Load Habsburg sample
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -368,9 +379,15 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.min.js" crossorigin=""></script>
-  <script define:vars={{ mapPins, focusId }}>
-    // Person navigation
+  <script type="application/json" id="gotha-boot-data" is:inline set:html={JSON.stringify({ mapPins, focusId })} />
+  <script>
+    import maplibregl from "maplibre-gl";
+    import "maplibre-gl/dist/maplibre-gl.css";
+    import { darkBasemapStyle } from "@/lib/atlas/basemap";
+
+    const raw = document.getElementById("gotha-boot-data")?.textContent ?? "{}";
+    const { mapPins, focusId } = JSON.parse(raw);
+
     document.querySelectorAll("[data-person]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-person");
@@ -382,16 +399,39 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
       });
     });
 
-    // Add form toggle
     const addForm = document.getElementById("add-person-form");
     document.querySelector("[data-toggle-add]")?.addEventListener("click", () => {
-      addForm.style.display = addForm.style.display === "none" ? "block" : "none";
+      if (addForm) addForm.style.display = addForm.style.display === "none" ? "block" : "none";
     });
     document.querySelector("[data-cancel-add]")?.addEventListener("click", () => {
-      addForm.style.display = "none";
+      if (addForm) addForm.style.display = "none";
     });
 
-    // Add person form submit
+    async function loadSample(btn) {
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Loading sample…";
+      }
+      try {
+        const res = await fetch("/api/gotha/sample", { method: "POST" });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Failed to load sample");
+        const url = new URL(window.location.href);
+        if (json.focusId) url.searchParams.set("p", json.focusId);
+        window.location.href = url.toString();
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Failed to load sample");
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Load Habsburg sample";
+        }
+      }
+    }
+
+    document.querySelectorAll("[data-load-sample]").forEach((btn) => {
+      btn.addEventListener("click", () => loadSample(btn));
+    });
+
     document.querySelector("[data-add-form]")?.addEventListener("submit", async (e) => {
       e.preventDefault();
       const form = e.target;
@@ -421,7 +461,6 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
       }
     });
 
-    // Add relation form
     document.querySelector("[data-rel-form]")?.addEventListener("submit", async (e) => {
       e.preventDefault();
       const form = e.target;
@@ -446,7 +485,6 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
       }
     });
 
-    // Surname lookup
     document.querySelectorAll("[data-lookup-surname]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const name = btn.getAttribute("data-lookup-surname");
@@ -465,25 +503,22 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
       });
     });
 
-    // Map
     function bootMap() {
-      const ML = window.maplibregl;
-      if (!ML) { setTimeout(bootMap, 40); return; }
-      const el = document.getElementById("gotha-map");
-      if (!el || el._booted) return;
-      el._booted = true;
+      const host = document.getElementById("gotha-map");
+      if (!host || host.dataset.booted === "1") return;
+      host.dataset.booted = "1";
 
-      const map = new ML.Map({
-        container: el,
-        style: {
-          version: 8,
-          sources: {
-            osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, attribution: "&copy; OpenStreetMap contributors" },
-          },
-          layers: [{ id: "osm", type: "raster", source: "osm" }],
-        },
-        center: [0, 30],
-        zoom: 2,
+      const map = new maplibregl.Map({
+        container: host,
+        style: darkBasemapStyle,
+        center: mapPins.length === 1
+          ? [mapPins[0].birth_lng, mapPins[0].birth_lat]
+          : [16.37, 48.21],
+        zoom: mapPins.length ? 4 : 2.2,
+      });
+
+      map.on("error", (e) => {
+        console.warn("[gotha map]", e?.error ?? e);
       });
 
       const bounds = [];
@@ -491,31 +526,32 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
         const isFocus = p.id === focusId;
         const el2 = document.createElement("div");
         el2.innerHTML = `<div style="width:${isFocus ? 18 : 12}px;height:${isFocus ? 18 : 12}px;border-radius:50%;background:#78c97a;border:2px solid #0d0f0e;box-shadow:0 0 0 ${isFocus ? 3 : 2}px rgba(120,201,122,0.4);cursor:pointer;" title="${p.name}"></div>`;
-        el2.addEventListener("click", () => {
+        const pin = el2.firstElementChild;
+        pin?.addEventListener("click", () => {
           const url = new URL(window.location.href);
           url.searchParams.set("p", p.id);
           window.location.href = url.toString();
         });
-        new ML.Marker({ element: el2.firstElementChild, anchor: "center" })
+        new maplibregl.Marker({ element: pin, anchor: "center" })
           .setLngLat([p.birth_lng, p.birth_lat])
           .addTo(map);
         bounds.push([p.birth_lng, p.birth_lat]);
       });
 
-      if (bounds.length > 1) {
-        const bb = bounds.reduce(
-          (b, p) => [[Math.min(b[0][0],p[0]),Math.min(b[0][1],p[1])],[Math.max(b[1][0],p[0]),Math.max(b[1][1],p[1])]],
-          [[180,90],[-180,-90]]
-        );
-        map.fitBounds(bb, { padding: 60, maxZoom: 8 });
-      }
+      map.on("load", () => {
+        map.resize();
+        if (bounds.length > 1) {
+          const bb = bounds.reduce(
+            (b, p) => [[Math.min(b[0][0], p[0]), Math.min(b[0][1], p[1])], [Math.max(b[1][0], p[0]), Math.max(b[1][1], p[1])]],
+            [[180, 90], [-180, -90]],
+          );
+          map.fitBounds(bb, { padding: 60, maxZoom: 8 });
+        }
+      });
 
-      setTimeout(() => map.resize(), 100);
+      requestAnimationFrame(() => map.resize());
     }
 
-    let attempts = 0;
-    const waitML = setInterval(() => {
-      if (window.maplibregl || ++attempts > 100) { clearInterval(waitML); bootMap(); }
-    }, 50);
+    bootMap();
   </script>
 </NovelcrafterLayout>

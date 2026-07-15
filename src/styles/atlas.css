@@ -28,20 +28,21 @@
 /* ── MapLibre host ───────────────────────────────────────────────────────── */
 .atlas-stage { position: absolute; inset: 0; }
 
+/* Never put CSS filter/opacity/transform on the MapLibre host — WebGL goes black. */
 .atlas-map {
   position: absolute; inset: 0; z-index: 1;
-  filter: sepia(0.45) contrast(0.92) brightness(0.9) saturate(0.8);
 }
 
 /* MapLibre canvas fill */
 .atlas-map canvas { display: block; }
 
-/* ── Atmospheric veil ────────────────────────────────────────────────────── */
+/* ── Atmospheric veil (sepia/warm look lives here, not on the GL canvas) ─── */
 .atlas-map-veil {
   position: absolute; inset: 0; z-index: 2;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(15,12,9,0.4) 100%);
-  mix-blend-mode: multiply;
+  background:
+    radial-gradient(ellipse at center, transparent 35%, rgba(15,12,9,0.55) 100%),
+    linear-gradient(180deg, rgba(201,162,39,0.06), transparent 40%, rgba(15,12,9,0.25));
 }
 
 /* ── Liquid-glass utility ────────────────────────────────────────────────── */
@@ -412,9 +413,15 @@
 .gotha-person__meta strong { display: block; font-size: 13px; font-weight: 600; }
 .gotha-person__meta span { font-size: 11px; color: var(--gt-dim); }
 
-/* Center — map */
+/* Center — map (no CSS filter on MapLibre host — blanks WebGL) */
 .gotha-map-wrap { position: relative; min-height: 400px; background: #0d0f0e; }
-.gotha-map { position: absolute; inset: 0; z-index: 1; filter: sepia(0.3) contrast(0.9) brightness(0.8) saturate(0.7); }
+.gotha-map { position: absolute; inset: 0; z-index: 1; }
+.gotha-map-veil {
+  position: absolute; inset: 0; z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(13,15,14,0.45) 100%);
+}
+.gotha-map canvas { display: block; }
 
 /* Right — detail panel */
 .gotha-detail {
