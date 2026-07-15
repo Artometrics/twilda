@@ -288,6 +288,7 @@
 .nc-input:focus,
 .nc-select:focus {
   outline: none;
+
   border-color: var(--color-secondary-500);
 }
 .nc-input::placeholder {
@@ -550,6 +551,7 @@
 }
 .nc-textarea:focus {
   outline: none;
+
   border-color: var(--color-secondary-500);
 }
 .nc-modal-backdrop {
@@ -1278,6 +1280,15 @@
 .nc-ms-scene[contenteditable="true"]:focus {
   outline: none;
 }
+
+.nc input:focus-visible,
+.nc textarea:focus-visible,
+.nc select:focus-visible,
+.nc button:focus-visible {
+  outline: 2px solid #c9a227;
+  outline-offset: 2px;
+}
+
 .nc-ms-empty {
   text-align: center;
   color: var(--nc-text-faint);
@@ -1518,4 +1529,49 @@
     border-left: none;
     border-right: none;
   }
+}
+
+.nc-book__badge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #c9a227;
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  border-radius: 999px;
+  padding: 1px 6px;
+  vertical-align: middle;
+}
+
+.nc-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.nc-welcome__card {
+  max-width: 420px;
+  background: #161210;
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  border-radius: 16px;
+  padding: 24px;
+  color: #f4ebe0;
+}
+.nc-welcome__card h2 {
+  margin: 0 0 12px;
+  font-size: 22px;
+}
+.nc-welcome__card ol {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  line-height: 1.5;
+  color: #cbbba3;
+}
+.nc-welcome__card a {
+  color: #c9a227;
 }

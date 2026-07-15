@@ -19,9 +19,24 @@ const statusLabel =
     : frontmatter.status === "complete"
       ? "Complete"
       : "Draft";
+const articleLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: frontmatter.title ?? frontmatter.page,
+  description: frontmatter.description,
+  datePublished: frontmatter.pubDate,
+  author: team?.data?.name
+    ? { "@type": "Person", name: team.data.name }
+    : { "@type": "Organization", name: "Artometrics" },
+};
 ---
 
-<BaseLayout>
+<BaseLayout
+  title={`${frontmatter.title ?? frontmatter.page} · Research · Twilda`}
+  description={frontmatter.description ?? "Twilda research"}
+  canonicalPath={Astro.url.pathname}
+  jsonLd={articleLd}
+>
   <section>
     <Wrapper variant="standard" class="py-32">
       <div

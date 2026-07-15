@@ -24,7 +24,11 @@ Create project **`twilda`** under org **Artometrics** (separate from other apps)
 1. Copy URL + keys into `.env` and Netlify env.
 2. Enable Auth providers when wiring login/signup.
 3. RLS on for every table before production anon use.
-4. Run database schema: copy all of `supabase/migrations/001_initial_schema.sql` into Supabase **SQL Editor** and **Run** (idempotent; see `supabase/migrations/README.md`).
+4. Run database schema in Supabase **SQL Editor** (idempotent; see `supabase/migrations/README.md`):
+   - `001_initial_schema.sql` — novels / profiles / subscriptions
+   - `003_novel_drafts.sql` — drafts / timelines
+   - **`004_atlas_schema.sql` — required for Atlas user tables + GOTHA**
+   - **`005_atlas_museum.sql` — required for My Museum collections + enrich cache**
 
 ```bash
 npx supabase gen types typescript --project-id <ref> > src/lib/supabase/database.types.ts

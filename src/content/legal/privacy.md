@@ -22,7 +22,7 @@ Data is stored in Supabase (PostgreSQL) with row-level security. Access is restr
 
 ### Third parties
 
-We use Supabase (auth and database), Netlify (hosting), and Stripe (billing). AI requests may be processed via Netlify AI Gateway. Each provider operates under its own privacy terms.
+We use Supabase (auth and database), Netlify (hosting), and Stripe (billing). AI requests may be processed via Netlify AI Gateway. Atlas enrichment may fetch public data from Wikidata, Wikipedia, Wikimedia Commons, and The Metropolitan Museum of Art Collection API; we store source URLs and license metadata with saved museum items. Each provider operates under its own privacy terms.
 
 ### Your rights
 

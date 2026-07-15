@@ -9,10 +9,10 @@ export const prerender = false;
 
 const plan = Astro.url.searchParams.get("plan") ?? "free";
 const email = Astro.url.searchParams.get("email") ?? "";
-const redirect = plan === "free" ? "/novels/" : `/account/billing/?plan=${plan}`;
+const redirect = plan === "free" ? "/novels/?welcome=1" : `/account/billing/?plan=${plan}`;
 ---
 
-<BaseLayout hideNav={true} hideFooter={true}>
+<BaseLayout hideNav={true} hideFooter={true} title="Sign up · Twilda" description="Create a Twilda account." canonicalPath="/forms/signup/" noindex={true}>
   <section>
     <Wrapper
       variant="standard"
@@ -119,7 +119,7 @@ const redirect = plan === "free" ? "/novels/" : `/account/billing/?plan=${plan}`
       const supabase = createSupabaseBrowserClient();
       const plan = data.get("plan")?.toString() ?? "free";
       const afterAuth =
-        plan === "free" ? "/novels/" : `/account/billing/?plan=${plan}`;
+        plan === "free" ? "/novels/?welcome=1" : `/account/billing/?plan=${plan}`;
       const redirectTo = `${window.location.origin}/auth/callback/?next=${encodeURIComponent(afterAuth)}`;
       const { data: signUpData, error } = await supabase.auth.signUp({
         email,

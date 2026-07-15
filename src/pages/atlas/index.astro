@@ -4,19 +4,14 @@ export const prerender = false;
 import NovelcrafterLayout from "@/layouts/NovelcrafterLayout.astro";
 import NovelsTopbar from "@/components/novels/NovelsTopbar.astro";
 import "@/styles/atlas.css";
+import { atlasScenes, getEntity, getScene } from "@/lib/atlas/data";
 import {
-  atlasEntities,
-  atlasScenes,
-  countByKind,
-  getEntity,
-  getScene,
-  peerRanking,
-  relatedEntities,
-  sceneCallouts,
-  timelineBounds,
-  RELATION_LABELS,
-} from "@/lib/atlas/data";
-import type { AtlasEntity } from "@/lib/atlas/types";
+  focusCardPayload,
+  searchIndex,
+  serializeCallouts,
+  timelineMarks,
+} from "@/lib/atlas/focus-payload";
+import { timelineBounds } from "@/lib/atlas/data";
 import { requireAuth } from "@/lib/auth/guards";
 
 const auth = requireAuth(Astro);
@@ -27,49 +22,41 @@ const sceneParam = Astro.url.searchParams.get("scene") ?? "vienna-1913";
 const scene = getScene(sceneParam) ?? atlasScenes[0];
 const focusId = Astro.url.searchParams.get("e") ?? scene.focusId;
 const focus = getEntity(focusId) ?? getEntity(scene.focusId)!;
-const related = relatedEntities(focus.id);
-const peers = peerRanking(focus.id);
 const bounds = timelineBounds();
-const counts = countByKind();
-const callouts = sceneCallouts(scene);
+const card = focusCardPayload(focus.id);
+const callouts = serializeCallouts(scene.id);
 
-const { data: subscription } = await supabase
+// Credits are non-critical for Atlas — don't block first paint on a slow DB hop.
+const creditsPromise = supabase
   .from("subscriptions")
   .select("ai_credits_remaining, ai_credits_monthly")
   .eq("user_id", user.id)
-  .maybeSingle();
+  .maybeSingle()
+  .then((r) => r.data)
+  .catch(() => null);
 
-function yearsLabel(e: AtlasEntity): string {
-  if (e.startYear != null && e.endYear != null) return `${e.startYear}–${e.endYear}`;
-  if (e.startYear != null) return e.startYear < 0 ? `${Math.abs(e.startYear)} BCE` : String(e.startYear);
-  return "";
-}
-
-const totalKinds = Object.values(counts).reduce((a, b) => a + b, 0);
+const subscription = await Promise.race([
+  creditsPromise,
+  new Promise<null>((resolve) => setTimeout(() => resolve(null), 120)),
+]);
 
 const clientPayload = {
-  entities: atlasEntities,
-  scenes: atlasScenes,
   sceneId: scene.id,
   focusId: focus.id,
   bounds,
-  callouts: callouts.map((c) => ({
-    id: c.id,
-    kind: c.kind,
-    name: c.name,
-    calloutLabel: c.calloutLabel ?? c.name,
-    portraitUrl: c.portraitUrl ?? null,
-    coords: c.coords ?? null,
-  })),
+  callouts,
   center: scene.center,
   zoom: scene.zoom,
   badge: scene.badge,
   year: scene.year,
+  search: searchIndex(),
+  timeline: timelineMarks(),
+  card,
 };
 ---
 
 <NovelcrafterLayout title="Atlas · Twilda">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" crossorigin="" />
+  <!-- MapLibre CSS is imported from the client script below -->
 
   <!-- SVG liquid-glass displacement filter (Chromium bonus) -->
   <svg width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden;">
@@ -107,89 +94,109 @@ const clientPayload = {
         }
       </div>
 
-      <!-- Search -->
+      <!-- Kind filters -->
+      <div class="atlas-hud atlas-kind-filters" role="group" aria-label="Filter by kind">
+        {
+          [
+            ["all", "All"],
+            ["person", "People"],
+            ["place", "Places"],
+            ["work", "Artifacts"],
+            ["deity", "Gods"],
+            ["concept", "Concepts"],
+          ].map(([id, label]) => (
+            <button type="button" class:list={["atlas-kind-btn", { "is-active": id === "all" }]} data-kind-filter={id}>
+              {label}
+            </button>
+          ))
+        }
+      </div>
+
+      <!-- Search — results rendered client-side from compact index -->
       <div class="atlas-hud atlas-search-float">
-        <input type="search" placeholder="Search people, places, gods…" data-atlas-search />
-        <div class="atlas-results" data-atlas-results>
-          {
-            atlasEntities.map((e) => (
-              <button
-                type="button"
-                data-entity={e.id}
-                data-search={`${e.name} ${e.summary} ${e.tags.join(" ")} ${(e.aliases ?? []).join(" ")}`.toLowerCase()}
-              >
-                <span class="atlas-results__kind">{e.kind}</span>
-                {e.name}
-              </button>
-            ))
-          }
-        </div>
+        <label class="sr-only" for="atlas-search-input">Search Atlas</label>
+        <input
+          id="atlas-search-input"
+          type="search"
+          placeholder="Search people, places, artifacts…"
+          data-atlas-search
+          aria-label="Search people, places, artifacts"
+        />
+        <div class="atlas-results" data-atlas-results></div>
       </div>
 
       <!-- Period badge -->
       <div class="atlas-badge" data-atlas-badge>{scene.badge}</div>
 
-      <!-- Detail card -->
+      <!-- Detail card (updated via soft-nav without remounting the map) -->
       <aside class="atlas-card glass" data-atlas-card>
-        <p class="atlas-card__kind">{focus.kind}</p>
-        <h1 class="atlas-card__title">{focus.name}</h1>
-        {yearsLabel(focus) && <p class="atlas-card__years">{yearsLabel(focus)}</p>}
-        <p class="atlas-card__summary">{focus.summary}</p>
-        <div>{focus.tags.map((t) => <span class="atlas-chip">{t}</span>)}</div>
-
-        {
-          peers.length > 0 && (
-            <div class="atlas-card__section">
-              <h3>Ranked among peers</h3>
-              {peers.map((p) => (
-                <button class="atlas-rel" type="button" data-entity={p.id}>
-                  <div class="atlas-rel__meta">#{p.rank}</div>
-                  <div class="atlas-rel__name">{p.name}</div>
-                </button>
-              ))}
-            </div>
-          )
-        }
-
-        {
-          focus.provenance && focus.provenance.length > 0 && (
-            <div class="atlas-card__section">
-              <h3>Provenance</h3>
-              {focus.provenance.map((p) => {
-                const place = getEntity(p.placeId);
-                return (
+        <p class="atlas-card__kind">{card.focus.kind}</p>
+        <h1 class="atlas-card__title">{card.focus.name}</h1>
+        {card.focus.years && <p class="atlas-card__years">{card.focus.years}</p>}
+        <p class="atlas-card__summary">{card.focus.summary}</p>
+        <div data-atlas-tags>{card.focus.tags.map((t) => <span class="atlas-chip">{t}</span>)}</div>
+        <div class="atlas-card__actions" data-atlas-actions>
+          <button class="atlas-btn" type="button" data-save-museum>Save to My Museum</button>
+          {card.focus.sourceUrl && (
+            <a class="atlas-btn" href={card.focus.sourceUrl} target="_blank" rel="noopener noreferrer">Open source</a>
+          )}
+          <a class="atlas-btn" href="/account/#museum-heading">My Museum</a>
+        </div>
+        <p class="atlas-card__sources" data-atlas-sources>
+          {[
+            card.focus.license && `License: ${card.focus.license}`,
+            card.focus.attribution && `Credit: ${card.focus.attribution}`,
+            card.focus.wikidataId && `Wikidata ${card.focus.wikidataId}`,
+            card.focus.metObjectId && `Met ${card.focus.metObjectId}`,
+          ]
+            .filter(Boolean)
+            .join(" · ") || "Curated Twilda seed"}
+        </p>
+        <div data-atlas-card-body>
+          {
+            card.peers.length > 0 && (
+              <div class="atlas-card__section">
+                <h3>Ranked among peers</h3>
+                {card.peers.map((p) => (
+                  <button class="atlas-rel" type="button" data-entity={p.id}>
+                    <div class="atlas-rel__meta">#{p.rank}</div>
+                    <div class="atlas-rel__name">{p.name}</div>
+                  </button>
+                ))}
+              </div>
+            )
+          }
+          {
+            card.focus.provenance.length > 0 && (
+              <div class="atlas-card__section">
+                <h3>Provenance</h3>
+                {card.focus.provenance.map((p) => (
                   <button class="atlas-rel" type="button" data-entity={p.placeId}>
                     <div class="atlas-rel__meta">{p.year}</div>
-                    <div class="atlas-rel__name">{place?.name ?? p.placeId}</div>
+                    <div class="atlas-rel__name">{p.placeName}</div>
                     <div class="atlas-rel__meta">{p.note}</div>
                   </button>
-                );
-              })}
-            </div>
-          )
-        }
-
-        <div class="atlas-card__section">
-          <h3>Connected · who / what was near</h3>
-          {
-            related.slice(0, 10).map(({ link, entity, direction }) => (
-              <button class="atlas-rel" type="button" data-entity={entity.id}>
-                <div class="atlas-rel__meta">
-                  {direction === "out" ? RELATION_LABELS[link.rel] : `← ${RELATION_LABELS[link.rel]}`}
-                  {link.year != null && ` · ${link.year < 0 ? Math.abs(link.year) + " BCE" : link.year}${link.yearEnd ? `–${link.yearEnd}` : ""}`}
-                </div>
-                <div class="atlas-rel__name">{entity.name} <span style="opacity:0.5;font-weight:400">· {entity.kind}</span></div>
-                {link.note && <div class="atlas-rel__meta">{link.note}</div>}
-              </button>
-            ))
+                ))}
+              </div>
+            )
           }
+          <div class="atlas-card__section">
+            <h3>Connected · who / what was near</h3>
+            {
+              card.related.map((r) => (
+                <button class="atlas-rel" type="button" data-entity={r.id}>
+                  <div class="atlas-rel__meta">{r.meta}</div>
+                  <div class="atlas-rel__name">{r.name} <span style="opacity:0.5;font-weight:400">· {r.kind}</span></div>
+                  {r.note && <div class="atlas-rel__meta">{r.note}</div>}
+                </button>
+              ))
+            }
+          </div>
         </div>
-        <p class="atlas-hint">
-          {totalKinds} entries across {Object.entries(counts).filter(([,v])=>v>0).map(([k,v])=>`${v} ${k}s`).join(", ")}.
-        </p>
+        <p class="atlas-hint" data-atlas-hint>{card.hint}</p>
       </aside>
 
-      <!-- Timeline dock -->
+      <!-- Timeline dock — marks filled client-side from compact index -->
       <div class="atlas-dock">
         <div class="atlas-dock__inner glass">
           <div class="atlas-dock__top">
@@ -200,25 +207,8 @@ const clientPayload = {
               <input type="range" min={bounds.min} max={bounds.max} value={scene.year} data-timeline-year />
             </label>
           </div>
-          <div class="atlas-dock__track">
+          <div class="atlas-dock__track" data-timeline-track>
             <div class="atlas-dock__range" data-timeline-range></div>
-            {
-              atlasEntities
-                .filter((e) => e.startYear != null && (e.kind === "person" || e.kind === "deity" || e.kind === "event"))
-                .map((e) => {
-                  const pct = ((e.startYear! - bounds.min) / (bounds.max - bounds.min)) * 100;
-                  const color = e.kind === "deity" ? "#c9a227" : e.kind === "event" ? "#8a9bb8" : "var(--at-gold)";
-                  return (
-                    <button
-                      class="atlas-dock__mark"
-                      type="button"
-                      title={`${e.name} (${e.startYear})`}
-                      data-entity={e.id}
-                      style={`left:${pct}%;background:${color};`}
-                    />
-                  );
-                })
-            }
           </div>
           <div class="atlas-dock__axis">
             <span>{bounds.min < 0 ? Math.abs(bounds.min) + " BCE" : bounds.min}</span>
@@ -230,70 +220,345 @@ const clientPayload = {
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.min.js" crossorigin=""></script>
-  <script define:vars={{ clientPayload }}>
-    const PIN_COLORS = {
-      person: "#c4a574",
-      deity: "#e8b860",
-      place: "#7d9b8a",
-      work: "#d4a090",
-      event: "#8a9bb8",
-      idea: "#a090b8",
-      dynasty: "#9b8a70",
-      concept: "#7a9ba0",
-    };
+  <script type="application/json" id="atlas-boot-data" is:inline set:html={JSON.stringify(clientPayload)} />
+  <script>
+    import maplibregl from "maplibre-gl";
+    import "maplibre-gl/dist/maplibre-gl.css";
+    import { darkBasemapStyle } from "@/lib/atlas/basemap";
 
-    function go(opts) {
-      const url = new URL(window.location.href);
-      if (opts.scene) url.searchParams.set("scene", opts.scene);
-      if (opts.e) url.searchParams.set("e", opts.e);
-      window.location.href = url.toString();
+    const raw = document.getElementById("atlas-boot-data")?.textContent ?? "{}";
+    /** @type {any} */
+    let state = JSON.parse(raw);
+
+    /** @type {maplibregl.Map | null} */
+    let map = null;
+    /** @type {maplibregl.Marker[]} */
+    let markers = [];
+    let navBusy = false;
+
+    function esc(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
     }
 
-    document.querySelectorAll("[data-scene]").forEach((btn) => {
-      btn.addEventListener("click", () => go({ scene: btn.getAttribute("data-scene") }));
-    });
+    function yearStr(y) {
+      return y < 0 ? `${Math.abs(y)} BCE` : `${y} CE`;
+    }
 
-    document.querySelectorAll("[data-entity]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const id = el.getAttribute("data-entity");
-        if (id) go({ e: id, scene: clientPayload.sceneId });
+    function setUrl({ scene, e }) {
+      const url = new URL(window.location.href);
+      if (scene) url.searchParams.set("scene", scene);
+      if (e) url.searchParams.set("e", e);
+      history.pushState({ scene: url.searchParams.get("scene"), e: url.searchParams.get("e") }, "", url);
+    }
+
+    function renderCard(card) {
+      const root = document.querySelector("[data-atlas-card]");
+      if (!root || !card) return;
+      const kind = root.querySelector(".atlas-card__kind");
+      const title = root.querySelector(".atlas-card__title");
+      const years = root.querySelector(".atlas-card__years");
+      const summary = root.querySelector(".atlas-card__summary");
+      const tags = root.querySelector("[data-atlas-tags]");
+      const body = root.querySelector("[data-atlas-card-body]");
+      const hint = root.querySelector("[data-atlas-hint]");
+      const sources = root.querySelector("[data-atlas-sources]");
+      const actions = root.querySelector("[data-atlas-actions]");
+
+      if (kind) kind.textContent = card.focus.kind;
+      if (title) title.textContent = card.focus.name;
+      if (summary) summary.textContent = card.focus.summary;
+      if (hint) hint.textContent = card.hint;
+
+      if (years) {
+        if (card.focus.years) {
+          years.hidden = false;
+          years.textContent = card.focus.years;
+        } else {
+          years.hidden = true;
+          years.textContent = "";
+        }
+      }
+
+      if (tags) {
+        tags.innerHTML = card.focus.tags.map((t) => `<span class="atlas-chip">${esc(t)}</span>`).join("");
+      }
+
+      if (sources) {
+        const bits = [
+          card.focus.license && `License: ${card.focus.license}`,
+          card.focus.attribution && `Credit: ${card.focus.attribution}`,
+          card.focus.wikidataId && `Wikidata ${card.focus.wikidataId}`,
+          card.focus.metObjectId && `Met ${card.focus.metObjectId}`,
+        ].filter(Boolean);
+        sources.textContent = bits.join(" · ") || "Curated Twilda seed";
+      }
+
+      if (actions) {
+        const open = card.focus.sourceUrl
+          ? `<a class="atlas-btn" href="${esc(card.focus.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open source</a>`
+          : "";
+        actions.innerHTML = `<button class="atlas-btn" type="button" data-save-museum>Save to My Museum</button>${open}<a class="atlas-btn" href="/account/#museum-heading">My Museum</a>`;
+      }
+
+      if (body) {
+        let html = "";
+        if (card.peers?.length) {
+          html += `<div class="atlas-card__section"><h3>Ranked among peers</h3>`;
+          for (const p of card.peers) {
+            html += `<button class="atlas-rel" type="button" data-entity="${esc(p.id)}"><div class="atlas-rel__meta">#${esc(p.rank)}</div><div class="atlas-rel__name">${esc(p.name)}</div></button>`;
+          }
+          html += `</div>`;
+        }
+        if (card.focus.provenance?.length) {
+          html += `<div class="atlas-card__section"><h3>Provenance</h3>`;
+          for (const p of card.focus.provenance) {
+            html += `<button class="atlas-rel" type="button" data-entity="${esc(p.placeId)}"><div class="atlas-rel__meta">${esc(p.year)}</div><div class="atlas-rel__name">${esc(p.placeName)}</div><div class="atlas-rel__meta">${esc(p.note)}</div></button>`;
+          }
+          html += `</div>`;
+        }
+        html += `<div class="atlas-card__section"><h3>Connected · who / what was near</h3>`;
+        for (const r of card.related || []) {
+          html += `<button class="atlas-rel" type="button" data-entity="${esc(r.id)}"><div class="atlas-rel__meta">${esc(r.meta)}</div><div class="atlas-rel__name">${esc(r.name)} <span style="opacity:0.5;font-weight:400">· ${esc(r.kind)}</span></div>${r.note ? `<div class="atlas-rel__meta">${esc(r.note)}</div>` : ""}</button>`;
+        }
+        html += `</div>`;
+        body.innerHTML = html;
+      }
+    }
+
+    let kindFilter = "all";
+    function applyKindFilter() {
+      document.querySelectorAll("[data-kind-filter]").forEach((btn) => {
+        btn.classList.toggle("is-active", btn.getAttribute("data-kind-filter") === kindFilter);
       });
+      paintCallouts(state.callouts, state.focusId, { fit: false });
+    }
+
+    async function saveToMuseum() {
+      const f = state.card?.focus;
+      if (!f) return;
+      try {
+        const res = await fetch("/api/account/museum", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            seedEntityId: f.id,
+            title: f.name,
+            kind: f.kind,
+            summary: f.summary,
+            portraitUrl: f.portraitUrl,
+            sourceUrl: f.sourceUrl,
+            license: f.license,
+            attribution: f.attribution,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Save failed");
+        alert("Saved to My Museum");
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Save failed");
+      }
+    }
+
+    function calloutHtml(c, isFocus) {
+      const label = c.calloutLabel || c.name;
+      const focusClass = isFocus ? " is-focus" : "";
+      const noPhoto = ["place", "concept", "dynasty", "idea"].includes(c.kind);
+      if (noPhoto || !c.portraitUrl) {
+        const cls = `atlas-callout atlas-callout--${c.kind}${focusClass}`;
+        if (noPhoto) {
+          return `<div class="${cls}" data-id="${c.id}">
+            <div class="atlas-callout__label">${esc(label)}</div>
+            <div class="atlas-callout__tail"></div>
+          </div>`;
+        }
+        return `<div class="atlas-callout${focusClass}" data-id="${c.id}">
+          <div class="atlas-callout__photo"><div class="atlas-callout__fallback">${esc(label.charAt(0))}</div></div>
+          <div class="atlas-callout__label">${esc(label)}</div>
+          <div class="atlas-callout__tail"></div>
+        </div>`;
+      }
+      return `<div class="atlas-callout${focusClass}" data-id="${c.id}">
+        <div class="atlas-callout__photo">
+          <img src="${esc(c.portraitUrl)}" alt="" loading="lazy"
+            onerror="this.style.display='none';this.nextElementSibling?.removeAttribute('hidden');" />
+          <div class="atlas-callout__fallback" hidden>${esc(label.charAt(0))}</div>
+        </div>
+        <div class="atlas-callout__label">${esc(label)}</div>
+        <div class="atlas-callout__tail"></div>
+      </div>`;
+    }
+
+    function clearMarkers() {
+      markers.forEach((m) => m.remove());
+      markers = [];
+    }
+
+    function paintCallouts(callouts, focusId, { fit = true } = {}) {
+      if (!map) return;
+      clearMarkers();
+      const boundsArr = [];
+      for (const c of callouts) {
+        if (!c.coords) continue;
+        if (kindFilter !== "all" && c.kind !== kindFilter) continue;
+        const isFocus = c.id === focusId;
+        const wrap = document.createElement("div");
+        wrap.innerHTML = calloutHtml(c, isFocus);
+        const inner = wrap.firstElementChild;
+        inner?.addEventListener("click", () => selectEntity(c.id));
+        const marker = new maplibregl.Marker({ element: inner, anchor: "bottom" })
+          .setLngLat([c.coords.lng, c.coords.lat])
+          .addTo(map);
+        markers.push(marker);
+        boundsArr.push([c.coords.lng, c.coords.lat]);
+      }
+      if (fit && boundsArr.length > 1) {
+        const b = boundsArr.reduce(
+          (acc, p) => [[Math.min(acc[0][0], p[0]), Math.min(acc[0][1], p[1])], [Math.max(acc[1][0], p[0]), Math.max(acc[1][1], p[1])]],
+          [[180, 90], [-180, -90]],
+        );
+        map.fitBounds(b, { padding: 90, maxZoom: 14 });
+      }
+    }
+
+    function setActiveSceneButton(sceneId) {
+      document.querySelectorAll("[data-scene]").forEach((btn) => {
+        btn.classList.toggle("is-active", btn.getAttribute("data-scene") === sceneId);
+      });
+    }
+
+    async function selectEntity(id) {
+      if (!id || navBusy) return;
+      navBusy = true;
+      try {
+        setUrl({ scene: state.sceneId, e: id });
+        const res = await fetch(`/api/atlas/state?mode=focus&e=${encodeURIComponent(id)}`);
+        if (!res.ok) throw new Error("focus failed");
+        const data = await res.json();
+        state.focusId = id;
+        state.card = data.card;
+        renderCard(data.card);
+        // Refresh focus styling on existing markers without remounting map
+        paintCallouts(state.callouts, id, { fit: false });
+      } catch (err) {
+        console.warn("[atlas]", err);
+        window.location.search = `?scene=${encodeURIComponent(state.sceneId)}&e=${encodeURIComponent(id)}`;
+      } finally {
+        navBusy = false;
+      }
+    }
+
+    async function selectScene(sceneId) {
+      if (!sceneId || navBusy) return;
+      navBusy = true;
+      try {
+        const keepE = new URL(window.location.href).searchParams.get("e");
+        const qs = new URLSearchParams({ mode: "scene", scene: sceneId });
+        if (keepE) qs.set("e", keepE);
+        const res = await fetch(`/api/atlas/state?${qs}`);
+        if (!res.ok) throw new Error("scene failed");
+        const data = await res.json();
+        state.sceneId = data.scene.id;
+        state.focusId = data.card.focus.id;
+        state.callouts = data.callouts;
+        state.center = data.scene.center;
+        state.zoom = data.scene.zoom;
+        state.badge = data.scene.badge;
+        state.year = data.scene.year;
+        state.card = data.card;
+        setUrl({ scene: data.scene.id, e: data.card.focus.id });
+        setActiveSceneButton(data.scene.id);
+        const badge = document.querySelector("[data-atlas-badge]");
+        if (badge) badge.textContent = data.scene.badge;
+        const yearInput = document.querySelector("[data-timeline-year]");
+        if (yearInput) {
+          yearInput.value = String(data.scene.year);
+          updateTimeline(data.scene.year);
+        }
+        renderCard(data.card);
+        if (map) {
+          map.jumpTo({ center: [data.scene.center.lng, data.scene.center.lat], zoom: data.scene.zoom });
+          paintCallouts(data.callouts, data.card.focus.id, { fit: true });
+        }
+      } catch (err) {
+        console.warn("[atlas]", err);
+        window.location.search = `?scene=${encodeURIComponent(sceneId)}`;
+      } finally {
+        navBusy = false;
+      }
+    }
+
+    // Delegated clicks (card / timeline / search results)
+    document.querySelector(".atlas")?.addEventListener("click", (e) => {
+      const t = e.target;
+      if (!(t instanceof Element)) return;
+      if (t.closest("[data-save-museum]")) {
+        e.preventDefault();
+        saveToMuseum();
+        return;
+      }
+      const kindBtn = t.closest("[data-kind-filter]");
+      if (kindBtn) {
+        e.preventDefault();
+        kindFilter = kindBtn.getAttribute("data-kind-filter") || "all";
+        applyKindFilter();
+        return;
+      }
+      const sceneBtn = t.closest("[data-scene]");
+      if (sceneBtn) {
+        e.preventDefault();
+        selectScene(sceneBtn.getAttribute("data-scene"));
+        return;
+      }
+      const ent = t.closest("[data-entity]");
+      if (ent) {
+        e.preventDefault();
+        selectEntity(ent.getAttribute("data-entity"));
+      }
     });
 
-    // Search
+    // Search from compact index
     const search = document.querySelector("[data-atlas-search]");
     const results = document.querySelector("[data-atlas-results]");
-    const rbtns = [...document.querySelectorAll("[data-atlas-results] [data-entity]")];
 
     function filterResults() {
       const q = (search?.value || "").trim().toLowerCase();
       if (!results) return;
-      if (!q) { results.classList.remove("is-open"); return; }
+      if (!q) {
+        results.classList.remove("is-open");
+        results.innerHTML = "";
+        return;
+      }
+      const hits = (state.search || []).filter((e) => e.haystack.includes(q)).slice(0, 40);
+      results.innerHTML = hits
+        .map(
+          (e) =>
+            `<button type="button" data-entity="${esc(e.id)}"><span class="atlas-results__kind">${esc(e.kind)}</span>${esc(e.name)}</button>`,
+        )
+        .join("");
       results.classList.add("is-open");
-      rbtns.forEach((btn) => {
-        btn.style.display = (btn.getAttribute("data-search") || "").includes(q) ? "block" : "none";
-      });
     }
 
     search?.addEventListener("input", filterResults);
     search?.addEventListener("focus", filterResults);
     document.addEventListener("click", (e) => {
-      if (!e.target?.closest("[data-atlas-search]") && !e.target?.closest("[data-atlas-results]")) {
+      const t = e.target;
+      if (!(t instanceof Element)) return;
+      if (!t.closest("[data-atlas-search]") && !t.closest("[data-atlas-results]")) {
         results?.classList.remove("is-open");
       }
     });
 
-    // Timeline scrub
+    // Timeline
     const yearInput = document.querySelector("[data-timeline-year]");
     const yearLabel = document.querySelector("[data-timeline-label]");
     const rangeEl = document.querySelector("[data-timeline-range]");
+    const track = document.querySelector("[data-timeline-track]");
     const badge = document.querySelector("[data-atlas-badge]");
-    const { min, max } = clientPayload.bounds;
-
-    function yearStr(y) {
-      return y < 0 ? `${Math.abs(y)} BCE` : `${y} CE`;
-    }
+    const { min, max } = state.bounds;
 
     function updateTimeline(year) {
       const y = Number(year);
@@ -304,107 +569,64 @@ const clientPayload = {
         rangeEl.style.left = `${Math.max(0, left)}%`;
         rangeEl.style.width = `${Math.min(100 - Math.max(0, left), width)}%`;
       }
-      if (badge && Math.abs(y - clientPayload.year) > 5) {
-        badge.textContent = yearStr(y);
-      } else if (badge) {
-        badge.textContent = clientPayload.badge;
+      if (badge && Math.abs(y - state.year) > 5) badge.textContent = yearStr(y);
+      else if (badge) badge.textContent = state.badge;
+    }
+
+    function paintTimelineMarks() {
+      if (!track) return;
+      track.querySelectorAll(".atlas-dock__mark").forEach((n) => n.remove());
+      for (const e of state.timeline || []) {
+        const pct = ((e.startYear - min) / (max - min)) * 100;
+        const color = e.kind === "deity" ? "#c9a227" : e.kind === "event" ? "#8a9bb8" : "var(--at-gold)";
+        const btn = document.createElement("button");
+        btn.className = "atlas-dock__mark";
+        btn.type = "button";
+        btn.title = `${e.name} (${e.startYear})`;
+        btn.setAttribute("data-entity", e.id);
+        btn.style.left = `${pct}%`;
+        btn.style.background = color;
+        track.appendChild(btn);
       }
     }
 
     yearInput?.addEventListener("input", () => updateTimeline(yearInput.value));
-    if (yearInput) updateTimeline(yearInput.value);
+    updateTimeline(yearInput?.value ?? state.year);
+    paintTimelineMarks();
+    renderCard(state.card);
 
-    // Callout HTML builder
-    function calloutHtml(c, isFocus) {
-      const label = c.calloutLabel || c.name;
-      const focusClass = isFocus ? " is-focus" : "";
-      const noPhoto = ["place", "concept", "dynasty", "idea"].includes(c.kind);
-      if (noPhoto || !c.portraitUrl) {
-        const cls = `atlas-callout atlas-callout--${c.kind}${focusClass}`;
-        if (noPhoto) {
-          return `<div class="${cls}" data-id="${c.id}">
-            <div class="atlas-callout__label">${label}</div>
-            <div class="atlas-callout__tail"></div>
-          </div>`;
-        }
-        return `<div class="atlas-callout${focusClass}" data-id="${c.id}">
-          <div class="atlas-callout__photo"><div class="atlas-callout__fallback">${label.charAt(0)}</div></div>
-          <div class="atlas-callout__label">${label}</div>
-          <div class="atlas-callout__tail"></div>
-        </div>`;
-      }
-      return `<div class="atlas-callout${focusClass}" data-id="${c.id}">
-        <div class="atlas-callout__photo">
-          <img src="${c.portraitUrl}" alt="" loading="lazy"
-            onerror="this.style.display='none';this.nextElementSibling?.removeAttribute('hidden');" />
-          <div class="atlas-callout__fallback" hidden>${label.charAt(0)}</div>
-        </div>
-        <div class="atlas-callout__label">${label}</div>
-        <div class="atlas-callout__tail"></div>
-      </div>`;
-    }
+    window.addEventListener("popstate", () => {
+      const url = new URL(window.location.href);
+      const scene = url.searchParams.get("scene") || state.sceneId;
+      const e = url.searchParams.get("e");
+      if (scene !== state.sceneId) selectScene(scene);
+      else if (e && e !== state.focusId) selectEntity(e);
+    });
 
-    // Boot MapLibre
-    function bootMap() {
-      const ML = window.maplibregl;
-      if (!ML) { setTimeout(bootMap, 30); return; }
-      const el = document.getElementById("atlas-map");
-      if (!el || el._atlasBooted) return;
-      el._atlasBooted = true;
+    async function bootMap() {
+      const host = document.getElementById("atlas-map");
+      if (!host || host.dataset.booted === "1") return;
+      host.dataset.booted = "1";
 
-      const map = new ML.Map({
-        container: el,
-        style: {
-          version: 8,
-          sources: {
-            osm: {
-              type: "raster",
-              tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-              tileSize: 256,
-              attribution: "&copy; OpenStreetMap contributors",
-              maxzoom: 18,
-            },
-          },
-          layers: [{ id: "osm", type: "raster", source: "osm" }],
-        },
-        center: [clientPayload.center.lng, clientPayload.center.lat],
-        zoom: clientPayload.zoom,
+      // Defer MapLibre parse slightly so the shell paints first
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+
+      map = new maplibregl.Map({
+        container: host,
+        style: darkBasemapStyle,
+        center: [state.center.lng, state.center.lat],
+        zoom: state.zoom,
         scrollZoom: true,
       });
 
-      const boundsArr = [];
-      clientPayload.callouts.forEach((c) => {
-        if (!c.coords) return;
-        const isFocus = c.id === clientPayload.focusId;
-        const el = document.createElement("div");
-        el.innerHTML = calloutHtml(c, isFocus);
-        const inner = el.firstElementChild;
-        inner?.addEventListener("click", () => go({ e: c.id, scene: clientPayload.sceneId }));
-        const noPhoto = ["place", "concept", "dynasty", "idea"].includes(c.kind);
-        new ML.Marker({ element: inner, anchor: "bottom" })
-          .setLngLat([c.coords.lng, c.coords.lat])
-          .addTo(map);
-        boundsArr.push([c.coords.lng, c.coords.lat]);
+      map.on("error", (e) => console.warn("[atlas map]", e?.error ?? e));
+      map.on("load", () => {
+        map?.resize();
+        paintCallouts(state.callouts, state.focusId, { fit: true });
       });
-
-      if (boundsArr.length > 1) {
-        const bounds = boundsArr.reduce(
-          (b, p) => [[Math.min(b[0][0], p[0]), Math.min(b[0][1], p[1])], [Math.max(b[1][0], p[0]), Math.max(b[1][1], p[1])]],
-          [[180, 90], [-180, -90]]
-        );
-        map.fitBounds(bounds, { padding: 90, maxZoom: 14 });
-      }
-
-      setTimeout(() => map.resize(), 100);
+      requestAnimationFrame(() => map?.resize());
     }
 
-    // Wait for MapLibre CDN script
-    let attempts = 0;
-    const waitML = setInterval(() => {
-      if (window.maplibregl || ++attempts > 100) {
-        clearInterval(waitML);
-        bootMap();
-      }
-    }, 50);
+    bootMap();
   </script>
 </NovelcrafterLayout>

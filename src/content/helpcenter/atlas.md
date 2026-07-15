@@ -1,26 +1,40 @@
 ---
-iconId: "1"
-page: "Atlas research map"
-description: "Explore people, places, works, and ideas on an interactive map and timeline."
-category: Getting started
+page: Atlas
+description: Explore historical scenes, Met Open Access artifacts, and save works to My Museum.
+iconId: 1
+category: Features
 keywords:
   - atlas
-  - research
   - map
-  - timeline
-  - frida
-lastUpdated: 2026-07-14
+  - museum
+  - artifacts
+  - met
+lastUpdated: 2026-07-15
 faq:
-  - question: "What is Atlas?"
-    answer: "Atlas is Twilda's research database. It combines a map (like Google Maps) with encyclopedia-style entries and a timeline so you can follow a person, a place, a work of art, or an idea across geography and history."
-  - question: "How do I try the Frida Kahlo demo?"
-    answer: "Open Atlas from the novels top bar or go to /atlas/. Frida Kahlo loads by default. Click connected places and paintings to jump to museums and peer rankings. Use the timeline scrubber to focus a year."
-  - question: "Can I add my own research yet?"
-    answer: "This first version ships with a curated Frida Kahlo graph so you can feel the interaction model. User-authored Atlas graphs and Wikipedia import are next."
+  - question: What is Atlas?
+    answer: Atlas is Twilda’s historical map. Curated scenes pin people, places, works, deities, and ideas across time—Vienna 1913, Frida’s Mexico, Egyptian pantheon, language families, modern monarchies, and Met Open Access.
+  - question: What is Met Open Access?
+    answer: A scene of public-domain artworks from The Metropolitan Museum of Art (CC0). Images and basic data can be used freely with attribution recommended.
+  - question: Can I save artifacts?
+    answer: Yes. Open an artifact card and choose Save to My Museum. Collections live on your Account page (requires database migration 005).
+  - question: Where does the data come from?
+    answer: Curated Twilda seeds plus optional live enrichment from Wikidata, Wikipedia summaries (CC BY-SA), Wikimedia Commons, and the Met Collection API (CC0 for open-access objects).
 ---
 
-Atlas sits beside your novels: a Pantheon-like research layer with geography.
+Atlas is the map layer of Twilda—history you can click.
 
-Open **Atlas** and start with the **Vienna 1913** scene — portrait callouts on an aged map show who shared the city that year (Freud, Trotsky, Stalin, Hitler, Franz Joseph, Café Central). Switch to **Mexico City 1939** for Frida Kahlo’s orbit. Click a callout for encyclopedia context, then follow connections to places and works.
+## Scenes
 
-Signed-in writers open Atlas from the product top bar.
+Switch scenes from the top chips. Defaults to Vienna 1913; also Frida/Mexico, monarchies, Egypt, language families, and **Met Open Access**.
+
+## Artifacts and museums
+
+Works use the `work` entity kind. Museum places (like the Met) link via `housed_at`. Filter the map by kind: people, places, works, gods, concepts.
+
+## Sources and licenses
+
+Each enriched card shows source, license, and credit. Wikipedia extracts are labeled CC BY-SA. Met Open Access images are CC0.
+
+## My Museum
+
+Save artifacts to your account, then reopen them from Account → My Museum or jump back into Atlas focus.

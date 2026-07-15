@@ -4,7 +4,20 @@ import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
 import netlify from "@astrojs/netlify";
 
-const site = process.env.PUBLIC_SITE_URL || "https://twilda.com";
+const site = process.env.PUBLIC_SITE_URL || "[REDACTED]";
+
+const BLOCKED_SITEMAP = [
+  "/account",
+  "/novels",
+  "/atlas",
+  "/gotha",
+  "/forms",
+  "/api",
+  "/system",
+  "/auth",
+  "/customers",
+  "/integrations",
+];
 
 // https://astro.build/config
 export default defineConfig({
@@ -27,5 +40,19 @@ export default defineConfig({
     drafts: true
   },
   site,
-  integrations: [sitemap(), mdx()]
+  integrations: [
+    sitemap({
+      filter: (page) => {
+        try {
+          const path = new URL(page).pathname;
+          return !BLOCKED_SITEMAP.some(
+            (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+          );
+        } catch {
+          return true;
+        }
+      },
+    }),
+    mdx(),
+  ],
 });

@@ -31,6 +31,7 @@ The scripts are **idempotent** (safe to re-run).
 | `002_fix_partial_schema.sql` | Pointer only (legacy recovery name) |
 | `003_novel_drafts.sql` | Drafts / timelines + cross-draft references |
 | `004_atlas_schema.sql` | Atlas DB tables + GOTHA genealogy tables + `gotha_ancestors` RPC |
+| `005_atlas_museum.sql` | Museum collections (`atlas_collections`), enrich cache, `gotha_persons.atlas_seed_id` |
 
 ## After migration
 
@@ -39,3 +40,4 @@ The scripts are **idempotent** (safe to re-run).
 - Sign in at `/forms/login/` → library at `/novels/`
 - Starters: Gatsby, Trinity (v1 + v2 drafts), and Cardinal are seeded automatically
 - Atlas and GOTHA: run `004_atlas_schema.sql` to enable DB-backed atlas entities and GOTHA genealogy
+- Museum collections + enrich cache: run `005_atlas_museum.sql`

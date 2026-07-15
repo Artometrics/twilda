@@ -1,23 +1,45 @@
 ---
 import { AstroSeo } from "@lexingtonthemes/seo";
+import { getSiteUrl } from "@/lib/site";
 
-const site = import.meta.env.PUBLIC_SITE_URL || "https://twilda.com";
+interface Props {
+  title?: string;
+  description?: string;
+  canonicalPath?: string;
+  noindex?: boolean;
+  ogImage?: string;
+}
+
+const site = getSiteUrl();
+const {
+  title = "Twilda",
+  description = "Twilda — novels, Atlas history maps, and GOTHA genealogy from Artometrics.",
+  canonicalPath = "/",
+  noindex = false,
+  ogImage = "/og-image.jpg",
+} = Astro.props;
+
+const path = canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`;
+const canonical = `${site}${path}`;
+const imageUrl = ogImage.startsWith("http") ? ogImage : `${site}${ogImage}`;
 ---
 
 <AstroSeo
-  title="Twilda"
-  description="Twilda — writing tools from Artometrics."
-  canonical={site}
+  title={title}
+  description={description}
+  canonical={canonical}
+  noindex={noindex}
+  nofollow={noindex}
   openGraph={{
-    url: site,
-    title: "Twilda",
-    description: "Twilda — writing tools from Artometrics.",
+    url: canonical,
+    title,
+    description,
     images: [
       {
-        url: `${site}/og-image.jpg`,
+        url: imageUrl,
         width: 1200,
         height: 630,
-        alt: "Twilda",
+        alt: title,
         type: "image/jpeg",
       },
     ],
@@ -26,8 +48,6 @@ const site = import.meta.env.PUBLIC_SITE_URL || "https://twilda.com";
     locale: "en_US",
   }}
   twitter={{
-    handle: "@twilda",
-    site: "@twilda",
     cardType: "summary_large_image",
   }}
 />
