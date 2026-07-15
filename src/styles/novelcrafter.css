@@ -38,13 +38,14 @@
   height: 56px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   padding: 0 20px;
   border-bottom: 4px solid var(--color-secondary-500);
   background: var(--nc-bg-2);
   position: sticky;
   top: 0;
   z-index: 40;
+  min-width: 0;
 }
 .nc-brand {
   display: flex;
@@ -63,18 +64,21 @@
 .nc-topnav {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 .nc-topnav a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: 9999px;
   font-size: 14px;
   font-weight: 500;
   color: var(--nc-text-dim);
   border: 2px solid transparent;
+  white-space: nowrap;
   transition:
     background 0.15s ease,
     color 0.15s ease,
@@ -95,10 +99,12 @@
 .nc-topbar__right {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   font-size: 14px;
   font-weight: 500;
   color: var(--nc-text-dim);
+  min-width: 0;
+  flex-shrink: 1;
 }
 .nc-topbar__right a:hover {
   color: var(--nc-text);
@@ -1556,11 +1562,13 @@
 }
 .nc-welcome__card {
   max-width: 420px;
+  width: min(420px, 100%);
   background: #161210;
   border: 1px solid rgba(201, 162, 39, 0.35);
   border-radius: 16px;
   padding: 24px;
   color: #f4ebe0;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
 }
 .nc-welcome__card h2 {
   margin: 0 0 12px;
@@ -1574,4 +1582,14 @@
 }
 .nc-welcome__card a {
   color: #c9a227;
+}
+.nc-welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+.nc-welcome__actions .nc-btn,
+.nc-welcome__actions button {
+  min-height: 40px;
 }

@@ -64,7 +64,11 @@ if (dbReady && persons.length > 0) {
 }
 
 // Focus person
-const focusId = Astro.url.searchParams.get("p") ?? persons.find((p: any) => p.is_self)?.id ?? persons[0]?.id;
+const focusIdRaw = Astro.url.searchParams.get("p");
+const focusId =
+  Astro.url.searchParams.has("p")
+    ? focusIdRaw || null
+    : persons.find((p: any) => p.is_self)?.id ?? persons[0]?.id ?? null;
 const focus = persons.find((p: any) => p.id === focusId) ?? null;
 
 let zodiac: ZodiacSign | null = null;
@@ -313,11 +317,24 @@ const atlasHref = atlasSeedId
             </div>
           ) : (
             <>
-              <p class="gotha-detail__kind">
-                {focus.is_self ? "You" : "Person"}
-                {atlasSeedId ? " · linked to Atlas" : focus.atlas_entity_id ? " · Atlas entity" : ""}
-              </p>
-              <h2 class="gotha-detail__name">{focus.name}</h2>
+              <div class="gotha-detail__chrome">
+                <div class="gotha-detail__chrome-main">
+                  <p class="gotha-detail__kind">
+                    {focus.is_self ? "You" : "Person"}
+                    {atlasSeedId ? " · linked to Atlas" : focus.atlas_entity_id ? " · Atlas entity" : ""}
+                  </p>
+                  <h2 class="gotha-detail__name">{focus.name}</h2>
+                </div>
+                <button
+                  type="button"
+                  class="gotha-detail__close"
+                  data-close-detail
+                  aria-label="Close person detail"
+                  title="Close"
+                >
+                  ×
+                </button>
+              </div>
               <div class="gotha-detail__years">
                 {focus.birth_year && (focus.birth_year < 0 ? `b. ${Math.abs(focus.birth_year)} BCE` : `b. ${focus.birth_year}`)}
                 {focus.death_year && ` – d. ${focus.death_year}`}
@@ -542,6 +559,12 @@ const atlasHref = atlasSeedId
     });
 
     const addForm = document.getElementById("add-person-form");
+    document.querySelector("[data-close-detail]")?.addEventListener("click", () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("p", "");
+      window.location.href = url.pathname + "?" + url.searchParams.toString();
+    });
+
     document.querySelector("[data-toggle-add]")?.addEventListener("click", () => {
       if (addForm) addForm.style.display = addForm.style.display === "none" ? "block" : "none";
     });
