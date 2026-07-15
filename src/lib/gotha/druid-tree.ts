@@ -123,8 +123,6 @@ const DRUID_TREES: (DruidTree & { startMD: [number, number]; endMD: [number, num
   },
 ];
 
-export type DruidTree = (typeof DRUID_TREES)[number];
-
 export function getDruidTree(month: number, day: number): DruidTree {
   const now: [number, number] = [month, day];
   for (const tree of DRUID_TREES) {

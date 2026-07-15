@@ -92,44 +92,45 @@ const clientPayload = {
       <div class="atlas-map" id="atlas-map"></div>
       <div class="atlas-map-veil" aria-hidden="true"></div>
 
-      <!-- Scene switcher -->
-      <div class="atlas-hud atlas-scenes">
-        {
-          atlasScenes.map((s) => (
-            <button
-              type="button"
-              class:list={["atlas-scene-btn", { "is-active": s.id === scene.id }]}
-              data-scene={s.id}
-            >
-              {s.badge}
-            </button>
-          ))
-        }
-      </div>
+      <!-- Left HUD: scenes + filters stacked so wraps don't collide -->
+      <div class="atlas-hud atlas-hud-left">
+        <div class="atlas-scenes">
+          {
+            atlasScenes.map((s) => (
+              <button
+                type="button"
+                class:list={["atlas-scene-btn", { "is-active": s.id === scene.id }]}
+                data-scene={s.id}
+              >
+                {s.badge}
+              </button>
+            ))
+          }
+        </div>
 
-      <!-- Kind filters -->
-      <div class="atlas-hud atlas-kind-filters" role="group" aria-label="Filter by kind">
-        {
-          [
-            ["all", "All"],
-            ["person", "People"],
-            ["place", "Places"],
-            ["work", "Artifacts"],
-            ["idea", "Ideas"],
-            ["event", "Events"],
-            ["deity", "Gods"],
-            ["dynasty", "Dynasties"],
-            ["concept", "Concepts"],
-          ].map(([id, label]) => (
-            <button type="button" class:list={["atlas-kind-btn", { "is-active": id === "all" }]} data-kind-filter={id}>
-              {label}
-            </button>
-          ))
-        }
-      </div>
+        <div class="atlas-kind-filters" role="group" aria-label="Filter by kind">
+          {
+            [
+              ["all", "All"],
+              ["person", "People"],
+              ["place", "Places"],
+              ["work", "Artifacts"],
+              ["idea", "Ideas"],
+              ["event", "Events"],
+              ["deity", "Gods"],
+              ["dynasty", "Dynasties"],
+              ["concept", "Concepts"],
+            ].map(([id, label]) => (
+              <button type="button" class:list={["atlas-kind-btn", { "is-active": id === "all" }]} data-kind-filter={id}>
+                {label}
+              </button>
+            ))
+          }
+        </div>
 
-      <div class="atlas-hud atlas-empty-pins" data-atlas-empty hidden>
-        No pins match the current kind / timeline filters.
+        <div class="atlas-empty-pins" data-atlas-empty hidden>
+          No pins match the current kind / timeline filters.
+        </div>
       </div>
 
       <!-- Search — results rendered client-side from compact index -->
@@ -145,25 +146,37 @@ const clientPayload = {
         <div class="atlas-results" data-atlas-results></div>
       </div>
 
-      <!-- Live Discover — Met OA / Wikidata enrich -->
-      <div class="atlas-hud atlas-discover glass">
+      <!-- Live Discover — Met OA / Wikidata enrich (collapsible) -->
+      <div class="atlas-hud atlas-discover glass" data-atlas-discover>
         <div class="atlas-discover__head">
           <strong>Discover</strong>
+          <button
+            type="button"
+            class="atlas-discover__toggle"
+            data-discover-toggle
+            aria-expanded="true"
+            aria-controls="atlas-discover-body"
+            title="Collapse Discover"
+          >
+            −
+          </button>
+        </div>
+        <div class="atlas-discover__body" id="atlas-discover-body">
           <div class="atlas-discover__tabs" role="tablist" aria-label="Discover source">
             <button type="button" class="atlas-discover__tab is-active" data-discover-tab="met" role="tab" aria-selected="true">Met</button>
             <button type="button" class="atlas-discover__tab" data-discover-tab="wikidata" role="tab" aria-selected="false">Wikidata</button>
           </div>
+          <label class="sr-only" for="atlas-discover-input">Discover open data</label>
+          <input
+            id="atlas-discover-input"
+            type="search"
+            placeholder="Search Met / Wikidata…"
+            data-discover-q
+            aria-label="Discover open data"
+          />
+          <p class="atlas-discover__status" data-discover-status hidden></p>
+          <div class="atlas-discover__results" data-discover-results></div>
         </div>
-        <label class="sr-only" for="atlas-discover-input">Discover open data</label>
-        <input
-          id="atlas-discover-input"
-          type="search"
-          placeholder="Search Met / Wikidata…"
-          data-discover-q
-          aria-label="Discover open data"
-        />
-        <p class="atlas-discover__status" data-discover-status hidden></p>
-        <div class="atlas-discover__results" data-discover-results></div>
       </div>
 
       <!-- Period badge -->
@@ -171,8 +184,23 @@ const clientPayload = {
 
       <!-- Detail card (updated via soft-nav without remounting the map) -->
       <aside class="atlas-card glass" data-atlas-card>
-        <p class="atlas-card__kind">{card.focus.kind}</p>
-        <h1 class="atlas-card__title">{card.focus.name}</h1>
+        <div class="atlas-card__chrome">
+          <div class="atlas-card__chrome-main">
+            <p class="atlas-card__kind">{card.focus.kind}</p>
+            <h1 class="atlas-card__title">{card.focus.name}</h1>
+          </div>
+          <button
+            type="button"
+            class="atlas-card__toggle"
+            data-card-toggle
+            aria-expanded="true"
+            aria-controls="atlas-card-body"
+            title="Collapse card"
+          >
+            −
+          </button>
+        </div>
+        <div class="atlas-card__body" id="atlas-card-body" data-atlas-card-panel>
         {card.focus.years && <p class="atlas-card__years">{card.focus.years}</p>}
         <p class="atlas-card__summary">{card.focus.summary}</p>
         <div data-atlas-extra>
@@ -270,6 +298,7 @@ const clientPayload = {
           </div>
         </div>
         <p class="atlas-hint" data-atlas-hint>{card.hint}</p>
+        </div>
       </aside>
 
       <!-- Timeline dock — marks filled client-side from compact index -->
@@ -814,6 +843,26 @@ const clientPayload = {
     });
 
     // Discover panel (Met / Wikidata live APIs)
+    const discoverRoot = document.querySelector("[data-atlas-discover]");
+    const discoverToggle = document.querySelector("[data-discover-toggle]");
+    discoverToggle?.addEventListener("click", () => {
+      if (!discoverRoot || !discoverToggle) return;
+      const collapsed = discoverRoot.classList.toggle("is-collapsed");
+      discoverToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      discoverToggle.textContent = collapsed ? "+" : "−";
+      discoverToggle.title = collapsed ? "Expand Discover" : "Collapse Discover";
+    });
+
+    const cardRootEl = document.querySelector("[data-atlas-card]");
+    const cardToggle = document.querySelector("[data-card-toggle]");
+    cardToggle?.addEventListener("click", () => {
+      if (!cardRootEl || !cardToggle) return;
+      const collapsed = cardRootEl.classList.toggle("is-collapsed");
+      cardToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      cardToggle.textContent = collapsed ? "+" : "−";
+      cardToggle.title = collapsed ? "Expand card" : "Collapse card";
+    });
+
     let discoverTab = "met";
     let discoverTimer = 0;
     const discoverInput = document.querySelector("[data-discover-q]");
