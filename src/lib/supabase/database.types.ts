@@ -8,6 +8,7 @@ export interface Database {
           id: string;
           display_name: string | null;
           pen_name: string | null;
+          onboarding_completed: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -15,6 +16,7 @@ export interface Database {
           id: string;
           display_name?: string | null;
           pen_name?: string | null;
+          onboarding_completed?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -22,6 +24,7 @@ export interface Database {
           id?: string;
           display_name?: string | null;
           pen_name?: string | null;
+          onboarding_completed?: boolean;
           created_at?: string;
           updated_at?: string;
         };

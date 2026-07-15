@@ -33,7 +33,13 @@ const initial = userEmail?.[0]?.toUpperCase() ?? "?";
   <div class="nc-topbar__spacer"></div>
   <div class="nc-topbar__right">
     <a href="/helpcenter/">Help</a>
-    <span class="nc-credits">{credits}/{creditsMax}</span>
+    <span
+      class="nc-credits"
+      aria-label={`AI credits remaining: ${credits} of ${creditsMax}`}
+      title={`${credits} of ${creditsMax} AI credits remaining`}
+    >
+      {credits}/{creditsMax}
+    </span>
     {
       userEmail ? (
         <>
