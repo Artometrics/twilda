@@ -15,12 +15,18 @@ const { frontmatter } = Astro.props;
 // Breadcrumbs Data
 const breadcrumbs = [
   { label: "Home", href: "/" },
-  { label: "Integrations", href: "/integrations/home" },
+  { label: "Integrations", href: "/integrations/" },
   { label: frontmatter.integration, href: "#" },
 ];
 ---
 
-<BaseLayout>
+<BaseLayout
+  title={`${frontmatter.integration} · Integrations · Twilda`}
+  description={frontmatter.description ??
+    `${frontmatter.integration} integration for Twilda (coming soon).`}
+  canonicalPath={Astro.url.pathname}
+  noindex={true}
+>
   <!-- Modal -->
   <div
     id="modal"
@@ -56,12 +62,12 @@ const breadcrumbs = [
                 id="modal-title"
                 class="font-medium tracking-tight text-accent-900"
               >
-                Connect {frontmatter.integration} to BrightLight
+                Connect {frontmatter.integration} to Twilda
               </Text>
             </div>
             <Text variant="textSM" class="mt-2 text-base-600 text-balance">
-              Stop guessing what your customers want — prioritize their needs
-              and actually listen for once.
+              This connection flow is a preview — Twilda integrations are still
+              coming soon.
             </Text>
           </div>
 
@@ -71,7 +77,7 @@ const breadcrumbs = [
               variant="textBase"
               class="font-medium text-left text-base-800"
             >
-              BrightLight would like to
+              Twilda would like to
             </Text>
             <ul
               role="list"

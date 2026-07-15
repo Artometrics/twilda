@@ -11,12 +11,18 @@ const { frontmatter } = Astro.props;
 // Breadcrumbs Data
 const breadcrumbs = [
   { label: "Home", href: "/" },
-  { label: "Customers", href: "/customerss/home" },
+  { label: "Customers", href: "/customers/" },
   { label: frontmatter.customer, href: "#" },
 ];
 ---
 
-<BaseLayout>
+<BaseLayout
+  title={`${frontmatter.customer} · Customers · Twilda`}
+  description={frontmatter.about ??
+    `Customer story: ${frontmatter.customer} on Twilda.`}
+  canonicalPath={Astro.url.pathname}
+  noindex={true}
+>
   <section>
     <Wrapper variant="standard" class="py-32">
       <div class="max-w-xl mx-auto">

@@ -29,6 +29,7 @@ Create project **`twilda`** under org **Artometrics** (separate from other apps)
    - `003_novel_drafts.sql` — drafts / timelines
    - **`004_atlas_schema.sql` — required for Atlas user tables + GOTHA**
    - **`005_atlas_museum.sql` — required for My Museum collections + enrich cache**
+   - **`006_security_hardening.sql` — harden `gotha_ancestors` (auth.uid; revoke anon)**
 
 ```bash
 npx supabase gen types typescript --project-id <ref> > src/lib/supabase/database.types.ts

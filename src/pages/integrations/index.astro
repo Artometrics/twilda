@@ -17,7 +17,12 @@ const allTags = Array.from(
 ).sort();
 ---
 
-<BaseLayout>
+<BaseLayout
+  title="Integrations · Twilda"
+  description="Twilda integrations directory. Many listings are still template placeholders — real integrations are coming soon."
+  canonicalPath="/integrations/"
+  noindex={true}
+>
   <section>
     <Wrapper variant="standardPaddingless">
       <div class="grid grid-cols-1 lg:grid-cols-3">
@@ -29,11 +34,12 @@ const allTags = Array.from(
             variant="displayMD"
             class="font-semibold tracking-tight text-accent-900 text-balance"
           >
-            Plays nice with the tools you already use
+            Integrations coming soon
           </Text>
           <Text tag="p" variant="textBase" class="mt-4 text-accent-900">
-            No complicated rituals, just drop in your stack and go. We integrate
-            so smoothly, you'll forget email ever sucked.
+            Twilda will connect with the tools writers already use. Listings
+            below may still be Lexington template placeholders until we ship
+            real integrations.
           </Text>
           <nav role="navigation" class="hidden lg:block">
             <ul class="flex flex-col gap-2 mt-8">

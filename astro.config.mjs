@@ -4,7 +4,7 @@ import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
 import netlify from "@astrojs/netlify";
 
-const site = process.env.PUBLIC_SITE_URL || "[REDACTED]";
+const site = process.env.PUBLIC_SITE_URL || "http://localhost:4321";
 
 const BLOCKED_SITEMAP = [
   "/account",

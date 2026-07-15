@@ -2,10 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 
 /** Canonical public site origin (no trailing slash). */
 export function getSiteUrl(): string {
-  return (
-    import.meta.env.PUBLIC_SITE_URL ||
-    "https://twilda.com"
-  ).replace(/\/$/, "");
+  const raw = import.meta.env.PUBLIC_SITE_URL?.trim();
+  // Prefer configured env; fall back to local/dev so builds never emit broken canonicals.
+  const site = raw && raw.length > 0 ? raw : "http://localhost:4321";
+  return site.replace(/\/$/, "");
 }
 
 /** True when public Supabase env vars are present (does not validate keys). */

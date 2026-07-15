@@ -1,11 +1,11 @@
-# AGENTS.md — Ella Mae (`@lexington/ellamae`)
+# AGENTS.md — Twilda (`@artometrics/twilda`)
 
-**Ella Mae** is a Lexington Themes Astro template for a **SaaS / product marketing** site: a long-form homepage with hero, feature sections, pricing, testimonials, FAQ, plus **blog**, **changelog**, **customers** (case studies), **help center**, **integrations**, **team**, **legal**, auth-style **forms**, and a **design system** area under `/system/`. Primary use case is shipping a polished marketing site with rich content-driven sections, not a minimal landing-only starter.
+**Twilda** (Artometrics) is an Astro SSR product: novel writing workspace (**Plan / Write / Codex / Chat / Review**), **Atlas** historical map (seed catalogs + Met Open Access), **GOTHA** genealogy, and **My Museum** private collections — plus a polished marketing site (research, help center, changelog, legal).
 
-**Publisher:** [Lexington Themes](https://lexingtonthemes.com/)  
-**Support / docs (from README):** [Support](https://lexingtonthemes.com/legal/support/) · [Documentation](https://lexingtonthemes.com/documentation/quick-start/) · [Get your bundle](https://lexingtonthemes.com)
+**Publisher / support:** See README. Production: Netlify site `twilda`. Domain from `PUBLIC_SITE_URL`.
 
 ## Tech stack
+
 
 - **Astro** `^7.0.0` (`astro.config.mjs`) with **`@astrojs/netlify`** adapter (static by default; SSR via `export const prerender = false`)
 - **Tailwind CSS** `^4` via **`@tailwindcss/vite`**; plugins: **`@tailwindcss/forms`**, **`@tailwindcss/typography`**, **`tailwind-scrollbar-hide`** (see `src/styles/global.css`)
@@ -14,7 +14,7 @@
 - **RSS:** `@astrojs/rss` (used by `src/pages/rss.xml.js`)
 - **SEO component:** `@lexingtonthemes/seo` (see `src/components/fundations/head/Seo.astro`)
 - **Supabase:** `@supabase/supabase-js` — clients in `src/lib/supabase/`; env via `.env.example`
-- **Host:** Netlify site `twilda` (`netlify.toml`); production domain `twilda.com`
+- **Host:** Netlify site `twilda` (`netlify.toml`); production domain from `PUBLIC_SITE_URL`
 - **Markdown:** Shiki theme `night-owl`; `markdown.drafts: true` in config
 - **Aliases:** `@/*` → `src/*` (`tsconfig.json`)
 
@@ -33,7 +33,7 @@
 | Processed images | `src/images/` | Blog, team, changelog, brands, blobs, integrations, customers, assets |
 | Setup docs | `docs/SETUP.md` | Netlify + Supabase + env checklist |
 | Supabase SQL | `supabase/migrations/` | Future schema migrations |
-| Public static root | `public/` | **Not present in this repo** (no top-level `public/` directory) |
+| Public static root | `public/` | `robots.txt`, `favicon.svg`, `og-image.jpg`, `apple-touch-icon.png` |
 
 ## Content collections (`src/content.config.ts`)
 
@@ -111,7 +111,7 @@ Dynamic segments use **`[...slug].astro`** under those sections; **blog posts** 
 
 ## Customization
 
-- **Site URL / canonical / sitemap:** `PUBLIC_SITE_URL` (see `.env.example`) feeds `astro.config.mjs` `site`. Production: `https://twilda.com`. Full key setup: **`docs/SETUP.md`**.
+- **Site URL / canonical / sitemap:** `PUBLIC_SITE_URL` (see `.env.example`) feeds `astro.config.mjs` `site`. Production domain: set `PUBLIC_SITE_URL`. Full key setup: **`docs/SETUP.md`**.
 - **Brand colors & typography:** `src/styles/global.css` — `@theme` (OKLCH palette `accent`, `secondary`, `base`, `white`/`black`; `--font-sans` / Inter variable).
 - **Shell / meta:** `src/layouts/BaseLayout.astro` imports global CSS and `src/components/fundations/head/BaseHead.astro` (`Seo`, `Meta`, `Fonts`, `Favicons`, plus `Fuse` / `KeenSlider` scripts).
 - **Nav / footer:** `src/components/global/Navigation.astro`, `src/components/global/Footer.astro` (nav link list is inline in `Navigation.astro`).
@@ -146,4 +146,4 @@ From README / `package.json`:
 - **Dev server port is `4321`** (Astro default). Browse at `http://localhost:4321/`. Health: `/api/health`.
 - Site uses the **Netlify adapter**; most pages stay static. On-demand routes set `prerender = false`.
 - **No lint/typecheck script is configured.** Use `npm run build` as the correctness check.
-- Fuse.js live search lives on the **blog** (`src/components/blog/BlogSearch.astro`), via the search icon on `/blog/`, not on the Help Center.
+- Primary public content is **`/research/`** (blog routes redirect). Blog search component may still exist as leftover; prefer research SSR pages.

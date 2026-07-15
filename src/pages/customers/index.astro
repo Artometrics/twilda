@@ -11,7 +11,12 @@ import { getCollection } from "astro:content";
 const allCustomers = await getCollection("customers");
 ---
 
-<BaseLayout>
+<BaseLayout
+  title="Customers · Twilda"
+  description="Customer stories for Twilda are coming soon. Placeholder case studies from the site template may still appear here."
+  canonicalPath="/customers/"
+  noindex={true}
+>
   <section>
     <Wrapper variant="standard" class="pt-32 pb-12 lg:pt-64 bg-yellow">
       <div class="max-w-2xl text-balance mx-auto text-center">
@@ -20,11 +25,12 @@ const allCustomers = await getCollection("customers");
           variant="displayXL"
           class="font-semibold tracking-tight text-accent-900"
         >
-          Become a partner of th efuture of finance and banking with Munch.
+          Writers building worlds with Twilda
         </Text>
         <Text tag="p" variant="textBase" class="mt-4 text-accent-900">
-          Access expert guides, financial insights, and security tips to manage
-          your finances with confidence in the digital age.
+          Real customer stories are coming soon. Until then, any case studies
+          below may still be Lexington template placeholders — not live Twilda
+          partners.
         </Text>
       </div>
     </Wrapper>
