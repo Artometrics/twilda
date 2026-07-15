@@ -1,16 +1,23 @@
 import type { APIRoute } from "astro";
 import { createSupabaseServerClient } from "@/lib/supabase/ssr";
-import { SAMPLE_FAMILY_PERSONS, SAMPLE_FAMILY_RELATIONS } from "@/lib/gotha/sample-family";
+import { resolveSampleTemplate } from "@/lib/gotha/sample-family";
 
 export const prerender = false;
 
-/** Seed a Habsburg-adjacent demo tree for the signed-in user (only if they have no people yet). */
-export const POST: APIRoute = async ({ cookies, request }) => {
+/** Seed a demo tree for the signed-in user (only if they have no people yet). ?template=habsburg|immigrant-atlantic|mythic-ancestry */
+export const POST: APIRoute = async ({ cookies, request, url }) => {
   const supabase = createSupabaseServerClient(cookies, request);
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+
+  const body = await request.json().catch(() => ({}));
+  const templateId =
+    (typeof body.template === "string" && body.template) ||
+    url.searchParams.get("template") ||
+    "habsburg";
+  const template = resolveSampleTemplate(templateId);
 
   const { count, error: countError } = await supabase
     .from("gotha_persons")
@@ -35,7 +42,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
 
   const keyToId = new Map<string, string>();
 
-  for (const person of SAMPLE_FAMILY_PERSONS) {
+  for (const person of template.persons) {
     const base = {
       user_id: user.id,
       name: person.name,
@@ -51,7 +58,6 @@ export const POST: APIRoute = async ({ cookies, request }) => {
       notes: person.notes,
     };
 
-    // Prefer atlas_seed_id (005); fall back if column not migrated yet
     let { data, error } = await supabase
       .from("gotha_persons")
       .insert({ ...base, atlas_seed_id: person.atlas_seed_id })
@@ -68,12 +74,14 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     keyToId.set(person.key, data.id);
   }
 
-  const relRows = SAMPLE_FAMILY_RELATIONS.map((r) => ({
-    user_id: user.id,
-    from_person_id: keyToId.get(r.from)!,
-    to_person_id: keyToId.get(r.to)!,
-    rel: r.rel,
-  })).filter((r) => r.from_person_id && r.to_person_id);
+  const relRows = template.relations
+    .map((r) => ({
+      user_id: user.id,
+      from_person_id: keyToId.get(r.from)!,
+      to_person_id: keyToId.get(r.to)!,
+      rel: r.rel,
+    }))
+    .filter((r) => r.from_person_id && r.to_person_id);
 
   if (relRows.length > 0) {
     const { error: relError } = await supabase.from("gotha_relations").insert(relRows);
@@ -83,8 +91,11 @@ export const POST: APIRoute = async ({ cookies, request }) => {
   }
 
   const selfId = keyToId.get("you") ?? [...keyToId.values()][0];
-  return new Response(JSON.stringify({ ok: true, focusId: selfId, count: keyToId.size }), {
-    status: 201,
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({ ok: true, focusId: selfId, count: keyToId.size, template: templateId }),
+    {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
 };

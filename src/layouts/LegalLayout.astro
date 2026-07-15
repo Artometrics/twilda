@@ -13,7 +13,11 @@ const breadcrumbs = [
 ];
 ---
 
-<BaseLayout>
+<BaseLayout
+  title={`${frontmatter.page} · Twilda`}
+  description={`Twilda legal: ${frontmatter.page}`}
+  canonicalPath={Astro.url.pathname}
+>
   <section>
     <Wrapper variant="standard" class="pt-32 pb-8 bg-accent-300">
       <div class="max-w-xl mx-auto">

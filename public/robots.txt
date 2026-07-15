@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Allow: /research/
+Allow: /helpcenter/
+Allow: /changelog/
+Allow: /legal/
+Allow: /team/
+
+Disallow: /account
+Disallow: /novels
+Disallow: /atlas
+Disallow: /gotha
+Disallow: /forms
+Disallow: /api
+Disallow: /system
+Disallow: /auth
+Disallow: /customers
+Disallow: /integrations
+
+# Set Sitemap to ${PUBLIC_SITE_URL}/sitemap-index.xml in production (Netlify / host).
+Sitemap: /sitemap-index.xml

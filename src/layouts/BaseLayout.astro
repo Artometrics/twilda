@@ -1,14 +1,30 @@
 ---
-// Foundations
 import "@/styles/global.css";
 import BaseHead from "@/components/fundations/head/BaseHead.astro";
-// Components
 import Footer from "@/components/global/Footer.astro";
 import Navigation from "@/components/global/Navigation.astro";
-// Hides nav and footer on selected screens by passing
-// the hideNav and hideFooter props
-// <BaseLayout hideNav={true} hideFooter={true}>
-const { hideNav = false, hideFooter = false } = Astro.props;
+
+interface Props {
+  hideNav?: boolean;
+  hideFooter?: boolean;
+  title?: string;
+  description?: string;
+  canonicalPath?: string;
+  noindex?: boolean;
+  ogImage?: string;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[] | null;
+}
+
+const {
+  hideNav = false,
+  hideFooter = false,
+  title,
+  description,
+  canonicalPath,
+  noindex = false,
+  ogImage,
+  jsonLd = null,
+} = Astro.props;
 ---
 
 <html
@@ -16,11 +32,24 @@ const { hideNav = false, hideFooter = false } = Astro.props;
   class="scroll-smooth selection:bg-accent-900 selection:text-accent-300 no-touchevents hydrated"
 >
   <head>
-    <BaseHead />
+    <BaseHead
+      title={title}
+      description={description}
+      canonicalPath={canonicalPath}
+      noindex={noindex}
+      ogImage={ogImage}
+      jsonLd={jsonLd}
+    />
   </head>
   <body class="flex flex-col bg-white min-h-svh">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-accent-900 focus:px-4 focus:py-2 focus:text-white"
+    >
+      Skip to content
+    </a>
     {!hideNav && <Navigation />}
-    <main class="grow"><slot /></main>
+    <main id="main" class="grow"><slot /></main>
     {!hideFooter && <Footer />}
   </body>
 </html>

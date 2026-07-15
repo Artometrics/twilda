@@ -2,10 +2,20 @@
 import "@/styles/global.css";
 import "@/styles/novelcrafter.css";
 import Fonts from "@/components/fundations/head/Fonts.astro";
+import Favicons from "@/components/fundations/head/Favicons.astro";
+
 interface Props {
   title?: string;
+  description?: string;
+  noindex?: boolean;
 }
-const { title = "Novels · Twilda" } = Astro.props;
+
+const {
+  title = "Novels · Twilda",
+  description = "Twilda writing workspace — novels, Atlas, and GOTHA.",
+  noindex = true,
+} = Astro.props;
+const robots = noindex ? "noindex, nofollow" : "index, follow";
 ---
 
 <!doctype html>
@@ -16,18 +26,31 @@ const { title = "Novels · Twilda" } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="robots" content={robots} />
+    <meta name="googlebot" content={robots} />
     <title>{title}</title>
     <Fonts />
+    <Favicons />
     <style is:global>
       html.nc-html,
       body.nc-body {
         margin: 0;
         background: var(--color-accent-950);
       }
+      .nc *:focus-visible {
+        outline: 2px solid #c9a227;
+        outline-offset: 2px;
+      }
     </style>
   </head>
   <body class="nc-body nc">
-    <!-- Global liquid-glass SVG displacement filter (Chromium bonus) -->
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[100] focus:rounded focus:bg-black focus:px-3 focus:py-2 focus:text-white"
+    >
+      Skip to content
+    </a>
     <svg width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden;pointer-events:none;">
       <filter id="liquid-glass" x="0" y="0" width="100%" height="100%">
         <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="4" result="noise"/>
@@ -35,6 +58,8 @@ const { title = "Novels · Twilda" } = Astro.props;
         <feDisplacementMap in="SourceGraphic" in2="blurred" scale="50" xChannelSelector="R" yChannelSelector="G"/>
       </filter>
     </svg>
-    <slot />
+    <main id="main">
+      <slot />
+    </main>
   </body>
 </html>

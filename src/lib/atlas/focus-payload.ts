@@ -31,7 +31,11 @@ export function searchIndex() {
 
 export function timelineMarks() {
   return atlasEntities
-    .filter((e) => e.startYear != null && (e.kind === "person" || e.kind === "deity" || e.kind === "event"))
+    .filter(
+      (e) =>
+        e.startYear != null &&
+        (e.kind === "person" || e.kind === "deity" || e.kind === "event" || e.kind === "work"),
+    )
     .map((e) => ({
       id: e.id,
       kind: e.kind,
@@ -67,6 +71,13 @@ export function focusCardPayload(entityId: string) {
       summary: focus.summary,
       years: yearsLabel(focus),
       tags: focus.tags,
+      portraitUrl: focus.portraitUrl ?? null,
+      sourceUrl: focus.sourceUrl ?? null,
+      license: focus.license ?? null,
+      attribution: focus.attribution ?? null,
+      imageCredit: focus.imageCredit ?? null,
+      wikidataId: focus.wikidataId ?? null,
+      metObjectId: focus.metObjectId ?? null,
       provenance: (focus.provenance ?? []).map((p) => ({
         year: p.year,
         placeId: p.placeId,

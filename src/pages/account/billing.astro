@@ -26,7 +26,12 @@ const autoCheckout =
   Boolean(import.meta.env.STRIPE_SECRET_KEY);
 ---
 
-<BaseLayout>
+<BaseLayout
+  title="Billing · Twilda"
+  description="Manage your Twilda subscription and AI credits."
+  canonicalPath="/account/billing/"
+  noindex={true}
+>
   <Wrapper variant="standard" class="py-24">
     <Text tag="h1" variant="displayMD" class="font-semibold text-accent-900">
       Billing

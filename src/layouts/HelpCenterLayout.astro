@@ -7,15 +7,32 @@ import Wrapper from "@/components/fundations/containers/Wrapper.astro";
 import Plus from "@/components/fundations/icons/Plus.astro";
 import ChevronRight from "@/components/fundations/icons/ChevronRight.astro";
 const { frontmatter } = Astro.props;
-// Breadcrumbs Data
 const breadcrumbs = [
   { label: "Home", href: "/" },
-  { label: "Help Center", href: "/helpcenter/home" },
-  { label: frontmatter.page, href: "#" }, // Current page (unstyled)
+  { label: "Help Center", href: "/helpcenter/" },
+  { label: frontmatter.page, href: "#" },
 ];
+
+const faqLd =
+  Array.isArray(frontmatter.faq) && frontmatter.faq.length
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: frontmatter.faq.map((item: { question: string; answer: string }) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: { "@type": "Answer", text: item.answer },
+        })),
+      }
+    : null;
 ---
 
-<BaseLayout>
+<BaseLayout
+  title={`${frontmatter.page} · Help · Twilda`}
+  description={frontmatter.description ?? `Twilda help: ${frontmatter.page}`}
+  canonicalPath={Astro.url.pathname}
+  jsonLd={faqLd}
+>
   <section>
     <Wrapper variant="standard" class="pt-32 pb-8 bg-accent-300">
       <div class="max-w-xl mx-auto">

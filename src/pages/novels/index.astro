@@ -40,9 +40,22 @@ const recent = [...novels]
     return bT - aT;
   })
   .slice(0, 3);
+
+const classicTitles = new Set([
+  "the great gatsby",
+  "gatsby",
+  "trinity",
+  "cardinal",
+]);
+function isClassic(title: string) {
+  const t = title.toLowerCase();
+  return [...classicTitles].some((c) => t.includes(c));
+}
+
+const showWelcome = Astro.url.searchParams.get("welcome") === "1";
 ---
 
-<NovelcrafterLayout title="Your Novels · Twilda">
+<NovelcrafterLayout title="Your Novels · Twilda" description="Your Twilda novel library.">
   <NovelsTopbar
     active="novels"
     userEmail={user.email}
@@ -140,7 +153,10 @@ const recent = [...novels]
               <Cover kind={n.cover_kind} title={n.title} author={n.author} />
             </div>
             <div class="nc-book__meta">
-              <p class="nc-book__title">{n.title}</p>
+              <p class="nc-book__title">
+                {n.title}
+                {isClassic(n.title) && <span class="nc-book__badge">Classic template</span>}
+              </p>
               <p class="nc-book__date">{formatUpdated(n.updated_at)}</p>
               <p class="nc-book__author">{n.author}</p>
             </div>
@@ -152,6 +168,29 @@ const recent = [...novels]
       No novels match your search.
     </p>
   </main>
+
+  {
+    showWelcome && (
+      <div class="nc-welcome" data-welcome role="dialog" aria-labelledby="welcome-title">
+        <div class="nc-welcome__card">
+          <h2 id="welcome-title">Welcome to Twilda</h2>
+          <ol>
+            <li>Open a classic starter novel below.</li>
+            <li>
+              Visit <a href="/atlas/?scene=met-open-access">Atlas · Met Open Access</a> and save an artifact.
+            </li>
+            <li>
+              Load a <a href="/gotha/">GOTHA</a> sample family.
+            </li>
+            <li>
+              Review <a href="/account/#museum-heading">My Museum</a> on your account.
+            </li>
+          </ol>
+          <button type="button" class="nc-btn nc-btn--primary" data-welcome-dismiss>Got it</button>
+        </div>
+      </div>
+    )
+  }
 
   <div class="nc-toast" data-toast hidden></div>
 
@@ -270,5 +309,12 @@ const recent = [...novels]
     });
 
     applySort();
+
+    document.querySelector("[data-welcome-dismiss]")?.addEventListener("click", () => {
+      document.querySelector("[data-welcome]")?.remove();
+      const url = new URL(window.location.href);
+      url.searchParams.delete("welcome");
+      history.replaceState({}, "", url);
+    });
   </script>
 </NovelcrafterLayout>

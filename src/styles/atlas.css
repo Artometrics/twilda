@@ -77,6 +77,53 @@
   max-width: min(600px, calc(100% - 32px));
 }
 
+.atlas-kind-filters {
+  top: 64px; left: 16px;
+  display: flex; gap: 6px; flex-wrap: wrap;
+  max-width: min(520px, calc(100% - 32px));
+}
+
+.atlas-kind-btn {
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(20,16,12,0.72);
+  color: var(--at-dim);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.atlas-kind-btn.is-active {
+  color: var(--at-paper);
+  border-color: rgba(201,162,39,0.55);
+  background: rgba(201,162,39,0.2);
+}
+
+.atlas-card__actions {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin: 10px 0 8px;
+}
+.atlas-btn {
+  appearance: none;
+  display: inline-flex; align-items: center;
+  border: 1px solid rgba(201,162,39,0.35);
+  background: rgba(201,162,39,0.12);
+  color: var(--at-label);
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.atlas-btn:hover { background: rgba(201,162,39,0.22); }
+.atlas-card__sources {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: var(--at-faint);
+  line-height: 1.4;
+}
+
 .atlas-scene-btn {
   appearance: none;
   background: var(--at-panel);

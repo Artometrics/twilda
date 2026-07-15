@@ -134,9 +134,17 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
               <div class="gotha-empty">
                 <p>No people yet.<br />Add yourself first, then build your tree generation by generation.</p>
                 {dbReady && (
-                  <button class="gotha-btn gotha-btn--primary" type="button" data-load-sample style="margin-top:12px;width:100%;justify-content:center;">
-                    Load Habsburg sample
-                  </button>
+                  <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+                    <button class="gotha-btn gotha-btn--primary" type="button" data-load-sample data-template="habsburg" style="width:100%;justify-content:center;">
+                      Load Habsburg sample
+                    </button>
+                    <button class="gotha-btn" type="button" data-load-sample data-template="immigrant-atlantic" style="width:100%;justify-content:center;">
+                      Load Atlantic immigrant sample
+                    </button>
+                    <button class="gotha-btn" type="button" data-load-sample data-template="mythic-ancestry" style="width:100%;justify-content:center;">
+                      Load mythic ancestry sample
+                    </button>
+                  </div>
                 )}
               </div>
             ) : (
@@ -259,9 +267,17 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
               <p style="margin-top:12px;">Add yourself to begin — or load the Habsburg sample to see how the map and tree work together.</p>
               <p style="margin-top:12px;">Each person shows their western zodiac, Celtic Ogham tree, Chinese year animal, and family name origin via Wikidata.</p>
               {dbReady && (
-                <button class="gotha-btn gotha-btn--primary" type="button" data-load-sample style="margin-top:14px;justify-content:center;width:100%;">
-                  Load Habsburg sample
-                </button>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+                  <button class="gotha-btn gotha-btn--primary" type="button" data-load-sample data-template="habsburg" style="justify-content:center;width:100%;">
+                    Load Habsburg sample
+                  </button>
+                  <button class="gotha-btn" type="button" data-load-sample data-template="immigrant-atlantic" style="justify-content:center;width:100%;">
+                    Load Atlantic immigrant sample
+                  </button>
+                  <button class="gotha-btn" type="button" data-load-sample data-template="mythic-ancestry" style="justify-content:center;width:100%;">
+                    Load mythic ancestry sample
+                  </button>
+                </div>
               )}
             </div>
           ) : (
@@ -415,12 +431,18 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
     });
 
     async function loadSample(btn) {
+      const template = btn.getAttribute("data-template") || "habsburg";
+      const label = btn.textContent;
       if (btn) {
         btn.disabled = true;
         btn.textContent = "Loading sample…";
       }
       try {
-        const res = await fetch("/api/gotha/sample", { method: "POST" });
+        const res = await fetch("/api/gotha/sample", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ template }),
+        });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || "Failed to load sample");
         const url = new URL(window.location.href);
@@ -430,7 +452,7 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
         alert(err instanceof Error ? err.message : "Failed to load sample");
         if (btn) {
           btn.disabled = false;
-          btn.textContent = "Load Habsburg sample";
+          btn.textContent = label;
         }
       }
     }

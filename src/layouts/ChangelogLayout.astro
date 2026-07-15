@@ -16,7 +16,11 @@ const breadcrumbs = [
 ];
 ---
 
-<BaseLayout>
+<BaseLayout
+  title={`${frontmatter.page} · Changelog · Twilda`}
+  description={frontmatter.description ?? `Twilda changelog: ${frontmatter.page}`}
+  canonicalPath={Astro.url.pathname}
+>
   <section>
     <Wrapper variant="standard" class="py-32">
       <div class="flex flex-col justify-between max-w-xl mx-auto text-balance">

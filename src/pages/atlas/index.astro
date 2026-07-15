@@ -94,9 +94,34 @@ const clientPayload = {
         }
       </div>
 
+      <!-- Kind filters -->
+      <div class="atlas-hud atlas-kind-filters" role="group" aria-label="Filter by kind">
+        {
+          [
+            ["all", "All"],
+            ["person", "People"],
+            ["place", "Places"],
+            ["work", "Artifacts"],
+            ["deity", "Gods"],
+            ["concept", "Concepts"],
+          ].map(([id, label]) => (
+            <button type="button" class:list={["atlas-kind-btn", { "is-active": id === "all" }]} data-kind-filter={id}>
+              {label}
+            </button>
+          ))
+        }
+      </div>
+
       <!-- Search — results rendered client-side from compact index -->
       <div class="atlas-hud atlas-search-float">
-        <input type="search" placeholder="Search people, places, gods…" data-atlas-search />
+        <label class="sr-only" for="atlas-search-input">Search Atlas</label>
+        <input
+          id="atlas-search-input"
+          type="search"
+          placeholder="Search people, places, artifacts…"
+          data-atlas-search
+          aria-label="Search people, places, artifacts"
+        />
         <div class="atlas-results" data-atlas-results></div>
       </div>
 
@@ -110,6 +135,23 @@ const clientPayload = {
         {card.focus.years && <p class="atlas-card__years">{card.focus.years}</p>}
         <p class="atlas-card__summary">{card.focus.summary}</p>
         <div data-atlas-tags>{card.focus.tags.map((t) => <span class="atlas-chip">{t}</span>)}</div>
+        <div class="atlas-card__actions" data-atlas-actions>
+          <button class="atlas-btn" type="button" data-save-museum>Save to My Museum</button>
+          {card.focus.sourceUrl && (
+            <a class="atlas-btn" href={card.focus.sourceUrl} target="_blank" rel="noopener noreferrer">Open source</a>
+          )}
+          <a class="atlas-btn" href="/account/#museum-heading">My Museum</a>
+        </div>
+        <p class="atlas-card__sources" data-atlas-sources>
+          {[
+            card.focus.license && `License: ${card.focus.license}`,
+            card.focus.attribution && `Credit: ${card.focus.attribution}`,
+            card.focus.wikidataId && `Wikidata ${card.focus.wikidataId}`,
+            card.focus.metObjectId && `Met ${card.focus.metObjectId}`,
+          ]
+            .filter(Boolean)
+            .join(" · ") || "Curated Twilda seed"}
+        </p>
         <div data-atlas-card-body>
           {
             card.peers.length > 0 && (
@@ -223,6 +265,8 @@ const clientPayload = {
       const tags = root.querySelector("[data-atlas-tags]");
       const body = root.querySelector("[data-atlas-card-body]");
       const hint = root.querySelector("[data-atlas-hint]");
+      const sources = root.querySelector("[data-atlas-sources]");
+      const actions = root.querySelector("[data-atlas-actions]");
 
       if (kind) kind.textContent = card.focus.kind;
       if (title) title.textContent = card.focus.name;
@@ -241,6 +285,23 @@ const clientPayload = {
 
       if (tags) {
         tags.innerHTML = card.focus.tags.map((t) => `<span class="atlas-chip">${esc(t)}</span>`).join("");
+      }
+
+      if (sources) {
+        const bits = [
+          card.focus.license && `License: ${card.focus.license}`,
+          card.focus.attribution && `Credit: ${card.focus.attribution}`,
+          card.focus.wikidataId && `Wikidata ${card.focus.wikidataId}`,
+          card.focus.metObjectId && `Met ${card.focus.metObjectId}`,
+        ].filter(Boolean);
+        sources.textContent = bits.join(" · ") || "Curated Twilda seed";
+      }
+
+      if (actions) {
+        const open = card.focus.sourceUrl
+          ? `<a class="atlas-btn" href="${esc(card.focus.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open source</a>`
+          : "";
+        actions.innerHTML = `<button class="atlas-btn" type="button" data-save-museum>Save to My Museum</button>${open}<a class="atlas-btn" href="/account/#museum-heading">My Museum</a>`;
       }
 
       if (body) {
@@ -265,6 +326,40 @@ const clientPayload = {
         }
         html += `</div>`;
         body.innerHTML = html;
+      }
+    }
+
+    let kindFilter = "all";
+    function applyKindFilter() {
+      document.querySelectorAll("[data-kind-filter]").forEach((btn) => {
+        btn.classList.toggle("is-active", btn.getAttribute("data-kind-filter") === kindFilter);
+      });
+      paintCallouts(state.callouts, state.focusId, { fit: false });
+    }
+
+    async function saveToMuseum() {
+      const f = state.card?.focus;
+      if (!f) return;
+      try {
+        const res = await fetch("/api/account/museum", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            seedEntityId: f.id,
+            title: f.name,
+            kind: f.kind,
+            summary: f.summary,
+            portraitUrl: f.portraitUrl,
+            sourceUrl: f.sourceUrl,
+            license: f.license,
+            attribution: f.attribution,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Save failed");
+        alert("Saved to My Museum");
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Save failed");
       }
     }
 
@@ -308,6 +403,7 @@ const clientPayload = {
       const boundsArr = [];
       for (const c of callouts) {
         if (!c.coords) continue;
+        if (kindFilter !== "all" && c.kind !== kindFilter) continue;
         const isFocus = c.id === focusId;
         const wrap = document.createElement("div");
         wrap.innerHTML = calloutHtml(c, isFocus);
@@ -399,6 +495,18 @@ const clientPayload = {
     document.querySelector(".atlas")?.addEventListener("click", (e) => {
       const t = e.target;
       if (!(t instanceof Element)) return;
+      if (t.closest("[data-save-museum]")) {
+        e.preventDefault();
+        saveToMuseum();
+        return;
+      }
+      const kindBtn = t.closest("[data-kind-filter]");
+      if (kindBtn) {
+        e.preventDefault();
+        kindFilter = kindBtn.getAttribute("data-kind-filter") || "all";
+        applyKindFilter();
+        return;
+      }
       const sceneBtn = t.closest("[data-scene]");
       if (sceneBtn) {
         e.preventDefault();
