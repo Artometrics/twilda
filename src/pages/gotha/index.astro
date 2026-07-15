@@ -7,6 +7,8 @@ import "@/styles/atlas.css";
 import { requireAuth } from "@/lib/auth/guards";
 import { zodiacFromBirthDate, getChineseZodiac, type ZodiacSign, type ChineseZodiac } from "@/lib/gotha/zodiac";
 import { druidTreeFromBirthDate, type DruidTree } from "@/lib/gotha/druid-tree";
+import { sceneForEntity } from "@/lib/atlas/focus-payload";
+import { getEntity } from "@/lib/atlas/data";
 
 const auth = requireAuth(Astro);
 if (auth instanceof Response) return auth;
@@ -22,13 +24,25 @@ let persons: any[] = [];
 let dbReady = true;
 const personsPromise = (async () => {
   try {
-    const { data, error } = await supabase
+    const full = await supabase
       .from("gotha_persons")
-      .select("id, name, birth_year, birth_month, birth_day, birth_place, birth_lat, birth_lng, death_year, family_name, is_self, notes, atlas_entity_id")
+      .select(
+        "id, name, birth_year, birth_month, birth_day, birth_place, birth_lat, birth_lng, death_year, family_name, is_self, notes, atlas_entity_id, atlas_seed_id",
+      )
       .eq("user_id", user.id)
       .order("birth_year", { ascending: true, nullsFirst: false });
-    if (error && error.code === "42P01") return { persons: [] as any[], dbReady: false };
-    return { persons: data ?? [], dbReady: true };
+    if (full.error && full.error.code === "42P01") return { persons: [] as any[], dbReady: false };
+    if (full.error && full.error.message?.includes("atlas_seed_id")) {
+      const retry = await supabase
+        .from("gotha_persons")
+        .select(
+          "id, name, birth_year, birth_month, birth_day, birth_place, birth_lat, birth_lng, death_year, family_name, is_self, notes, atlas_entity_id",
+        )
+        .eq("user_id", user.id)
+        .order("birth_year", { ascending: true, nullsFirst: false });
+      return { persons: retry.data ?? [], dbReady: true };
+    }
+    return { persons: full.data ?? [], dbReady: true };
   } catch {
     return { persons: [] as any[], dbReady: false };
   }
@@ -90,6 +104,13 @@ function treePins(personId: string) {
 const tree = focus ? treePins(focusId) : { parents: [], children: [], partners: [] };
 
 const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
+
+const atlasSeedId = focus?.atlas_seed_id || null;
+const atlasEntity = atlasSeedId ? getEntity(atlasSeedId) : null;
+const atlasScene = atlasSeedId ? sceneForEntity(atlasSeedId) : null;
+const atlasHref = atlasSeedId
+  ? `/atlas/?${atlasScene ? `scene=${encodeURIComponent(atlasScene)}&` : ""}e=${encodeURIComponent(atlasSeedId)}`
+  : null;
 ---
 
 <NovelcrafterLayout title="GOTHA · Twilda">
@@ -199,6 +220,16 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
               <label>Birth place</label>
               <input name="birth_place" placeholder="e.g. Cork, Ireland" />
             </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="gotha-field">
+                <label>Latitude (optional)</label>
+                <input name="birth_lat" type="number" step="any" placeholder="auto from place" />
+              </div>
+              <div class="gotha-field">
+                <label>Longitude (optional)</label>
+                <input name="birth_lng" type="number" step="any" placeholder="auto from place" />
+              </div>
+            </div>
             <div class="gotha-field" style="flex-direction:row;align-items:center;gap:8px;">
               <input type="checkbox" name="is_self" id="is-self" />
               <label for="is-self" style="text-transform:none;letter-spacing:0;font-size:12px;">This is me</label>
@@ -283,7 +314,8 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
           ) : (
             <>
               <p class="gotha-detail__kind">
-                {focus.is_self ? "You" : "Person"}{focus.atlas_entity_id ? " · linked to Atlas" : ""}
+                {focus.is_self ? "You" : "Person"}
+                {atlasSeedId ? " · linked to Atlas" : focus.atlas_entity_id ? " · Atlas entity" : ""}
               </p>
               <h2 class="gotha-detail__name">{focus.name}</h2>
               <div class="gotha-detail__years">
@@ -293,6 +325,69 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
               </div>
               {focus.family_name && <div style="margin-bottom:14px;"><span class="gotha-chip">{focus.family_name}</span></div>}
               {focus.notes && <p style="font-size:13px;color:var(--at-dim);margin-bottom:16px;line-height:1.5;">{focus.notes}</p>}
+
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+                <button class="gotha-btn" type="button" data-toggle-edit>Edit</button>
+                <button class="gotha-btn" type="button" data-delete-person={focus.id} style="color:#e08888;border-color:rgba(224,136,136,0.4);">Delete</button>
+              </div>
+
+              <div class="gotha-add-form" id="edit-person-form" style="display:none;margin:0 0 16px;">
+                <form data-edit-form>
+                  <input type="hidden" name="id" value={focus.id} />
+                  <div class="gotha-field">
+                    <label>Full name *</label>
+                    <input name="name" required value={focus.name} />
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                    <div class="gotha-field">
+                      <label>Birth year</label>
+                      <input name="birth_year" type="number" value={focus.birth_year ?? ""} />
+                    </div>
+                    <div class="gotha-field">
+                      <label>Month</label>
+                      <input name="birth_month" type="number" min="1" max="12" value={focus.birth_month ?? ""} />
+                    </div>
+                    <div class="gotha-field">
+                      <label>Day</label>
+                      <input name="birth_day" type="number" min="1" max="31" value={focus.birth_day ?? ""} />
+                    </div>
+                  </div>
+                  <div class="gotha-field">
+                    <label>Death year</label>
+                    <input name="death_year" type="number" value={focus.death_year ?? ""} />
+                  </div>
+                  <div class="gotha-field">
+                    <label>Family / surname</label>
+                    <input name="family_name" value={focus.family_name ?? ""} />
+                  </div>
+                  <div class="gotha-field">
+                    <label>Birth place</label>
+                    <input name="birth_place" value={focus.birth_place ?? ""} />
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div class="gotha-field">
+                      <label>Latitude</label>
+                      <input name="birth_lat" type="number" step="any" value={focus.birth_lat ?? ""} placeholder="auto from place" />
+                    </div>
+                    <div class="gotha-field">
+                      <label>Longitude</label>
+                      <input name="birth_lng" type="number" step="any" value={focus.birth_lng ?? ""} placeholder="auto from place" />
+                    </div>
+                  </div>
+                  <div class="gotha-field">
+                    <label>Notes</label>
+                    <textarea name="notes" rows="3">{focus.notes ?? ""}</textarea>
+                  </div>
+                  <div class="gotha-field" style="flex-direction:row;align-items:center;gap:8px;">
+                    <input type="checkbox" name="is_self" id="edit-is-self" checked={focus.is_self} />
+                    <label for="edit-is-self" style="text-transform:none;letter-spacing:0;font-size:12px;">This is me</label>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button class="gotha-btn gotha-btn--primary" type="submit" style="flex:1;justify-content:center;">Save changes</button>
+                    <button class="gotha-btn" type="button" data-cancel-edit style="flex:1;justify-content:center;">Cancel</button>
+                  </div>
+                </form>
+              </div>
 
               {zodiac && (
                 <div class="gotha-section">
@@ -378,20 +473,44 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
                     const other = r.from_person_id === focusId ? personById[r.to_person_id] : personById[r.from_person_id];
                     const dir = r.from_person_id === focusId ? "→" : "←";
                     return other ? (
-                      <button class="gotha-rel" type="button" data-person={other.id}>
-                        <div class="gotha-rel__meta">{r.rel} {dir}</div>
-                        <div class="gotha-rel__name">{other.name}</div>
-                      </button>
+                      <div class="gotha-rel-row">
+                        <button class="gotha-rel" type="button" data-person={other.id}>
+                          <div class="gotha-rel__meta">{r.rel} {dir}</div>
+                          <div class="gotha-rel__name">{other.name}</div>
+                        </button>
+                        <button
+                          class="gotha-btn"
+                          type="button"
+                          data-delete-relation={r.id}
+                          title="Remove relation"
+                          style="padding:4px 8px;font-size:11px;color:#e08888;border-color:rgba(224,136,136,0.35);"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     ) : null;
                   })}
                 </div>
               )}
 
-              {focus.atlas_entity_id && (
+              <div class="gotha-section">
+                <h3>Ancestors</h3>
+                <p style="font-size:12px;color:var(--gt-dim);margin:0 0 8px;">Multi-generation list from the family graph.</p>
+                <div data-ancestors-root data-person-id={focus.id}>
+                  <p style="font-size:12px;color:var(--gt-faint);margin:0;">Loading ancestors…</p>
+                </div>
+              </div>
+
+              {atlasHref && (
                 <div class="gotha-section">
                   <h3>Atlas connection</h3>
-                  <a href={`/atlas/?e=${focus.atlas_entity_id}`} class="gotha-btn">
-                    View in Atlas →
+                  {atlasEntity && (
+                    <p style="font-size:12px;color:var(--gt-dim);margin:0 0 8px;">
+                      Seed · {atlasEntity.name} ({atlasEntity.kind})
+                    </p>
+                  )}
+                  <a href={atlasHref} class="gotha-btn">
+                    Open in Atlas →
                   </a>
                 </div>
               )}
@@ -472,6 +591,8 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
         birth_day: data.get("birth_day") || null,
         family_name: data.get("family_name") || null,
         birth_place: data.get("birth_place") || null,
+        birth_lat: data.get("birth_lat") || null,
+        birth_lng: data.get("birth_lng") || null,
         is_self: form.querySelector('[name="is_self"]')?.checked,
       };
       try {
@@ -487,6 +608,63 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
         window.location.href = url.toString();
       } catch (err) {
         alert(err instanceof Error ? err.message : "Save failed");
+      }
+    });
+
+    const editForm = document.getElementById("edit-person-form");
+    document.querySelector("[data-toggle-edit]")?.addEventListener("click", () => {
+      if (editForm) editForm.style.display = editForm.style.display === "none" ? "block" : "none";
+    });
+    document.querySelector("[data-cancel-edit]")?.addEventListener("click", () => {
+      if (editForm) editForm.style.display = "none";
+    });
+
+    document.querySelector("[data-edit-form]")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      const id = data.get("id");
+      const body = {
+        name: data.get("name"),
+        birth_year: data.get("birth_year") || null,
+        birth_month: data.get("birth_month") || null,
+        birth_day: data.get("birth_day") || null,
+        death_year: data.get("death_year") || null,
+        family_name: data.get("family_name") || null,
+        birth_place: data.get("birth_place") || null,
+        birth_lat: data.get("birth_lat") || null,
+        birth_lng: data.get("birth_lng") || null,
+        notes: data.get("notes") || null,
+        is_self: form.querySelector('[name="is_self"]')?.checked,
+      };
+      try {
+        const res = await fetch(`/api/gotha/persons?id=${encodeURIComponent(String(id))}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Update failed");
+        window.location.reload();
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Update failed");
+      }
+    });
+
+    document.querySelector("[data-delete-person]")?.addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      const id = btn?.getAttribute?.("data-delete-person");
+      if (!id) return;
+      if (!confirm("Delete this person and their relations?")) return;
+      try {
+        const res = await fetch(`/api/gotha/persons?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || "Delete failed");
+        const url = new URL(window.location.href);
+        url.searchParams.delete("p");
+        window.location.href = url.toString();
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Delete failed");
       }
     });
 
@@ -513,6 +691,80 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
         alert(err instanceof Error ? err.message : "Failed");
       }
     });
+
+    document.querySelectorAll("[data-delete-relation]").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = btn.getAttribute("data-delete-relation");
+        if (!id) return;
+        if (!confirm("Remove this relation?")) return;
+        try {
+          const res = await fetch(`/api/gotha/relations?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+          const json = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(json.error || "Remove failed");
+          window.location.reload();
+        } catch (err) {
+          alert(err instanceof Error ? err.message : "Remove failed");
+        }
+      });
+    });
+
+    async function loadAncestors() {
+      const root = document.querySelector("[data-ancestors-root]");
+      if (!root) return;
+      const personId = root.getAttribute("data-person-id");
+      if (!personId) return;
+      try {
+        const res = await fetch(`/api/gotha/ancestors?person_id=${encodeURIComponent(personId)}&generations=6`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed");
+        const rows = Array.isArray(data) ? data : [];
+        const ancestors = rows.filter((row) => Number(row.generation ?? 0) > 0);
+        if (!ancestors.length) {
+          root.innerHTML = `<p style="font-size:12px;color:var(--gt-faint);margin:0;">No ancestors linked yet. Add parent relations to build the tree.</p>`;
+          return;
+        }
+        const byGen = new Map();
+        for (const row of ancestors) {
+          const g = Number(row.generation ?? 1);
+          if (!byGen.has(g)) byGen.set(g, []);
+          byGen.get(g).push(row);
+        }
+        const gens = [...byGen.keys()].sort((a, b) => a - b);
+        let html = `<div class="gotha-ancestors">`;
+        for (const g of gens) {
+          html += `<div class="gotha-ancestors__gen"><div class="gotha-ancestors__label">Generation ${g}</div>`;
+          for (const row of byGen.get(g)) {
+            const pid = row.person_id || row.ancestor_id || row.id;
+            const name = row.name || "Unknown";
+            html += `<button class="gotha-btn" type="button" data-person="${escAttr(pid)}" style="margin:0 4px 4px 0;">${escHtml(name)}</button>`;
+          }
+          html += `</div>`;
+        }
+        html += `</div>`;
+        root.innerHTML = html;
+        root.querySelectorAll("[data-person]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const id = btn.getAttribute("data-person");
+            if (!id) return;
+            const url = new URL(window.location.href);
+            url.searchParams.set("p", id);
+            window.location.href = url.toString();
+          });
+        });
+      } catch (err) {
+        root.innerHTML = `<p style="font-size:12px;color:var(--gt-faint);margin:0;">${escHtml(err instanceof Error ? err.message : "Could not load ancestors")}.</p>`;
+      }
+    }
+
+    function escHtml(s) {
+      return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function escAttr(s) {
+      return escHtml(s).replace(/"/g, "&quot;");
+    }
+    loadAncestors();
 
     document.querySelectorAll("[data-lookup-surname]").forEach((btn) => {
       btn.addEventListener("click", async () => {

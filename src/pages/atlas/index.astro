@@ -9,6 +9,7 @@ import {
   focusCardPayload,
   searchIndex,
   serializeCallouts,
+  serializeFocusPins,
   timelineMarks,
 } from "@/lib/atlas/focus-payload";
 import { timelineBounds } from "@/lib/atlas/data";
@@ -25,6 +26,15 @@ const focus = getEntity(focusId) ?? getEntity(scene.focusId)!;
 const bounds = timelineBounds();
 const card = focusCardPayload(focus.id);
 const callouts = serializeCallouts(scene.id);
+const pins = serializeFocusPins(focus.id);
+/** Deep-link / museum Open in Atlas: prefer focus pins over scene callouts. */
+const useFocusPins =
+  Boolean(Astro.url.searchParams.get("e")) &&
+  !scene.calloutIds.includes(focus.id);
+const initialYear =
+  useFocusPins && (focus.startYear ?? focus.endYear) != null
+    ? Number(focus.startYear ?? focus.endYear)
+    : scene.year;
 
 // Credits are non-critical for Atlas — don't block first paint on a slow DB hop.
 const creditsPromise = supabase
@@ -45,10 +55,13 @@ const clientPayload = {
   focusId: focus.id,
   bounds,
   callouts,
+  pins,
+  pinMode: useFocusPins ? "focus" : "scene",
   center: scene.center,
   zoom: scene.zoom,
   badge: scene.badge,
   year: scene.year,
+  scrubYear: initialYear,
   search: searchIndex(),
   timeline: timelineMarks(),
   card,
@@ -102,7 +115,10 @@ const clientPayload = {
             ["person", "People"],
             ["place", "Places"],
             ["work", "Artifacts"],
+            ["idea", "Ideas"],
+            ["event", "Events"],
             ["deity", "Gods"],
+            ["dynasty", "Dynasties"],
             ["concept", "Concepts"],
           ].map(([id, label]) => (
             <button type="button" class:list={["atlas-kind-btn", { "is-active": id === "all" }]} data-kind-filter={id}>
@@ -110,6 +126,10 @@ const clientPayload = {
             </button>
           ))
         }
+      </div>
+
+      <div class="atlas-hud atlas-empty-pins" data-atlas-empty hidden>
+        No pins match the current kind / timeline filters.
       </div>
 
       <!-- Search — results rendered client-side from compact index -->
@@ -134,6 +154,40 @@ const clientPayload = {
         <h1 class="atlas-card__title">{card.focus.name}</h1>
         {card.focus.years && <p class="atlas-card__years">{card.focus.years}</p>}
         <p class="atlas-card__summary">{card.focus.summary}</p>
+        <div data-atlas-extra>
+          {
+            card.focus.description && (
+              <details class="atlas-card__details">
+                <summary>Description</summary>
+                <p>{card.focus.description}</p>
+              </details>
+            )
+          }
+          {
+            card.focus.imageCredit && (
+              <details class="atlas-card__details">
+                <summary>Image credit</summary>
+                <p>{card.focus.imageCredit}</p>
+              </details>
+            )
+          }
+          {
+            card.focus.wikidataId && (
+              <details class="atlas-card__details">
+                <summary>Wikidata</summary>
+                <p>
+                  <a
+                    href={`https://www.wikidata.org/wiki/${card.focus.wikidataId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {card.focus.wikidataId}
+                  </a>
+                </p>
+              </details>
+            )
+          }
+        </div>
         <div data-atlas-tags>{card.focus.tags.map((t) => <span class="atlas-chip">{t}</span>)}</div>
         <div class="atlas-card__actions" data-atlas-actions>
           <button class="atlas-btn" type="button" data-save-museum>Save to My Museum</button>
@@ -204,7 +258,7 @@ const clientPayload = {
             <span data-timeline-label>Focus {scene.year < 0 ? Math.abs(scene.year) + " BCE" : scene.year + " CE"}</span>
             <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--at-dim);">
               Scrub
-              <input type="range" min={bounds.min} max={bounds.max} value={scene.year} data-timeline-year />
+              <input type="range" min={bounds.min} max={bounds.max} value={initialYear} data-timeline-year />
             </label>
           </div>
           <div class="atlas-dock__track" data-timeline-track>
@@ -262,6 +316,7 @@ const clientPayload = {
       const title = root.querySelector(".atlas-card__title");
       const years = root.querySelector(".atlas-card__years");
       const summary = root.querySelector(".atlas-card__summary");
+      const extra = root.querySelector("[data-atlas-extra]");
       const tags = root.querySelector("[data-atlas-tags]");
       const body = root.querySelector("[data-atlas-card-body]");
       const hint = root.querySelector("[data-atlas-hint]");
@@ -281,6 +336,21 @@ const clientPayload = {
           years.hidden = true;
           years.textContent = "";
         }
+      }
+
+      if (extra) {
+        let extraHtml = "";
+        if (card.focus.description) {
+          extraHtml += `<details class="atlas-card__details"><summary>Description</summary><p>${esc(card.focus.description)}</p></details>`;
+        }
+        if (card.focus.imageCredit) {
+          extraHtml += `<details class="atlas-card__details"><summary>Image credit</summary><p>${esc(card.focus.imageCredit)}</p></details>`;
+        }
+        if (card.focus.wikidataId) {
+          const q = esc(card.focus.wikidataId);
+          extraHtml += `<details class="atlas-card__details"><summary>Wikidata</summary><p><a href="https://www.wikidata.org/wiki/${q}" target="_blank" rel="noopener noreferrer">${q}</a></p></details>`;
+        }
+        extra.innerHTML = extraHtml;
       }
 
       if (tags) {
@@ -330,11 +400,33 @@ const clientPayload = {
     }
 
     let kindFilter = "all";
+    /** @type {number} */
+    let scrubYear = Number(state.scrubYear ?? state.year);
+    const YEAR_WINDOW = 15;
+
+    function inYearWindow(e, year) {
+      const lo = year - YEAR_WINDOW;
+      const hi = year + YEAR_WINDOW;
+      const start = e.startYear ?? e.endYear;
+      const end = e.endYear ?? e.startYear;
+      if (start == null && end == null) return true;
+      const s = Number(start);
+      const en = Number(end ?? start);
+      return s <= hi && en >= lo;
+    }
+
+    function activePinList() {
+      return state.pinMode === "focus" && Array.isArray(state.pins) && state.pins.length
+        ? state.pins
+        : state.callouts || [];
+    }
+
     function applyKindFilter() {
       document.querySelectorAll("[data-kind-filter]").forEach((btn) => {
         btn.classList.toggle("is-active", btn.getAttribute("data-kind-filter") === kindFilter);
       });
-      paintCallouts(state.callouts, state.focusId, { fit: false });
+      paintCallouts(activePinList(), state.focusId, { fit: false });
+      paintTimelineMarks();
     }
 
     async function saveToMuseum() {
@@ -397,14 +489,18 @@ const clientPayload = {
       markers = [];
     }
 
-    function paintCallouts(callouts, focusId, { fit = true } = {}) {
+    function paintCallouts(callouts, focusId, { fit = true, flyToFocus = false } = {}) {
       if (!map) return;
       clearMarkers();
       const boundsArr = [];
+      /** @type {{ lng: number, lat: number } | null} */
+      let focusCoords = null;
       for (const c of callouts) {
         if (!c.coords) continue;
         if (kindFilter !== "all" && c.kind !== kindFilter) continue;
+        if (!inYearWindow(c, scrubYear)) continue;
         const isFocus = c.id === focusId;
+        if (isFocus) focusCoords = c.coords;
         const wrap = document.createElement("div");
         wrap.innerHTML = calloutHtml(c, isFocus);
         const inner = wrap.firstElementChild;
@@ -415,12 +511,19 @@ const clientPayload = {
         markers.push(marker);
         boundsArr.push([c.coords.lng, c.coords.lat]);
       }
-      if (fit && boundsArr.length > 1) {
+      const emptyEl = document.querySelector("[data-atlas-empty]");
+      if (emptyEl) emptyEl.hidden = markers.length > 0;
+
+      if (flyToFocus && focusCoords) {
+        map.flyTo({ center: [focusCoords.lng, focusCoords.lat], zoom: Math.max(map.getZoom(), 6), essential: true });
+      } else if (fit && boundsArr.length > 1) {
         const b = boundsArr.reduce(
           (acc, p) => [[Math.min(acc[0][0], p[0]), Math.min(acc[0][1], p[1])], [Math.max(acc[1][0], p[0]), Math.max(acc[1][1], p[1])]],
           [[180, 90], [-180, -90]],
         );
         map.fitBounds(b, { padding: 90, maxZoom: 14 });
+      } else if (fit && boundsArr.length === 1) {
+        map.flyTo({ center: boundsArr[0], zoom: Math.max(map.getZoom(), 6), essential: true });
       }
     }
 
@@ -440,9 +543,19 @@ const clientPayload = {
         const data = await res.json();
         state.focusId = id;
         state.card = data.card;
+        state.pins = data.pins || [];
+        state.pinMode = "focus";
+        const focusPin = (state.pins || []).find((p) => p.id === id) || (state.search || []).find((p) => p.id === id);
+        const focusYear = focusPin?.startYear ?? focusPin?.endYear;
+        if (focusYear != null) {
+          scrubYear = Number(focusYear);
+          const yearInputEl = document.querySelector("[data-timeline-year]");
+          if (yearInputEl) yearInputEl.value = String(scrubYear);
+          updateTimeline(scrubYear, { repaint: false });
+        }
         renderCard(data.card);
-        // Refresh focus styling on existing markers without remounting map
-        paintCallouts(state.callouts, id, { fit: false });
+        paintCallouts(state.pins, id, { fit: false, flyToFocus: true });
+        paintTimelineMarks();
       } catch (err) {
         console.warn("[atlas]", err);
         window.location.search = `?scene=${encodeURIComponent(state.sceneId)}&e=${encodeURIComponent(id)}`;
@@ -464,11 +577,14 @@ const clientPayload = {
         state.sceneId = data.scene.id;
         state.focusId = data.card.focus.id;
         state.callouts = data.callouts;
+        state.pins = data.pins || [];
+        state.pinMode = "scene";
         state.center = data.scene.center;
         state.zoom = data.scene.zoom;
         state.badge = data.scene.badge;
         state.year = data.scene.year;
         state.card = data.card;
+        scrubYear = Number(data.scene.year);
         setUrl({ scene: data.scene.id, e: data.card.focus.id });
         setActiveSceneButton(data.scene.id);
         const badge = document.querySelector("[data-atlas-badge]");
@@ -560,25 +676,39 @@ const clientPayload = {
     const badge = document.querySelector("[data-atlas-badge]");
     const { min, max } = state.bounds;
 
-    function updateTimeline(year) {
+    function updateTimeline(year, { repaint = true } = {}) {
       const y = Number(year);
-      if (yearLabel) yearLabel.textContent = `Focus ${yearStr(y)}`;
+      scrubYear = y;
+      if (yearLabel) yearLabel.textContent = `Focus ${yearStr(y)} · ±${YEAR_WINDOW}y`;
       if (rangeEl) {
-        const left = ((y - 15 - min) / (max - min)) * 100;
-        const width = (30 / (max - min)) * 100;
+        const left = ((y - YEAR_WINDOW - min) / (max - min)) * 100;
+        const width = ((YEAR_WINDOW * 2) / (max - min)) * 100;
         rangeEl.style.left = `${Math.max(0, left)}%`;
         rangeEl.style.width = `${Math.min(100 - Math.max(0, left), width)}%`;
       }
       if (badge && Math.abs(y - state.year) > 5) badge.textContent = yearStr(y);
       else if (badge) badge.textContent = state.badge;
+      if (repaint) {
+        paintCallouts(activePinList(), state.focusId, { fit: false });
+        paintTimelineMarks();
+      }
     }
 
     function paintTimelineMarks() {
       if (!track) return;
       track.querySelectorAll(".atlas-dock__mark").forEach((n) => n.remove());
       for (const e of state.timeline || []) {
+        if (kindFilter !== "all" && e.kind !== kindFilter) continue;
+        if (!inYearWindow(e, scrubYear)) continue;
         const pct = ((e.startYear - min) / (max - min)) * 100;
-        const color = e.kind === "deity" ? "#c9a227" : e.kind === "event" ? "#8a9bb8" : "var(--at-gold)";
+        const color =
+          e.kind === "deity"
+            ? "#c9a227"
+            : e.kind === "event"
+              ? "#8a9bb8"
+              : e.kind === "dynasty" || e.kind === "idea"
+                ? "#a78bfa"
+                : "var(--at-gold)";
         const btn = document.createElement("button");
         btn.className = "atlas-dock__mark";
         btn.type = "button";
@@ -591,7 +721,7 @@ const clientPayload = {
     }
 
     yearInput?.addEventListener("input", () => updateTimeline(yearInput.value));
-    updateTimeline(yearInput?.value ?? state.year);
+    updateTimeline(yearInput?.value ?? state.year, { repaint: false });
     paintTimelineMarks();
     renderCard(state.card);
 
@@ -622,7 +752,8 @@ const clientPayload = {
       map.on("error", (e) => console.warn("[atlas map]", e?.error ?? e));
       map.on("load", () => {
         map?.resize();
-        paintCallouts(state.callouts, state.focusId, { fit: true });
+        const fly = state.pinMode === "focus";
+        paintCallouts(activePinList(), state.focusId, { fit: !fly, flyToFocus: fly });
       });
       requestAnimationFrame(() => map?.resize());
     }

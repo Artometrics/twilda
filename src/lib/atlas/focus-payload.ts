@@ -1,6 +1,8 @@
 import {
   atlasEntities,
+  atlasScenes,
   countByKind,
+  focusPins,
   getEntity,
   getScene,
   peerRanking,
@@ -8,7 +10,6 @@ import {
   sceneCallouts,
   timelineBounds,
   RELATION_LABELS,
-  atlasScenes,
 } from "@/lib/atlas/data";
 import type { AtlasEntity } from "@/lib/atlas/types";
 
@@ -18,6 +19,14 @@ export function yearsLabel(e: AtlasEntity): string {
   return "";
 }
 
+/** Prefer a scene that lists the entity as a callout or focus. */
+export function sceneForEntity(entityId: string): string | null {
+  const hit = atlasScenes.find(
+    (s) => s.focusId === entityId || s.calloutIds.includes(entityId),
+  );
+  return hit?.id ?? null;
+}
+
 /** Compact catalog for client search + timeline (no long descriptions). */
 export function searchIndex() {
   return atlasEntities.map((e) => ({
@@ -25,6 +34,7 @@ export function searchIndex() {
     kind: e.kind,
     name: e.name,
     startYear: e.startYear ?? null,
+    endYear: e.endYear ?? null,
     haystack: `${e.name} ${e.summary} ${e.tags.join(" ")} ${(e.aliases ?? []).join(" ")}`.toLowerCase(),
   }));
 }
@@ -34,26 +44,44 @@ export function timelineMarks() {
     .filter(
       (e) =>
         e.startYear != null &&
-        (e.kind === "person" || e.kind === "deity" || e.kind === "event" || e.kind === "work"),
+        (e.kind === "person" ||
+          e.kind === "deity" ||
+          e.kind === "event" ||
+          e.kind === "work" ||
+          e.kind === "dynasty" ||
+          e.kind === "idea"),
     )
     .map((e) => ({
       id: e.id,
       kind: e.kind,
       name: e.name,
       startYear: e.startYear as number,
+      endYear: e.endYear ?? null,
     }));
 }
 
-export function serializeCallouts(sceneId: string) {
-  const scene = getScene(sceneId) ?? atlasScenes[0];
-  return sceneCallouts(scene).map((c) => ({
+function serializePinEntity(c: AtlasEntity, extra: Record<string, unknown> = {}) {
+  return {
     id: c.id,
     kind: c.kind,
     name: c.name,
     calloutLabel: c.calloutLabel ?? c.name,
     portraitUrl: c.portraitUrl ?? null,
     coords: c.coords ?? null,
-  }));
+    startYear: c.startYear ?? null,
+    endYear: c.endYear ?? null,
+    ...extra,
+  };
+}
+
+export function serializeCallouts(sceneId: string) {
+  const scene = getScene(sceneId) ?? atlasScenes[0];
+  return sceneCallouts(scene).map((c) => serializePinEntity(c));
+}
+
+/** Pins for a focused entity — used on soft-nav and museum deep-links. */
+export function serializeFocusPins(entityId: string) {
+  return focusPins(entityId).map(({ entity, role }) => serializePinEntity(entity, { role }));
 }
 
 export function focusCardPayload(entityId: string) {
@@ -69,6 +97,7 @@ export function focusCardPayload(entityId: string) {
       kind: focus.kind,
       name: focus.name,
       summary: focus.summary,
+      description: focus.description || null,
       years: yearsLabel(focus),
       tags: focus.tags,
       portraitUrl: focus.portraitUrl ?? null,
@@ -116,6 +145,7 @@ export function scenePayload(sceneId: string, focusId?: string | null) {
       zoom: scene.zoom,
     },
     callouts: serializeCallouts(scene.id),
+    pins: serializeFocusPins(focus.id),
     card: focusCardPayload(focus.id),
     bounds: timelineBounds(),
   };

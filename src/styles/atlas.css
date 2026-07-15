@@ -80,8 +80,43 @@
 .atlas-kind-filters {
   top: 64px; left: 16px;
   display: flex; gap: 6px; flex-wrap: wrap;
-  max-width: min(520px, calc(100% - 32px));
+  max-width: min(640px, calc(100% - 32px));
 }
+
+.atlas-empty-pins {
+  top: 112px; left: 16px;
+  max-width: min(320px, calc(100% - 32px));
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(201,162,39,0.35);
+  background: rgba(20,16,12,0.82);
+  color: var(--at-dim);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.atlas-card__details {
+  margin: 0 0 8px;
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: rgba(0,0,0,0.2);
+}
+.atlas-card__details summary {
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--at-label);
+}
+.atlas-card__details p {
+  margin: 8px 0 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--at-dim);
+  white-space: pre-wrap;
+}
+.atlas-card__details a { color: var(--at-gold); }
 
 .atlas-kind-btn {
   appearance: none;
@@ -570,6 +605,30 @@
 .gotha-rel:hover { color: var(--gt-accent); }
 .gotha-rel__meta { font-size: 11px; color: var(--gt-faint); }
 .gotha-rel__name { font-size: 13px; font-weight: 600; }
+
+.gotha-rel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.gotha-rel-row .gotha-rel {
+  flex: 1;
+  min-width: 0;
+  border-bottom: none;
+}
+
+.gotha-ancestors { display: flex; flex-direction: column; gap: 10px; }
+.gotha-ancestors__gen { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.gotha-ancestors__label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gt-faint);
+  width: 100%;
+  margin-bottom: 2px;
+}
 
 .gotha-surname-result {
   font-size: 13px; color: var(--gt-dim); line-height: 1.4; margin-top: 8px;
