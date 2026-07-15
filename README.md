@@ -21,7 +21,7 @@ See **[docs/SETUP.md](docs/SETUP.md)**.
 npm install
 cp .env.example .env
 # Fill PUBLIC_SITE_URL, PUBLIC_SUPABASE_*, SUPABASE_SERVICE_ROLE_KEY
-# Run SQL: 001, 003, 004, and 005 (museum) in Supabase SQL Editor
+# Run SQL: 001, 003, 004, 005 (museum), 006, 007 (onboarding) in Supabase SQL Editor
 npm run dev
 ```
 
@@ -47,7 +47,7 @@ npm run dev
 
 ## Open data
 
-Atlas enrichment may call Wikidata (CC0), Wikipedia summaries (CC BY-SA), Wikimedia Commons (per-file), and the Met Collection API (CC0 for Open Access). Twilda does **not** scrape WikiArt.
+Atlas enrichment may call Wikidata (CC0), Wikipedia summaries (CC BY-SA), Wikimedia Commons (per-file), and the Met Collection API (CC0 for Open Access). Europeana / Rijks / Smithsonian / FRED env keys are **future optional stubs** (not wired). Twilda does **not** scrape WikiArt. Remote image origins are documented in `docs/SETUP.md`.
 
 ## Support
 

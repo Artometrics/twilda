@@ -7,10 +7,8 @@ import "@/styles/atlas.css";
 import { atlasScenes, getEntity, getScene } from "@/lib/atlas/data";
 import {
   focusCardPayload,
-  searchIndex,
   serializeCallouts,
   serializeFocusPins,
-  timelineMarks,
 } from "@/lib/atlas/focus-payload";
 import { timelineBounds } from "@/lib/atlas/data";
 import { requireAuth } from "@/lib/auth/guards";
@@ -50,6 +48,7 @@ const subscription = await Promise.race([
   new Promise<null>((resolve) => setTimeout(() => resolve(null), 120)),
 ]);
 
+// search + timeline load lazily via /api/atlas/search-index after map shell paints
 const clientPayload = {
   sceneId: scene.id,
   focusId: focus.id,
@@ -62,8 +61,9 @@ const clientPayload = {
   badge: scene.badge,
   year: scene.year,
   scrubYear: initialYear,
-  search: searchIndex(),
-  timeline: timelineMarks(),
+  search: [],
+  timeline: [],
+  indexReady: false,
   card,
 };
 ---
@@ -788,6 +788,11 @@ const clientPayload = {
         results.innerHTML = "";
         return;
       }
+      if (!state.indexReady) {
+        results.innerHTML = `<div class="atlas-results__item" style="opacity:.7">Loading catalog…</div>`;
+        results.classList.add("is-open");
+        return;
+      }
       const hits = (state.search || []).filter((e) => e.haystack.includes(q)).slice(0, 40);
       results.innerHTML = hits
         .map(
@@ -1074,6 +1079,22 @@ const clientPayload = {
       else if (e && e !== state.focusId) selectEntity(e);
     });
 
+    async function loadSearchIndex() {
+      try {
+        const res = await fetch("/api/atlas/search-index");
+        if (!res.ok) throw new Error(`search-index ${res.status}`);
+        const data = await res.json();
+        state.search = data.search || [];
+        state.timeline = data.timeline || [];
+        state.indexReady = true;
+        paintTimelineMarks();
+        if (search instanceof HTMLInputElement && search.value.trim()) filterResults();
+      } catch (err) {
+        console.warn("[atlas search-index]", err);
+        state.indexReady = false;
+      }
+    }
+
     async function bootMap() {
       const host = document.getElementById("atlas-map");
       if (!host || host.dataset.booted === "1") return;
@@ -1095,6 +1116,8 @@ const clientPayload = {
         map?.resize();
         const fly = state.pinMode === "focus";
         paintCallouts(activePinList(), state.focusId, { fit: !fly, flyToFocus: fly });
+        // Catalog after map init — search/timeline can wait; pins already in boot payload
+        void loadSearchIndex();
       });
       requestAnimationFrame(() => map?.resize());
     }
