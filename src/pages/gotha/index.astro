@@ -86,9 +86,7 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
 ---
 
 <NovelcrafterLayout title="GOTHA · Twilda">
-  <style is:global>
-    @import "maplibre-gl/dist/maplibre-gl.css";
-  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" crossorigin="" />
 
   <!-- Liquid-glass SVG filter -->
   <svg width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden;">
@@ -370,11 +368,7 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
     </div>
   </div>
 
-  <script>
-    import maplibregl from "maplibre-gl";
-    window.__maplibregl = maplibregl;
-  </script>
-
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.min.js" crossorigin=""></script>
   <script define:vars={{ mapPins, focusId }}>
     // Person navigation
     document.querySelectorAll("[data-person]").forEach((btn) => {
@@ -473,7 +467,7 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
 
     // Map
     function bootMap() {
-      const ML = window.__maplibregl;
+      const ML = window.maplibregl;
       if (!ML) { setTimeout(bootMap, 40); return; }
       const el = document.getElementById("gotha-map");
       if (!el || el._booted) return;
@@ -521,7 +515,7 @@ const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
 
     let attempts = 0;
     const waitML = setInterval(() => {
-      if (window.__maplibregl || ++attempts > 100) { clearInterval(waitML); bootMap(); }
+      if (window.maplibregl || ++attempts > 100) { clearInterval(waitML); bootMap(); }
     }, 50);
   </script>
 </NovelcrafterLayout>
