@@ -1,6 +1,8 @@
 /** Shared fetch helpers for Atlas enrich APIs (Wikidata, Wikipedia, Met). */
 
-export const TWILDA_UA = "Twilda/1.0 (twilda.com)"; // pragma: allowlist secret
+import { createServerClient } from "@/lib/supabase/server";
+
+export const TWILDA_UA = "TwildaResearchBot/1.0";
 
 export type EnrichEntity = {
   id: string;
@@ -28,6 +30,44 @@ const WD_API = "https://www.wikidata.org/w/api.php";
 const WD_SPARQL = "https://query.wikidata.org/sparql";
 const WIKI_SUMMARY = "https://en.wikipedia.org/api/rest_v1/page/summary";
 const MET_API = "https://collectionapi.metmuseum.org/public/collection/v1";
+
+const ENRICH_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** Read enrich cache — fail soft if table/env missing. Uses service role. */
+export async function getEnrichCache<T = unknown>(cacheKey: string): Promise<T | null> {
+  try {
+    // Table may be absent until migration 005; Database types omit it.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = createServerClient({ useServiceRole: true }) as any;
+    const { data, error } = await admin
+      .from("atlas_enrich_cache")
+      .select("payload, fetched_at")
+      .eq("cache_key", cacheKey)
+      .maybeSingle();
+
+    if (error?.code === "42P01" || error || !data) return null;
+    const fetched = Date.parse(data.fetched_at as string);
+    if (!Number.isFinite(fetched) || Date.now() - fetched > ENRICH_CACHE_TTL_MS) return null;
+    return data.payload as T;
+  } catch {
+    return null;
+  }
+}
+
+/** Upsert enrich cache — fail soft if table/env missing. Requires service role. */
+export async function setEnrichCache(cacheKey: string, payload: unknown): Promise<void> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = createServerClient({ useServiceRole: true }) as any;
+    await admin.from("atlas_enrich_cache").upsert({
+      cache_key: cacheKey,
+      payload,
+      fetched_at: new Date().toISOString(),
+    });
+  } catch {
+    // skip cache
+  }
+}
 
 export async function twildaFetch(url: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
@@ -121,7 +161,6 @@ export async function wikidataGetEntity(qid: string): Promise<EnrichEntity | nul
   if (coordClaim?.latitude != null && coordClaim?.longitude != null) {
     coords = { lat: coordClaim.latitude, lng: coordClaim.longitude };
   } else {
-    // Place of birth (P19) → coords via SPARQL fallback
     const pob = claimValue(entity, "P19") as { id?: string } | undefined;
     if (pob?.id) {
       coords = await sparqlCoords(pob.id);
@@ -164,7 +203,7 @@ LIMIT 1`.trim();
   }
 }
 
-/** Resolve enrich: by QID or search-then-get first hit. */
+/** Resolve enrich: by QID or search-then-get first hit. Cached ~24h when migration 005 is applied. */
 export async function enrichFromWikidata(opts: {
   qid?: string | null;
   q?: string | null;
@@ -173,18 +212,38 @@ export async function enrichFromWikidata(opts: {
   const q = opts.q?.trim();
 
   if (qid) {
-    return wikidataGetEntity(qid);
+    const id = qid.toUpperCase().startsWith("Q") ? qid.toUpperCase() : `Q${qid}`;
+    const key = `wd:entity:${id}`;
+    const cached = await getEnrichCache<EnrichEntity>(key);
+    if (cached) return cached;
+    const ent = await wikidataGetEntity(id);
+    if (ent) await setEnrichCache(key, ent);
+    return ent;
   }
   if (!q) return null;
 
+  const searchKey = `wd:search:${q.toLowerCase()}`;
+  const cachedSearch = await getEnrichCache<EnrichEntity | EnrichEntity[]>(searchKey);
+  if (cachedSearch) return cachedSearch;
+
   const hits = await wikidataSearch(q, 5);
-  if (hits.length === 0) return [];
+  if (hits.length === 0) {
+    await setEnrichCache(searchKey, []);
+    return [];
+  }
   const entities: EnrichEntity[] = [];
   for (const hit of hits.slice(0, 3)) {
-    const ent = await wikidataGetEntity(hit.id);
+    const entityKey = `wd:entity:${hit.id}`;
+    let ent: EnrichEntity | null = await getEnrichCache<EnrichEntity>(entityKey);
+    if (!ent) {
+      ent = await wikidataGetEntity(hit.id);
+      if (ent) await setEnrichCache(entityKey, ent);
+    }
     if (ent) entities.push(ent);
   }
-  return entities.length === 1 ? entities[0] : entities;
+  const result = entities.length === 1 ? entities[0] : entities;
+  await setEnrichCache(searchKey, result);
+  return result;
 }
 
 export async function wikipediaSummary(title: string): Promise<{
@@ -194,18 +253,31 @@ export async function wikipediaSummary(title: string): Promise<{
   license: "CC BY-SA 4.0";
   attribution: "Wikipedia";
 } | null> {
-  const encoded = encodeURIComponent(title.replace(/ /g, "_"));
+  const normalized = title.trim().replace(/ /g, "_");
+  const key = `wiki:summary:${normalized.toLowerCase()}`;
+  const cached = await getEnrichCache<{
+    title: string;
+    extract: string;
+    contentUrls: unknown;
+    license: "CC BY-SA 4.0";
+    attribution: "Wikipedia";
+  }>(key);
+  if (cached) return cached;
+
+  const encoded = encodeURIComponent(normalized);
   const res = await twildaFetch(`${WIKI_SUMMARY}/${encoded}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Wikipedia summary HTTP ${res.status}`);
   const json = await res.json();
-  return {
+  const payload = {
     title: json.title ?? title,
     extract: json.extract ?? "",
     contentUrls: json.content_urls ?? null,
-    license: "CC BY-SA 4.0",
-    attribution: "Wikipedia",
+    license: "CC BY-SA 4.0" as const,
+    attribution: "Wikipedia" as const,
   };
+  await setEnrichCache(key, payload);
+  return payload;
 }
 
 export async function metSearch(q: string, limit = 12): Promise<MetObjectSummary[]> {
@@ -225,11 +297,15 @@ export async function metSearch(q: string, limit = 12): Promise<MetObjectSummary
 }
 
 export async function metObject(id: number | string): Promise<MetObjectSummary | null> {
+  const key = `met:object:${id}`;
+  const cached = await getEnrichCache<MetObjectSummary>(key);
+  if (cached) return cached;
+
   const res = await twildaFetch(`${MET_API}/objects/${id}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Met object HTTP ${res.status}`);
   const json = await res.json();
-  return {
+  const payload: MetObjectSummary = {
     metObjectId: json.objectID ?? Number(id),
     title: json.title ?? "Untitled",
     artist: json.artistDisplayName || null,
@@ -238,4 +314,6 @@ export async function metObject(id: number | string): Promise<MetObjectSummary |
     objectURL: json.objectURL || null,
     license: "CC0",
   };
+  await setEnrichCache(key, payload);
+  return payload;
 }

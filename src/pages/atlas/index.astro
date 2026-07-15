@@ -145,6 +145,27 @@ const clientPayload = {
         <div class="atlas-results" data-atlas-results></div>
       </div>
 
+      <!-- Live Discover — Met OA / Wikidata enrich -->
+      <div class="atlas-hud atlas-discover glass">
+        <div class="atlas-discover__head">
+          <strong>Discover</strong>
+          <div class="atlas-discover__tabs" role="tablist" aria-label="Discover source">
+            <button type="button" class="atlas-discover__tab is-active" data-discover-tab="met" role="tab" aria-selected="true">Met</button>
+            <button type="button" class="atlas-discover__tab" data-discover-tab="wikidata" role="tab" aria-selected="false">Wikidata</button>
+          </div>
+        </div>
+        <label class="sr-only" for="atlas-discover-input">Discover open data</label>
+        <input
+          id="atlas-discover-input"
+          type="search"
+          placeholder="Search Met / Wikidata…"
+          data-discover-q
+          aria-label="Discover open data"
+        />
+        <p class="atlas-discover__status" data-discover-status hidden></p>
+        <div class="atlas-discover__results" data-discover-results></div>
+      </div>
+
       <!-- Period badge -->
       <div class="atlas-badge" data-atlas-badge>{scene.badge}</div>
 
@@ -190,12 +211,13 @@ const clientPayload = {
         </div>
         <div data-atlas-tags>{card.focus.tags.map((t) => <span class="atlas-chip">{t}</span>)}</div>
         <div class="atlas-card__actions" data-atlas-actions>
-          <button class="atlas-btn" type="button" data-save-museum>Save to My Museum</button>
+          <button class="atlas-btn" type="button" data-save-museum data-save-label>Save to My Museum</button>
           {card.focus.sourceUrl && (
             <a class="atlas-btn" href={card.focus.sourceUrl} target="_blank" rel="noopener noreferrer">Open source</a>
           )}
           <a class="atlas-btn" href="/account/#museum-heading">My Museum</a>
         </div>
+        <p class="atlas-card__status" data-atlas-status hidden></p>
         <p class="atlas-card__sources" data-atlas-sources>
           {[
             card.focus.license && `License: ${card.focus.license}`,
@@ -274,6 +296,8 @@ const clientPayload = {
     </div>
   </div>
 
+  <div class="nc-toast" data-atlas-toast hidden></div>
+
   <script type="application/json" id="atlas-boot-data" is:inline set:html={JSON.stringify(clientPayload)} />
   <script>
     import maplibregl from "maplibre-gl";
@@ -289,6 +313,8 @@ const clientPayload = {
     /** @type {maplibregl.Marker[]} */
     let markers = [];
     let navBusy = false;
+    /** @type {Set<string>} */
+    const savedMuseumIds = new Set();
 
     function esc(s) {
       return String(s ?? "")
@@ -296,6 +322,65 @@ const clientPayload = {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    function showToast(message) {
+      const toast = document.querySelector("[data-atlas-toast]");
+      if (!toast) return;
+      toast.textContent = message;
+      toast.hidden = false;
+      toast.classList.add("is-visible");
+      window.clearTimeout(showToast._t);
+      showToast._t = window.setTimeout(() => {
+        toast.classList.remove("is-visible");
+        window.setTimeout(() => {
+          toast.hidden = true;
+        }, 200);
+      }, 2400);
+    }
+
+    function setCardStatus(message) {
+      const el = document.querySelector("[data-atlas-status]");
+      if (!el) return;
+      if (!message) {
+        el.hidden = true;
+        el.textContent = "";
+        return;
+      }
+      el.hidden = false;
+      el.textContent = message;
+    }
+
+    function saveButtonLabel(focus) {
+      const id = focus?.id;
+      if (id && savedMuseumIds.has(id)) return "Saved ✓";
+      const kind = String(focus?.kind || "").toLowerCase();
+      if (kind === "work" || kind === "artifact") return "Save artifact";
+      return "Save to My Museum";
+    }
+
+    function syncSaveButton() {
+      const btn = document.querySelector("[data-save-museum]");
+      if (!btn) return;
+      const f = state.card?.focus;
+      btn.textContent = saveButtonLabel(f);
+      btn.disabled = Boolean(f?.id && savedMuseumIds.has(f.id));
+    }
+
+    async function loadMuseumIds() {
+      try {
+        const res = await fetch("/api/account/museum");
+        if (!res.ok) return;
+        const rows = await res.json();
+        if (!Array.isArray(rows)) return;
+        savedMuseumIds.clear();
+        for (const row of rows) {
+          if (row?.seed_entity_id) savedMuseumIds.add(String(row.seed_entity_id));
+        }
+        syncSaveButton();
+      } catch {
+        /* museum table may be missing */
+      }
     }
 
     function yearStr(y) {
@@ -371,7 +456,8 @@ const clientPayload = {
         const open = card.focus.sourceUrl
           ? `<a class="atlas-btn" href="${esc(card.focus.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open source</a>`
           : "";
-        actions.innerHTML = `<button class="atlas-btn" type="button" data-save-museum>Save to My Museum</button>${open}<a class="atlas-btn" href="/account/#museum-heading">My Museum</a>`;
+        actions.innerHTML = `<button class="atlas-btn" type="button" data-save-museum data-save-label>${esc(saveButtonLabel(card.focus))}</button>${open}<a class="atlas-btn" href="/account/#museum-heading">My Museum</a>`;
+        syncSaveButton();
       }
 
       if (body) {
@@ -429,10 +515,11 @@ const clientPayload = {
       paintTimelineMarks();
     }
 
-    async function saveToMuseum() {
-      const f = state.card?.focus;
-      if (!f) return;
+    async function saveToMuseum(payload) {
+      const f = payload || state.card?.focus;
+      if (!f?.id) return;
       try {
+        setCardStatus("Saving…");
         const res = await fetch("/api/account/museum", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -449,10 +536,45 @@ const clientPayload = {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || "Save failed");
-        alert("Saved to My Museum");
+        savedMuseumIds.add(String(f.id));
+        syncSaveButton();
+        setCardStatus("Saved to My Museum");
+        showToast("Saved to My Museum");
       } catch (err) {
-        alert(err instanceof Error ? err.message : "Save failed");
+        const msg = err instanceof Error ? err.message : "Save failed";
+        setCardStatus(msg);
+        showToast(msg);
       }
+    }
+
+    /** Preview enrich / Met hit on the detail card without a curated seed id. */
+    function previewDiscoverCard(focusPartial) {
+      const card = {
+        focus: {
+          id: focusPartial.id || null,
+          kind: focusPartial.kind || "work",
+          name: focusPartial.name || "Untitled",
+          summary: focusPartial.summary || "",
+          description: focusPartial.description || null,
+          years: focusPartial.years || "",
+          tags: focusPartial.tags || [],
+          portraitUrl: focusPartial.portraitUrl || null,
+          sourceUrl: focusPartial.sourceUrl || null,
+          license: focusPartial.license || null,
+          attribution: focusPartial.attribution || null,
+          imageCredit: focusPartial.imageCredit || null,
+          wikidataId: focusPartial.wikidataId || null,
+          metObjectId: focusPartial.metObjectId || null,
+          provenance: [],
+        },
+        peers: [],
+        related: [],
+        hint: focusPartial.hint || "Live Discover preview — not a curated Atlas seed.",
+      };
+      state.focusId = card.focus.id;
+      state.card = card;
+      renderCard(card);
+      setCardStatus("Preview from Discover");
     }
 
     function calloutHtml(c, isFocus) {
@@ -607,13 +729,31 @@ const clientPayload = {
       }
     }
 
-    // Delegated clicks (card / timeline / search results)
+    // Delegated clicks (card / timeline / search results / discover)
     document.querySelector(".atlas")?.addEventListener("click", (e) => {
       const t = e.target;
       if (!(t instanceof Element)) return;
       if (t.closest("[data-save-museum]")) {
         e.preventDefault();
         saveToMuseum();
+        return;
+      }
+      const discoverTabBtn = t.closest("[data-discover-tab]");
+      if (discoverTabBtn) {
+        e.preventDefault();
+        setDiscoverTab(discoverTabBtn.getAttribute("data-discover-tab") || "met");
+        return;
+      }
+      const previewBtn = t.closest("[data-discover-preview]");
+      if (previewBtn) {
+        e.preventDefault();
+        previewFromDiscoverButton(previewBtn);
+        return;
+      }
+      const saveMetBtn = t.closest("[data-discover-save-met]");
+      if (saveMetBtn) {
+        e.preventDefault();
+        saveMetFromDiscover(saveMetBtn);
         return;
       }
       const kindBtn = t.closest("[data-kind-filter]");
@@ -665,6 +805,205 @@ const clientPayload = {
       if (!(t instanceof Element)) return;
       if (!t.closest("[data-atlas-search]") && !t.closest("[data-atlas-results]")) {
         results?.classList.remove("is-open");
+      }
+    });
+
+    // Discover panel (Met / Wikidata live APIs)
+    let discoverTab = "met";
+    let discoverTimer = 0;
+    const discoverInput = document.querySelector("[data-discover-q]");
+    const discoverResults = document.querySelector("[data-discover-results]");
+    const discoverStatus = document.querySelector("[data-discover-status]");
+
+    function setDiscoverStatus(msg) {
+      if (!discoverStatus) return;
+      if (!msg) {
+        discoverStatus.hidden = true;
+        discoverStatus.textContent = "";
+        return;
+      }
+      discoverStatus.hidden = false;
+      discoverStatus.textContent = msg;
+    }
+
+    function setDiscoverTab(tab) {
+      discoverTab = tab === "wikidata" ? "wikidata" : "met";
+      document.querySelectorAll("[data-discover-tab]").forEach((btn) => {
+        const active = btn.getAttribute("data-discover-tab") === discoverTab;
+        btn.classList.toggle("is-active", active);
+        btn.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      if (discoverInput instanceof HTMLInputElement && discoverInput.value.trim()) {
+        runDiscover(discoverInput.value.trim());
+      }
+    }
+
+    function yearsFromEnrich(ent) {
+      if (ent.startYear != null && ent.endYear != null) return `${ent.startYear}–${ent.endYear}`;
+      if (ent.startYear != null) return String(ent.startYear);
+      return "";
+    }
+
+    function renderDiscoverResults(items) {
+      if (!discoverResults) return;
+      if (!items.length) {
+        discoverResults.innerHTML = `<p class="atlas-discover__empty">No results</p>`;
+        return;
+      }
+      discoverResults.innerHTML = items
+        .map((item) => {
+          const thumb = item.portraitUrl
+            ? `<img class="atlas-discover__thumb" src="${esc(item.portraitUrl)}" alt="" loading="lazy" />`
+            : `<div class="atlas-discover__thumb atlas-discover__thumb--empty">${esc((item.title || "?").charAt(0))}</div>`;
+          const meta = item.meta ? `<span class="atlas-discover__meta">${esc(item.meta)}</span>` : "";
+          const save =
+            item.source === "met"
+              ? `<button type="button" class="atlas-btn" data-discover-save-met="${esc(String(item.metObjectId))}" data-title="${esc(item.title)}" data-artist="${esc(item.artist || "")}" data-date="${esc(item.date || "")}" data-portrait="${esc(item.portraitUrl || "")}" data-source-url="${esc(item.sourceUrl || "")}">Save to Museum</button>`
+              : "";
+          return `<div class="atlas-discover__row" data-discover-item>
+            ${thumb}
+            <div class="atlas-discover__body">
+              <div class="atlas-discover__title">${esc(item.title)}</div>
+              ${meta}
+              <div class="atlas-discover__actions">
+                <button type="button" class="atlas-btn" data-discover-preview
+                  data-source="${esc(item.source)}"
+                  data-id="${esc(item.id || "")}"
+                  data-title="${esc(item.title)}"
+                  data-summary="${esc(item.summary || "")}"
+                  data-description="${esc(item.description || "")}"
+                  data-years="${esc(item.years || "")}"
+                  data-portrait="${esc(item.portraitUrl || "")}"
+                  data-source-url="${esc(item.sourceUrl || "")}"
+                  data-license="${esc(item.license || "")}"
+                  data-attribution="${esc(item.attribution || "")}"
+                  data-wikidata="${esc(item.wikidataId || "")}"
+                  data-met="${esc(item.metObjectId != null ? String(item.metObjectId) : "")}"
+                  data-kind="${esc(item.kind || "work")}"
+                >Preview</button>
+                ${save}
+              </div>
+            </div>
+          </div>`;
+        })
+        .join("");
+    }
+
+    function previewFromDiscoverButton(btn) {
+      const source = btn.getAttribute("data-source");
+      const metId = btn.getAttribute("data-met");
+      const qid = btn.getAttribute("data-wikidata") || btn.getAttribute("data-id");
+      const focus = {
+        id:
+          source === "met" && metId
+            ? `met-live-${metId}`
+            : qid
+              ? `wd-live-${qid}`
+              : `discover-${Date.now()}`,
+        kind: btn.getAttribute("data-kind") || (source === "met" ? "work" : "person"),
+        name: btn.getAttribute("data-title") || "Untitled",
+        summary: btn.getAttribute("data-summary") || "",
+        description: btn.getAttribute("data-description") || null,
+        years: btn.getAttribute("data-years") || "",
+        portraitUrl: btn.getAttribute("data-portrait") || null,
+        sourceUrl: btn.getAttribute("data-source-url") || null,
+        license: btn.getAttribute("data-license") || null,
+        attribution: btn.getAttribute("data-attribution") || null,
+        wikidataId: source === "wikidata" ? qid : null,
+        metObjectId: metId ? Number(metId) : null,
+        tags: source === "met" ? ["met", "open-access"] : ["wikidata"],
+        hint: source === "met" ? "Met Open Access · CC0" : "Wikidata enrich preview",
+      };
+      previewDiscoverCard(focus);
+    }
+
+    async function saveMetFromDiscover(btn) {
+      const objectId = btn.getAttribute("data-discover-save-met");
+      if (!objectId) return;
+      const focus = {
+        id: `met-live-${objectId}`,
+        kind: "work",
+        name: btn.getAttribute("data-title") || "Untitled",
+        summary: [btn.getAttribute("data-artist"), btn.getAttribute("data-date")].filter(Boolean).join(" · "),
+        portraitUrl: btn.getAttribute("data-portrait") || null,
+        sourceUrl: btn.getAttribute("data-source-url") || null,
+        license: "CC0",
+        attribution: "The Metropolitan Museum of Art",
+      };
+      previewDiscoverCard({ ...focus, tags: ["met", "open-access"], metObjectId: Number(objectId), hint: "Met Open Access · CC0" });
+      await saveToMuseum(focus);
+    }
+
+    async function runDiscover(q) {
+      if (!q) {
+        setDiscoverStatus("");
+        if (discoverResults) discoverResults.innerHTML = "";
+        return;
+      }
+      setDiscoverStatus("Searching…");
+      try {
+        if (discoverTab === "met") {
+          const res = await fetch(`/api/atlas/met/search?q=${encodeURIComponent(q)}`);
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || "Met search failed");
+          const items = (Array.isArray(json) ? json : []).map((o) => ({
+            source: "met",
+            id: `met-live-${o.metObjectId}`,
+            metObjectId: o.metObjectId,
+            title: o.title || "Untitled",
+            artist: o.artist || "",
+            date: o.date || "",
+            summary: [o.artist, o.date].filter(Boolean).join(" · "),
+            meta: [o.artist, o.date].filter(Boolean).join(" · ") || "Met · CC0",
+            portraitUrl: o.primaryImageSmall,
+            sourceUrl: o.objectURL,
+            license: "CC0",
+            attribution: "The Metropolitan Museum of Art",
+            kind: "work",
+          }));
+          renderDiscoverResults(items);
+          setDiscoverStatus(items.length ? `${items.length} Met results` : "No Met results");
+        } else {
+          const res = await fetch(`/api/atlas/enrich?q=${encodeURIComponent(q)}`);
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || "Enrich failed");
+          const list = Array.isArray(json) ? json : json ? [json] : [];
+          const items = list.map((ent) => ({
+            source: "wikidata",
+            id: ent.wikidataId || ent.id,
+            wikidataId: ent.wikidataId || ent.id,
+            title: ent.name,
+            summary: ent.description || "",
+            description: ent.description || "",
+            years: yearsFromEnrich(ent),
+            meta: ent.description || ent.wikidataId || "",
+            portraitUrl: ent.portraitUrl || null,
+            sourceUrl: ent.sourceUrl || null,
+            license: "CC0",
+            attribution: "Wikidata",
+            kind: "person",
+          }));
+          renderDiscoverResults(items);
+          setDiscoverStatus(items.length ? `${items.length} Wikidata results` : "No Wikidata results");
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Discover failed";
+        setDiscoverStatus(msg);
+        if (discoverResults) discoverResults.innerHTML = "";
+      }
+    }
+
+    discoverInput?.addEventListener("input", () => {
+      window.clearTimeout(discoverTimer);
+      const q = (discoverInput instanceof HTMLInputElement ? discoverInput.value : "").trim();
+      discoverTimer = window.setTimeout(() => runDiscover(q), 400);
+    });
+    discoverInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        window.clearTimeout(discoverTimer);
+        const q = (discoverInput instanceof HTMLInputElement ? discoverInput.value : "").trim();
+        runDiscover(q);
       }
     });
 
@@ -724,6 +1063,8 @@ const clientPayload = {
     updateTimeline(yearInput?.value ?? state.year, { repaint: false });
     paintTimelineMarks();
     renderCard(state.card);
+    loadMuseumIds();
+    syncSaveButton();
 
     window.addEventListener("popstate", () => {
       const url = new URL(window.location.href);
