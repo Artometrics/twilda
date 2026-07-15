@@ -524,7 +524,7 @@ async function seedNovelShell(
       synopsis: seed.synopsis,
       cover_kind: seed.cover,
       series_name: seed.series ?? null,
-      is_template: false,
+      is_template: true,
     })
     .select("id")
     .single();
@@ -580,7 +580,7 @@ export async function ensureStarterNovels(supabase: Client, userId: string) {
         synopsis: trinityV2Seed.synopsis,
         cover_kind: "trinity",
         series_name: trinityV2Seed.series ?? "Trinity",
-        is_template: false,
+        is_template: true,
       })
       .select("id")
       .single();
