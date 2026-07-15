@@ -1,0 +1,527 @@
+---
+export const prerender = false;
+
+import NovelcrafterLayout from "@/layouts/NovelcrafterLayout.astro";
+import NovelsTopbar from "@/components/novels/NovelsTopbar.astro";
+import "@/styles/atlas.css";
+import { requireAuth } from "@/lib/auth/guards";
+import { zodiacFromBirthDate, getChineseZodiac, type ZodiacSign, type ChineseZodiac } from "@/lib/gotha/zodiac";
+import { druidTreeFromBirthDate, type DruidTree } from "@/lib/gotha/druid-tree";
+
+const auth = requireAuth(Astro);
+if (auth instanceof Response) return auth;
+const { user, supabase } = auth;
+
+const { data: subscription } = await supabase
+  .from("subscriptions")
+  .select("ai_credits_remaining, ai_credits_monthly")
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+// Load persons from DB (silently empty if table not yet created)
+let persons: any[] = [];
+let dbReady = true;
+try {
+  const { data, error } = await supabase
+    .from("gotha_persons")
+    .select("id, name, birth_year, birth_month, birth_day, birth_place, birth_lat, birth_lng, death_year, family_name, is_self, notes, atlas_entity_id")
+    .eq("user_id", user.id)
+    .order("birth_year", { ascending: true, nullsFirst: false });
+  if (error && error.code === "42P01") dbReady = false;
+  else persons = data ?? [];
+} catch { dbReady = false; }
+
+// Load relations
+let relations: any[] = [];
+if (dbReady && persons.length > 0) {
+  const ids = persons.map((p: any) => p.id);
+  const { data: rels } = await supabase
+    .from("gotha_relations")
+    .select("id, from_person_id, to_person_id, rel")
+    .eq("user_id", user.id);
+  relations = rels ?? [];
+}
+
+// Focus person
+const focusId = Astro.url.searchParams.get("p") ?? persons.find((p: any) => p.is_self)?.id ?? persons[0]?.id;
+const focus = persons.find((p: any) => p.id === focusId) ?? null;
+
+let zodiac: ZodiacSign | null = null;
+let chinese: ChineseZodiac | null = null;
+let druid: DruidTree | null = null;
+
+if (focus?.birth_month && focus?.birth_day) {
+  zodiac = zodiacFromBirthDate(focus.birth_year ?? 1900, focus.birth_month, focus.birth_day);
+  druid = druidTreeFromBirthDate(focus.birth_month, focus.birth_day);
+}
+if (focus?.birth_year) {
+  chinese = getChineseZodiac(focus.birth_year);
+}
+
+const personRelations = relations.filter(
+  (r: any) => r.from_person_id === focusId || r.to_person_id === focusId,
+);
+
+const personById = Object.fromEntries(persons.map((p: any) => [p.id, p]));
+
+// Simple SVG tree computation — parents above, children below
+function treePins(personId: string) {
+  const parents: any[] = [];
+  const children: any[] = [];
+  const partners: any[] = [];
+  for (const r of relations) {
+    if (r.to_person_id === personId && r.rel === "parent") parents.push(personById[r.from_person_id]);
+    if (r.from_person_id === personId && r.rel === "parent") children.push(personById[r.to_person_id]);
+    if ((r.from_person_id === personId || r.to_person_id === personId) && r.rel === "partner") {
+      const other = r.from_person_id === personId ? r.to_person_id : r.from_person_id;
+      partners.push(personById[other]);
+    }
+  }
+  return { parents: parents.filter(Boolean), children: children.filter(Boolean), partners: partners.filter(Boolean) };
+}
+
+const tree = focus ? treePins(focusId) : { parents: [], children: [], partners: [] };
+
+const mapPins = persons.filter((p: any) => p.birth_lat && p.birth_lng);
+---
+
+<NovelcrafterLayout title="GOTHA · Twilda">
+  <style is:global>
+    @import "maplibre-gl/dist/maplibre-gl.css";
+  </style>
+
+  <!-- Liquid-glass SVG filter -->
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden;">
+    <filter id="liquid-glass" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="4" result="noise"/>
+      <feGaussianBlur in="noise" stdDeviation="2" result="blurred"/>
+      <feDisplacementMap in="SourceGraphic" in2="blurred" scale="50" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
+
+  <NovelsTopbar
+    active="gotha"
+    userEmail={user.email}
+    credits={subscription?.ai_credits_remaining ?? 5}
+    creditsMax={subscription?.ai_credits_monthly ?? 5}
+  />
+
+  <div class="gotha">
+    <div class="gotha-shell">
+      <!-- LEFT — person list + tree -->
+      <aside class="gotha-tree">
+        <div class="gotha-tree__head">
+          <h1>GOTHA</h1>
+          <p>Your personal genealogy. Add ancestors to trace their stories against the wider map of history.</p>
+          {!dbReady && (
+            <p style="color:#c9a227;font-size:12px;margin:0;">
+              Run <code>004_atlas_schema.sql</code> in Supabase to enable GOTHA persistence.
+            </p>
+          )}
+          <button class="gotha-btn gotha-btn--primary" type="button" data-toggle-add style="margin-top:10px;width:100%;justify-content:center;">
+            + Add person
+          </button>
+        </div>
+
+        <div class="gotha-scroll" data-persons-list>
+          {
+            persons.length === 0 ? (
+              <div class="gotha-empty">
+                <p>No people yet.<br />Add yourself first, then build your tree generation by generation.</p>
+              </div>
+            ) : (
+              persons.map((p: any) => (
+                <button
+                  class:list={["gotha-person", { "is-active": p.id === focusId }]}
+                  type="button"
+                  data-person={p.id}
+                >
+                  <div class="gotha-person__av">{p.name.charAt(0).toUpperCase()}</div>
+                  <div class="gotha-person__meta">
+                    <strong>{p.name}{p.is_self ? " (you)" : ""}</strong>
+                    <span>
+                      {p.family_name && `${p.family_name} · `}
+                      {p.birth_year && p.birth_year < 0 ? `${Math.abs(p.birth_year)} BCE` : p.birth_year}
+                      {p.death_year && ` – ${p.death_year}`}
+                      {p.birth_place && ` · ${p.birth_place}`}
+                    </span>
+                  </div>
+                </button>
+              ))
+            )
+          }
+        </div>
+
+        <!-- Add person form (hidden by default) -->
+        <div class="gotha-add-form" id="add-person-form" style="display:none;margin:8px;">
+          <form data-add-form>
+            <div class="gotha-field">
+              <label>Full name *</label>
+              <input name="name" required placeholder="e.g. Mary O'Brien" />
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+              <div class="gotha-field">
+                <label>Birth year</label>
+                <input name="birth_year" type="number" placeholder="1920" />
+              </div>
+              <div class="gotha-field">
+                <label>Month</label>
+                <input name="birth_month" type="number" min="1" max="12" placeholder="6" />
+              </div>
+              <div class="gotha-field">
+                <label>Day</label>
+                <input name="birth_day" type="number" min="1" max="31" placeholder="15" />
+              </div>
+            </div>
+            <div class="gotha-field">
+              <label>Family / surname</label>
+              <input name="family_name" placeholder="e.g. McAuliffe" />
+            </div>
+            <div class="gotha-field">
+              <label>Birth place</label>
+              <input name="birth_place" placeholder="e.g. Cork, Ireland" />
+            </div>
+            <div class="gotha-field" style="flex-direction:row;align-items:center;gap:8px;">
+              <input type="checkbox" name="is_self" id="is-self" />
+              <label for="is-self" style="text-transform:none;letter-spacing:0;font-size:12px;">This is me</label>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="gotha-btn gotha-btn--primary" type="submit" style="flex:1;justify-content:center;">Save</button>
+              <button class="gotha-btn" type="button" data-cancel-add style="flex:1;justify-content:center;">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </aside>
+
+      <!-- CENTER — map (birth pins + migrations) -->
+      <div class="gotha-map-wrap">
+        <div class="gotha-map" id="gotha-map"></div>
+
+        <!-- SVG family tree overlay on mobile / detail -->
+        {
+          focus && (
+            <div style="position:absolute;bottom:0;left:0;right:0;z-index:20;pointer-events:none;">
+              <div style="padding:12px 16px;background:linear-gradient(to top,rgba(13,15,14,0.92),transparent);pointer-events:auto;">
+                <p style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--gt-faint);margin:0 0 6px;">Family connections</p>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+                  {tree.parents.length > 0 && (
+                    <div>
+                      <p style="font-size:10px;color:var(--gt-faint);margin:0 0 4px;">Parents</p>
+                      {tree.parents.map((p: any) => (
+                        <button class="gotha-btn" type="button" data-person={p.id} style="margin-right:4px;margin-bottom:4px;">{p.name}</button>
+                      ))}
+                    </div>
+                  )}
+                  {tree.partners.length > 0 && (
+                    <div>
+                      <p style="font-size:10px;color:var(--gt-faint);margin:0 0 4px;">Partners</p>
+                      {tree.partners.map((p: any) => (
+                        <button class="gotha-btn" type="button" data-person={p.id} style="margin-right:4px;">{p.name}</button>
+                      ))}
+                    </div>
+                  )}
+                  {tree.children.length > 0 && (
+                    <div>
+                      <p style="font-size:10px;color:var(--gt-faint);margin:0 0 4px;">Children</p>
+                      {tree.children.map((p: any) => (
+                        <button class="gotha-btn" type="button" data-person={p.id} style="margin-right:4px;">{p.name}</button>
+                      ))}
+                    </div>
+                  )}
+                  {tree.parents.length === 0 && tree.children.length === 0 && tree.partners.length === 0 && (
+                    <p style="font-size:12px;color:var(--gt-faint);margin:0;">No connections yet. Use "Add relation" to link people.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        }
+      </div>
+
+      <!-- RIGHT — profile panel -->
+      <aside class="gotha-detail">
+        {
+          !focus ? (
+            <div class="gotha-empty">
+              <p style="font-family:var(--gt-serif);font-size:22px;margin:0 0 10px;color:var(--gt-text);">GOTHA</p>
+              <p>Inspired by the Almanach de Gotha — the old German reference for European royal lineages — this is your personal genealogy and mythological ancestry explorer.</p>
+              <p style="margin-top:12px;">Add yourself to begin. Then add parents, grandparents, and connect them to places on the map and figures in Atlas history.</p>
+              <p style="margin-top:12px;">Each person shows their western zodiac, Celtic Ogham tree, Chinese year animal, and family name origin via Wikidata.</p>
+            </div>
+          ) : (
+            <>
+              <p class="gotha-detail__kind">
+                {focus.is_self ? "You" : "Person"}{focus.atlas_entity_id ? " · linked to Atlas" : ""}
+              </p>
+              <h2 class="gotha-detail__name">{focus.name}</h2>
+              <div class="gotha-detail__years">
+                {focus.birth_year && (focus.birth_year < 0 ? `b. ${Math.abs(focus.birth_year)} BCE` : `b. ${focus.birth_year}`)}
+                {focus.death_year && ` – d. ${focus.death_year}`}
+                {focus.birth_place && ` · ${focus.birth_place}`}
+              </div>
+              {focus.family_name && <div style="margin-bottom:14px;"><span class="gotha-chip">{focus.family_name}</span></div>}
+              {focus.notes && <p style="font-size:13px;color:var(--at-dim);margin-bottom:16px;line-height:1.5;">{focus.notes}</p>}
+
+              {zodiac && (
+                <div class="gotha-section">
+                  <h3>Western zodiac</h3>
+                  <div class="gotha-sign">
+                    <span class="gotha-sign__symbol">{zodiac.symbol}</span>
+                    <div>
+                      <div class="gotha-sign__name">{zodiac.name}</div>
+                      <div class="gotha-sign__range">{zodiac.dateRange} · {zodiac.ruling} · {zodiac.element} · {zodiac.modality}</div>
+                      <div class="gotha-sign__desc">{zodiac.description}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {druid && (
+                <div class="gotha-section">
+                  <h3>Celtic Ogham tree</h3>
+                  <div class="gotha-sign gotha-sign--druid">
+                    <span class="gotha-sign__symbol">{druid.oghamLetter} {druid.symbol}</span>
+                    <div>
+                      <div class="gotha-sign__name">{druid.tree}</div>
+                      <div class="gotha-sign__range">{druid.dateRange} · {druid.meaning}</div>
+                      <div class="gotha-sign__desc">{druid.lore.slice(0, 180)}…</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {chinese && (
+                <div class="gotha-section">
+                  <h3>Chinese zodiac year</h3>
+                  <div class="gotha-sign">
+                    <span class="gotha-sign__symbol">{chinese.symbol}</span>
+                    <div>
+                      <div class="gotha-sign__name">{chinese.animal}</div>
+                      <div class="gotha-sign__range">{chinese.element} year</div>
+                      <div class="gotha-sign__desc">{chinese.description}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {focus.family_name && (
+                <div class="gotha-section">
+                  <h3>Surname origin</h3>
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <span style="font-size:13px;color:var(--gt-dim);">Look up "{focus.family_name}" in Wikidata</span>
+                    <button class="gotha-btn" type="button" data-lookup-surname={focus.family_name}>Look up</button>
+                  </div>
+                  <div class="gotha-surname-result" id="surname-result" hidden></div>
+                </div>
+              )}
+
+              <div class="gotha-section">
+                <h3>Add relation</h3>
+                <form data-rel-form style="display:flex;flex-direction:column;gap:8px;">
+                  <div class="gotha-field">
+                    <label>Other person</label>
+                    <select name="other_person_id">
+                      {persons.filter((p: any) => p.id !== focusId).map((p: any) => (
+                        <option value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div class="gotha-field">
+                    <label>Relation type (from their perspective to you)</label>
+                    <select name="rel">
+                      <option value="parent">Parent of {focus.name}</option>
+                      <option value="child">Child of {focus.name}</option>
+                      <option value="partner">Partner of {focus.name}</option>
+                      <option value="sibling">Sibling of {focus.name}</option>
+                    </select>
+                  </div>
+                  <button class="gotha-btn gotha-btn--primary" type="submit" style="justify-content:center;">Add relation</button>
+                </form>
+              </div>
+
+              {personRelations.length > 0 && (
+                <div class="gotha-section">
+                  <h3>All relations</h3>
+                  {personRelations.map((r: any) => {
+                    const other = r.from_person_id === focusId ? personById[r.to_person_id] : personById[r.from_person_id];
+                    const dir = r.from_person_id === focusId ? "→" : "←";
+                    return other ? (
+                      <button class="gotha-rel" type="button" data-person={other.id}>
+                        <div class="gotha-rel__meta">{r.rel} {dir}</div>
+                        <div class="gotha-rel__name">{other.name}</div>
+                      </button>
+                    ) : null;
+                  })}
+                </div>
+              )}
+
+              {focus.atlas_entity_id && (
+                <div class="gotha-section">
+                  <h3>Atlas connection</h3>
+                  <a href={`/atlas/?e=${focus.atlas_entity_id}`} class="gotha-btn">
+                    View in Atlas →
+                  </a>
+                </div>
+              )}
+            </>
+          )
+        }
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    import maplibregl from "maplibre-gl";
+    window.__maplibregl = maplibregl;
+  </script>
+
+  <script define:vars={{ mapPins, focusId }}>
+    // Person navigation
+    document.querySelectorAll("[data-person]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-person");
+        if (id) {
+          const url = new URL(window.location.href);
+          url.searchParams.set("p", id);
+          window.location.href = url.toString();
+        }
+      });
+    });
+
+    // Add form toggle
+    const addForm = document.getElementById("add-person-form");
+    document.querySelector("[data-toggle-add]")?.addEventListener("click", () => {
+      addForm.style.display = addForm.style.display === "none" ? "block" : "none";
+    });
+    document.querySelector("[data-cancel-add]")?.addEventListener("click", () => {
+      addForm.style.display = "none";
+    });
+
+    // Add person form submit
+    document.querySelector("[data-add-form]")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      const body = {
+        name: data.get("name"),
+        birth_year: data.get("birth_year") || null,
+        birth_month: data.get("birth_month") || null,
+        birth_day: data.get("birth_day") || null,
+        family_name: data.get("family_name") || null,
+        birth_place: data.get("birth_place") || null,
+        is_self: form.querySelector('[name="is_self"]')?.checked,
+      };
+      try {
+        const res = await fetch("/api/gotha/persons", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error);
+        const url = new URL(window.location.href);
+        url.searchParams.set("p", json.id);
+        window.location.href = url.toString();
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Save failed");
+      }
+    });
+
+    // Add relation form
+    document.querySelector("[data-rel-form]")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      const otherId = data.get("other_person_id");
+      const rel = data.get("rel");
+      const body = rel === "parent"
+        ? { from_person_id: otherId, to_person_id: focusId, rel: "parent" }
+        : rel === "child"
+        ? { from_person_id: focusId, to_person_id: otherId, rel: "parent" }
+        : { from_person_id: focusId, to_person_id: otherId, rel };
+      try {
+        const res = await fetch("/api/gotha/relations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) { const j = await res.json(); throw new Error(j.error); }
+        window.location.reload();
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Failed");
+      }
+    });
+
+    // Surname lookup
+    document.querySelectorAll("[data-lookup-surname]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const name = btn.getAttribute("data-lookup-surname");
+        const result = document.getElementById("surname-result");
+        if (!result) return;
+        result.textContent = "Looking up…";
+        result.hidden = false;
+        try {
+          const res = await fetch(`/api/gotha/surname?name=${encodeURIComponent(name)}`);
+          const data = await res.json();
+          if (data.error) result.textContent = data.error;
+          else {
+            result.innerHTML = `<strong>${data.name}</strong>${data.wikidataId ? ` · Wikidata ${data.wikidataId}` : ""}${data.country ? `<br>Origin: ${data.country}` : ""}${data.description ? `<br>${data.description}` : ""}`;
+          }
+        } catch { result.textContent = "Lookup failed."; }
+      });
+    });
+
+    // Map
+    function bootMap() {
+      const ML = window.__maplibregl;
+      if (!ML) { setTimeout(bootMap, 40); return; }
+      const el = document.getElementById("gotha-map");
+      if (!el || el._booted) return;
+      el._booted = true;
+
+      const map = new ML.Map({
+        container: el,
+        style: {
+          version: 8,
+          sources: {
+            osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, attribution: "&copy; OpenStreetMap contributors" },
+          },
+          layers: [{ id: "osm", type: "raster", source: "osm" }],
+        },
+        center: [0, 30],
+        zoom: 2,
+      });
+
+      const bounds = [];
+      mapPins.forEach((p) => {
+        const isFocus = p.id === focusId;
+        const el2 = document.createElement("div");
+        el2.innerHTML = `<div style="width:${isFocus ? 18 : 12}px;height:${isFocus ? 18 : 12}px;border-radius:50%;background:#78c97a;border:2px solid #0d0f0e;box-shadow:0 0 0 ${isFocus ? 3 : 2}px rgba(120,201,122,0.4);cursor:pointer;" title="${p.name}"></div>`;
+        el2.addEventListener("click", () => {
+          const url = new URL(window.location.href);
+          url.searchParams.set("p", p.id);
+          window.location.href = url.toString();
+        });
+        new ML.Marker({ element: el2.firstElementChild, anchor: "center" })
+          .setLngLat([p.birth_lng, p.birth_lat])
+          .addTo(map);
+        bounds.push([p.birth_lng, p.birth_lat]);
+      });
+
+      if (bounds.length > 1) {
+        const bb = bounds.reduce(
+          (b, p) => [[Math.min(b[0][0],p[0]),Math.min(b[0][1],p[1])],[Math.max(b[1][0],p[0]),Math.max(b[1][1],p[1])]],
+          [[180,90],[-180,-90]]
+        );
+        map.fitBounds(bb, { padding: 60, maxZoom: 8 });
+      }
+
+      setTimeout(() => map.resize(), 100);
+    }
+
+    let attempts = 0;
+    const waitML = setInterval(() => {
+      if (window.__maplibregl || ++attempts > 100) { clearInterval(waitML); bootMap(); }
+    }, 50);
+  </script>
+</NovelcrafterLayout>

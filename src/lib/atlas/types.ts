@@ -1,4 +1,4 @@
-export type AtlasKind = "person" | "place" | "work" | "idea" | "event";
+export type AtlasKind = "person" | "place" | "work" | "idea" | "event" | "deity" | "dynasty" | "concept";
 
 export type AtlasRelation =
   | "born_in"
@@ -12,7 +12,16 @@ export type AtlasRelation =
   | "influenced_by"
   | "related"
   | "moved_to"
-  | "valued_among";
+  | "valued_among"
+  | "parent_of"
+  | "child_of"
+  | "sibling_of"
+  | "spouse_of"
+  | "ruled"
+  | "descends_from"
+  | "speaks"
+  | "writes_in"
+  | "member_of";
 
 export interface AtlasCoords {
   lat: number;
@@ -89,4 +98,13 @@ export const RELATION_LABELS: Record<AtlasRelation, string> = {
   related: "Related",
   moved_to: "Moved to",
   valued_among: "Valued among",
+  parent_of: "Parent of",
+  child_of: "Child of",
+  sibling_of: "Sibling of",
+  spouse_of: "Spouse of",
+  ruled: "Ruled",
+  descends_from: "Descends from",
+  speaks: "Speaks",
+  writes_in: "Writes in",
+  member_of: "Member of",
 };

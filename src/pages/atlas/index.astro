@@ -41,9 +41,11 @@ const { data: subscription } = await supabase
 
 function yearsLabel(e: AtlasEntity): string {
   if (e.startYear != null && e.endYear != null) return `${e.startYear}–${e.endYear}`;
-  if (e.startYear != null) return String(e.startYear);
+  if (e.startYear != null) return e.startYear < 0 ? `${Math.abs(e.startYear)} BCE` : String(e.startYear);
   return "";
 }
+
+const totalKinds = Object.values(counts).reduce((a, b) => a + b, 0);
 
 const clientPayload = {
   entities: atlasEntities,
@@ -57,7 +59,7 @@ const clientPayload = {
     name: c.name,
     calloutLabel: c.calloutLabel ?? c.name,
     portraitUrl: c.portraitUrl ?? null,
-    coords: c.coords!,
+    coords: c.coords ?? null,
   })),
   center: scene.center,
   zoom: scene.zoom,
@@ -67,7 +69,19 @@ const clientPayload = {
 ---
 
 <NovelcrafterLayout title="Atlas · Twilda">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <style is:global>
+    /* MapLibre GL CSS — inlined to avoid CDN */
+    @import "maplibre-gl/dist/maplibre-gl.css";
+  </style>
+
+  <!-- SVG liquid-glass displacement filter (Chromium bonus) -->
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden;">
+    <filter id="liquid-glass" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="4" result="noise"/>
+      <feGaussianBlur in="noise" stdDeviation="2" result="blurred"/>
+      <feDisplacementMap in="SourceGraphic" in2="blurred" scale="50" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
 
   <NovelsTopbar
     active="atlas"
@@ -81,6 +95,7 @@ const clientPayload = {
       <div class="atlas-map" id="atlas-map"></div>
       <div class="atlas-map-veil" aria-hidden="true"></div>
 
+      <!-- Scene switcher -->
       <div class="atlas-hud atlas-scenes">
         {
           atlasScenes.map((s) => (
@@ -95,12 +110,17 @@ const clientPayload = {
         }
       </div>
 
+      <!-- Search -->
       <div class="atlas-hud atlas-search-float">
-        <input type="search" placeholder="Search people, places, works…" data-atlas-search />
+        <input type="search" placeholder="Search people, places, gods…" data-atlas-search />
         <div class="atlas-results" data-atlas-results>
           {
             atlasEntities.map((e) => (
-              <button type="button" data-entity={e.id} data-search={`${e.name} ${e.summary} ${e.tags.join(" ")}`.toLowerCase()}>
+              <button
+                type="button"
+                data-entity={e.id}
+                data-search={`${e.name} ${e.summary} ${e.tags.join(" ")} ${(e.aliases ?? []).join(" ")}`.toLowerCase()}
+              >
                 <span class="atlas-results__kind">{e.kind}</span>
                 {e.name}
               </button>
@@ -109,16 +129,16 @@ const clientPayload = {
         </div>
       </div>
 
+      <!-- Period badge -->
       <div class="atlas-badge" data-atlas-badge>{scene.badge}</div>
 
-      <aside class="atlas-card" data-atlas-card>
+      <!-- Detail card -->
+      <aside class="atlas-card glass" data-atlas-card>
         <p class="atlas-card__kind">{focus.kind}</p>
         <h1 class="atlas-card__title">{focus.name}</h1>
         {yearsLabel(focus) && <p class="atlas-card__years">{yearsLabel(focus)}</p>}
         <p class="atlas-card__summary">{focus.summary}</p>
-        <div>
-          {focus.tags.map((t) => <span class="atlas-chip">{t}</span>)}
-        </div>
+        <div>{focus.tags.map((t) => <span class="atlas-chip">{t}</span>)}</div>
 
         {
           peers.length > 0 && (
@@ -144,6 +164,7 @@ const clientPayload = {
                   <button class="atlas-rel" type="button" data-entity={p.placeId}>
                     <div class="atlas-rel__meta">{p.year}</div>
                     <div class="atlas-rel__name">{place?.name ?? p.placeId}</div>
+                    <div class="atlas-rel__meta">{p.note}</div>
                   </button>
                 );
               })}
@@ -154,70 +175,81 @@ const clientPayload = {
         <div class="atlas-card__section">
           <h3>Connected · who / what was near</h3>
           {
-            related.slice(0, 8).map(({ link, entity, direction }) => (
+            related.slice(0, 10).map(({ link, entity, direction }) => (
               <button class="atlas-rel" type="button" data-entity={entity.id}>
                 <div class="atlas-rel__meta">
                   {direction === "out" ? RELATION_LABELS[link.rel] : `← ${RELATION_LABELS[link.rel]}`}
-                  {link.year != null && ` · ${link.year}${link.yearEnd ? `–${link.yearEnd}` : ""}`}
+                  {link.year != null && ` · ${link.year < 0 ? Math.abs(link.year) + " BCE" : link.year}${link.yearEnd ? `–${link.yearEnd}` : ""}`}
                 </div>
-                <div class="atlas-rel__name">{entity.name}</div>
+                <div class="atlas-rel__name">{entity.name} <span style="opacity:0.5;font-weight:400">· {entity.kind}</span></div>
+                {link.note && <div class="atlas-rel__meta">{link.note}</div>}
               </button>
             ))
           }
         </div>
         <p class="atlas-hint">
-          {counts.person} people · {counts.place} places · {counts.work} works in Atlas. Switch scenes to
-          see who shared a city in one year.
+          {totalKinds} entries across {Object.entries(counts).filter(([,v])=>v>0).map(([k,v])=>`${v} ${k}s`).join(", ")}.
         </p>
       </aside>
 
+      <!-- Timeline dock -->
       <div class="atlas-dock">
-        <div class="atlas-dock__inner">
+        <div class="atlas-dock__inner glass">
           <div class="atlas-dock__top">
             <strong>Timeline</strong>
-            <span data-timeline-label>Focus year {scene.year}</span>
+            <span data-timeline-label>Focus {scene.year < 0 ? Math.abs(scene.year) + " BCE" : scene.year + " CE"}</span>
             <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--at-dim);">
               Scrub
-              <input
-                type="range"
-                min={bounds.min}
-                max={bounds.max}
-                value={scene.year}
-                data-timeline-year
-              />
+              <input type="range" min={bounds.min} max={bounds.max} value={scene.year} data-timeline-year />
             </label>
           </div>
           <div class="atlas-dock__track">
             <div class="atlas-dock__range" data-timeline-range></div>
             {
               atlasEntities
-                .filter((e) => e.startYear != null && e.kind === "person")
+                .filter((e) => e.startYear != null && (e.kind === "person" || e.kind === "deity" || e.kind === "event"))
                 .map((e) => {
                   const pct = ((e.startYear! - bounds.min) / (bounds.max - bounds.min)) * 100;
+                  const color = e.kind === "deity" ? "#c9a227" : e.kind === "event" ? "#8a9bb8" : "var(--at-gold)";
                   return (
                     <button
                       class="atlas-dock__mark"
                       type="button"
                       title={`${e.name} (${e.startYear})`}
                       data-entity={e.id}
-                      style={`left:${pct}%;`}
+                      style={`left:${pct}%;background:${color};`}
                     />
                   );
                 })
             }
           </div>
           <div class="atlas-dock__axis">
-            <span>{bounds.min}</span>
-            <span>{Math.round((bounds.min + bounds.max) / 2)}</span>
-            <span>{bounds.max}</span>
+            <span>{bounds.min < 0 ? Math.abs(bounds.min) + " BCE" : bounds.min}</span>
+            <span>0</span>
+            <span>{bounds.max} CE</span>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    import maplibregl from "maplibre-gl";
+    window.__maplibregl = maplibregl;
+  </script>
+
   <script define:vars={{ clientPayload }}>
+    const PIN_COLORS = {
+      person: "#c4a574",
+      deity: "#e8b860",
+      place: "#7d9b8a",
+      work: "#d4a090",
+      event: "#8a9bb8",
+      idea: "#a090b8",
+      dynasty: "#9b8a70",
+      concept: "#7a9ba0",
+    };
+
     function go(opts) {
       const url = new URL(window.location.href);
       if (opts.scene) url.searchParams.set("scene", opts.scene);
@@ -236,124 +268,150 @@ const clientPayload = {
       });
     });
 
+    // Search
     const search = document.querySelector("[data-atlas-search]");
     const results = document.querySelector("[data-atlas-results]");
-    const resultButtons = [...document.querySelectorAll("[data-atlas-results] [data-entity]")];
+    const rbtns = [...document.querySelectorAll("[data-atlas-results] [data-entity]")];
 
     function filterResults() {
       const q = (search?.value || "").trim().toLowerCase();
       if (!results) return;
-      if (!q) {
-        results.classList.remove("is-open");
-        return;
-      }
+      if (!q) { results.classList.remove("is-open"); return; }
       results.classList.add("is-open");
-      resultButtons.forEach((btn) => {
-        const hay = btn.getAttribute("data-search") || "";
-        btn.style.display = hay.includes(q) ? "block" : "none";
+      rbtns.forEach((btn) => {
+        btn.style.display = (btn.getAttribute("data-search") || "").includes(q) ? "block" : "none";
       });
     }
+
     search?.addEventListener("input", filterResults);
     search?.addEventListener("focus", filterResults);
+    document.addEventListener("click", (e) => {
+      if (!e.target?.closest("[data-atlas-search]") && !e.target?.closest("[data-atlas-results]")) {
+        results?.classList.remove("is-open");
+      }
+    });
 
+    // Timeline scrub
     const yearInput = document.querySelector("[data-timeline-year]");
     const yearLabel = document.querySelector("[data-timeline-label]");
     const rangeEl = document.querySelector("[data-timeline-range]");
     const badge = document.querySelector("[data-atlas-badge]");
     const { min, max } = clientPayload.bounds;
 
+    function yearStr(y) {
+      return y < 0 ? `${Math.abs(y)} BCE` : `${y} CE`;
+    }
+
     function updateTimeline(year) {
       const y = Number(year);
-      if (yearLabel) yearLabel.textContent = `Focus year ${y}`;
+      if (yearLabel) yearLabel.textContent = `Focus ${yearStr(y)}`;
       if (rangeEl) {
         const left = ((y - 15 - min) / (max - min)) * 100;
         const width = (30 / (max - min)) * 100;
         rangeEl.style.left = `${Math.max(0, left)}%`;
         rangeEl.style.width = `${Math.min(100 - Math.max(0, left), width)}%`;
       }
-      // Soft-update badge year if scrubbing away from scene year
-      if (badge && Math.abs(y - clientPayload.year) > 2) {
-        const place = clientPayload.badge.replace(/\s+\d{4}$/, "");
-        badge.textContent = `${place} ${y}`;
+      if (badge && Math.abs(y - clientPayload.year) > 5) {
+        badge.textContent = yearStr(y);
       } else if (badge) {
         badge.textContent = clientPayload.badge;
       }
     }
+
     yearInput?.addEventListener("input", () => updateTimeline(yearInput.value));
     if (yearInput) updateTimeline(yearInput.value);
 
+    // Callout HTML builder
     function calloutHtml(c, isFocus) {
       const label = c.calloutLabel || c.name;
       const focusClass = isFocus ? " is-focus" : "";
-      if (c.kind === "place" || !c.portraitUrl) {
-        if (c.kind === "place") {
-          return `<div class="atlas-callout atlas-callout--place${focusClass}" data-id="${c.id}">
+      const noPhoto = ["place", "concept", "dynasty", "idea"].includes(c.kind);
+      if (noPhoto || !c.portraitUrl) {
+        const cls = `atlas-callout atlas-callout--${c.kind}${focusClass}`;
+        if (noPhoto) {
+          return `<div class="${cls}" data-id="${c.id}">
             <div class="atlas-callout__label">${label}</div>
             <div class="atlas-callout__tail"></div>
           </div>`;
         }
-        const initial = (label || "?").trim().charAt(0);
         return `<div class="atlas-callout${focusClass}" data-id="${c.id}">
-          <div class="atlas-callout__photo"><div class="atlas-callout__fallback">${initial}</div></div>
+          <div class="atlas-callout__photo"><div class="atlas-callout__fallback">${label.charAt(0)}</div></div>
           <div class="atlas-callout__label">${label}</div>
           <div class="atlas-callout__tail"></div>
         </div>`;
       }
       return `<div class="atlas-callout${focusClass}" data-id="${c.id}">
         <div class="atlas-callout__photo">
-          <img src="${c.portraitUrl}" alt="" loading="lazy" onerror="this.style.display='none';this.parentNode.querySelector('.atlas-callout__fallback')?.removeAttribute('hidden');" />
-          <div class="atlas-callout__fallback" hidden>${(label || "?").charAt(0)}</div>
+          <img src="${c.portraitUrl}" alt="" loading="lazy"
+            onerror="this.style.display='none';this.nextElementSibling?.removeAttribute('hidden');" />
+          <div class="atlas-callout__fallback" hidden>${label.charAt(0)}</div>
         </div>
         <div class="atlas-callout__label">${label}</div>
         <div class="atlas-callout__tail"></div>
       </div>`;
     }
 
+    // Boot MapLibre
     function bootMap() {
-      if (!window.L) {
-        window.setTimeout(bootMap, 40);
-        return;
-      }
+      const ML = window.__maplibregl;
+      if (!ML) { setTimeout(bootMap, 30); return; }
       const el = document.getElementById("atlas-map");
       if (!el || el._atlasBooted) return;
       el._atlasBooted = true;
 
-      const map = window.L.map(el, {
-        zoomControl: true,
-        attributionControl: true,
-        scrollWheelZoom: true,
-      }).setView([clientPayload.center.lat, clientPayload.center.lng], clientPayload.zoom);
+      const map = new ML.Map({
+        container: el,
+        style: {
+          version: 8,
+          sources: {
+            osm: {
+              type: "raster",
+              tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+              tileSize: 256,
+              attribution: "&copy; OpenStreetMap contributors",
+              maxzoom: 18,
+            },
+          },
+          layers: [{ id: "osm", type: "raster", source: "osm" }],
+        },
+        center: [clientPayload.center.lng, clientPayload.center.lat],
+        zoom: clientPayload.zoom,
+        scrollZoom: true,
+      });
 
-      // Aged paper street map feel
-      window.L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        attribution: "&copy; OpenStreetMap &copy; CARTO",
-        subdomains: "abcd",
-        maxZoom: 18,
-      }).addTo(map);
-
-      const bounds = [];
+      const boundsArr = [];
       clientPayload.callouts.forEach((c) => {
         if (!c.coords) return;
         const isFocus = c.id === clientPayload.focusId;
-        const icon = window.L.divIcon({
-          className: "atlas-leaflet-pin",
-          html: calloutHtml(c, isFocus),
-          iconSize: c.kind === "place" ? [80, 44] : [92, 118],
-          iconAnchor: c.kind === "place" ? [40, 44] : [46, 118],
-        });
-        const marker = window.L.marker([c.coords.lat, c.coords.lng], { icon, riseOnHover: true }).addTo(map);
-        marker.on("click", () => go({ e: c.id, scene: clientPayload.sceneId }));
-        bounds.push([c.coords.lat, c.coords.lng]);
+        const el = document.createElement("div");
+        el.innerHTML = calloutHtml(c, isFocus);
+        const inner = el.firstElementChild;
+        inner?.addEventListener("click", () => go({ e: c.id, scene: clientPayload.sceneId }));
+        const noPhoto = ["place", "concept", "dynasty", "idea"].includes(c.kind);
+        new ML.Marker({ element: inner, anchor: "bottom" })
+          .setLngLat([c.coords.lng, c.coords.lat])
+          .addTo(map);
+        boundsArr.push([c.coords.lng, c.coords.lat]);
       });
 
-      if (bounds.length > 1) {
-        map.fitBounds(bounds, { padding: [80, 80], maxZoom: 15 });
+      if (boundsArr.length > 1) {
+        const bounds = boundsArr.reduce(
+          (b, p) => [[Math.min(b[0][0], p[0]), Math.min(b[0][1], p[1])], [Math.max(b[1][0], p[0]), Math.max(b[1][1], p[1])]],
+          [[180, 90], [-180, -90]]
+        );
+        map.fitBounds(bounds, { padding: 90, maxZoom: 14 });
       }
 
-      // Fix tile sizing after layout
-      window.setTimeout(() => map.invalidateSize(), 80);
+      setTimeout(() => map.resize(), 100);
     }
 
-    bootMap();
+    // Wait for ML import
+    let attempts = 0;
+    const waitML = setInterval(() => {
+      if (window.__maplibregl || ++attempts > 100) {
+        clearInterval(waitML);
+        bootMap();
+      }
+    }, 50);
   </script>
 </NovelcrafterLayout>
