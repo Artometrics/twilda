@@ -36,25 +36,31 @@ export const POST: APIRoute = async ({ cookies, request }) => {
   const keyToId = new Map<string, string>();
 
   for (const person of SAMPLE_FAMILY_PERSONS) {
-    const { data, error } = await supabase
+    const base = {
+      user_id: user.id,
+      name: person.name,
+      birth_year: person.birth_year,
+      birth_month: person.birth_month,
+      birth_day: person.birth_day,
+      birth_place: person.birth_place,
+      birth_lat: person.birth_lat,
+      birth_lng: person.birth_lng,
+      death_year: person.death_year,
+      family_name: person.family_name,
+      is_self: person.is_self,
+      notes: person.notes,
+    };
+
+    // Prefer atlas_seed_id (005); fall back if column not migrated yet
+    let { data, error } = await supabase
       .from("gotha_persons")
-      .insert({
-        user_id: user.id,
-        name: person.name,
-        birth_year: person.birth_year,
-        birth_month: person.birth_month,
-        birth_day: person.birth_day,
-        birth_place: person.birth_place,
-        birth_lat: person.birth_lat,
-        birth_lng: person.birth_lng,
-        death_year: person.death_year,
-        family_name: person.family_name,
-        is_self: person.is_self,
-        notes: person.notes,
-        atlas_entity_id: person.atlas_entity_id,
-      })
+      .insert({ ...base, atlas_seed_id: person.atlas_seed_id })
       .select("id")
       .single();
+
+    if (error && (error.message?.includes("atlas_seed_id") || error.code === "PGRST204")) {
+      ({ data, error } = await supabase.from("gotha_persons").insert(base).select("id").single());
+    }
 
     if (error || !data) {
       return new Response(JSON.stringify({ error: error?.message ?? "Failed to insert sample person" }), { status: 500 });

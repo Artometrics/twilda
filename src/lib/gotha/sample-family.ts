@@ -12,7 +12,8 @@ export type SamplePerson = {
   family_name: string | null;
   is_self: boolean;
   notes: string | null;
-  atlas_entity_id: string | null;
+  /** Atlas TypeScript seed id (e.g. "franz-joseph"), not a DB uuid. */
+  atlas_seed_id: string | null;
 };
 
 export type SampleRelation = {
@@ -35,7 +36,7 @@ export const SAMPLE_FAMILY_PERSONS: SamplePerson[] = [
     family_name: "Habsburg",
     is_self: false,
     notes: "Emperor of Austria — sample Almanach-style entry linked to Atlas.",
-    atlas_entity_id: "franz-joseph",
+    atlas_seed_id: "franz-joseph",
   },
   {
     key: "elisabeth",
@@ -50,7 +51,7 @@ export const SAMPLE_FAMILY_PERSONS: SamplePerson[] = [
     family_name: "Wittelsbach",
     is_self: false,
     notes: "Empress consort; restless traveler across the Habsburg lands.",
-    atlas_entity_id: null,
+    atlas_seed_id: null,
   },
   {
     key: "rudolf",
@@ -65,7 +66,7 @@ export const SAMPLE_FAMILY_PERSONS: SamplePerson[] = [
     family_name: "Habsburg",
     is_self: false,
     notes: "Only son of Franz Joseph and Elisabeth.",
-    atlas_entity_id: null,
+    atlas_seed_id: null,
   },
   {
     key: "gisela",
@@ -80,7 +81,7 @@ export const SAMPLE_FAMILY_PERSONS: SamplePerson[] = [
     family_name: "Habsburg",
     is_self: false,
     notes: "Second daughter; later lived in Munich.",
-    atlas_entity_id: null,
+    atlas_seed_id: null,
   },
   {
     key: "you",
@@ -95,7 +96,7 @@ export const SAMPLE_FAMILY_PERSONS: SamplePerson[] = [
     family_name: null,
     is_self: true,
     notes: "Placeholder for your own entry. Edit or delete and rebuild your tree.",
-    atlas_entity_id: null,
+    atlas_seed_id: null,
   },
 ];
 
