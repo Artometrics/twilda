@@ -69,10 +69,7 @@ const clientPayload = {
 ---
 
 <NovelcrafterLayout title="Atlas · Twilda">
-  <style is:global>
-    /* MapLibre GL CSS — inlined to avoid CDN */
-    @import "maplibre-gl/dist/maplibre-gl.css";
-  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css" crossorigin="" />
 
   <!-- SVG liquid-glass displacement filter (Chromium bonus) -->
   <svg width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden;">
@@ -233,11 +230,7 @@ const clientPayload = {
     </div>
   </div>
 
-  <script>
-    import maplibregl from "maplibre-gl";
-    window.__maplibregl = maplibregl;
-  </script>
-
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.min.js" crossorigin=""></script>
   <script define:vars={{ clientPayload }}>
     const PIN_COLORS = {
       person: "#c4a574",
@@ -353,7 +346,7 @@ const clientPayload = {
 
     // Boot MapLibre
     function bootMap() {
-      const ML = window.__maplibregl;
+      const ML = window.maplibregl;
       if (!ML) { setTimeout(bootMap, 30); return; }
       const el = document.getElementById("atlas-map");
       if (!el || el._atlasBooted) return;
@@ -405,10 +398,10 @@ const clientPayload = {
       setTimeout(() => map.resize(), 100);
     }
 
-    // Wait for ML import
+    // Wait for MapLibre CDN script
     let attempts = 0;
     const waitML = setInterval(() => {
-      if (window.__maplibregl || ++attempts > 100) {
+      if (window.maplibregl || ++attempts > 100) {
         clearInterval(waitML);
         bootMap();
       }
