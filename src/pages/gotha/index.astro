@@ -12,29 +12,36 @@ const auth = requireAuth(Astro);
 if (auth instanceof Response) return auth;
 const { user, supabase } = auth;
 
-const { data: subscription } = await supabase
+const creditsPromise = supabase
   .from("subscriptions")
   .select("ai_credits_remaining, ai_credits_monthly")
   .eq("user_id", user.id)
   .maybeSingle();
 
-// Load persons from DB (silently empty if table not yet created)
 let persons: any[] = [];
 let dbReady = true;
-try {
-  const { data, error } = await supabase
-    .from("gotha_persons")
-    .select("id, name, birth_year, birth_month, birth_day, birth_place, birth_lat, birth_lng, death_year, family_name, is_self, notes, atlas_entity_id")
-    .eq("user_id", user.id)
-    .order("birth_year", { ascending: true, nullsFirst: false });
-  if (error && error.code === "42P01") dbReady = false;
-  else persons = data ?? [];
-} catch { dbReady = false; }
+const personsPromise = (async () => {
+  try {
+    const { data, error } = await supabase
+      .from("gotha_persons")
+      .select("id, name, birth_year, birth_month, birth_day, birth_place, birth_lat, birth_lng, death_year, family_name, is_self, notes, atlas_entity_id")
+      .eq("user_id", user.id)
+      .order("birth_year", { ascending: true, nullsFirst: false });
+    if (error && error.code === "42P01") return { persons: [] as any[], dbReady: false };
+    return { persons: data ?? [], dbReady: true };
+  } catch {
+    return { persons: [] as any[], dbReady: false };
+  }
+})();
+
+const [subResult, personsResult] = await Promise.all([creditsPromise, personsPromise]);
+const subscription = subResult.data;
+persons = personsResult.persons;
+dbReady = personsResult.dbReady;
 
 // Load relations
 let relations: any[] = [];
 if (dbReady && persons.length > 0) {
-  const ids = persons.map((p: any) => p.id);
   const { data: rels } = await supabase
     .from("gotha_relations")
     .select("id, from_person_id, to_person_id, rel")
