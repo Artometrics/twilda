@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { metSearch } from "@/lib/atlas/enrich";
+import { checkRateLimit, rateLimitResponse } from "@/lib/api/rate-limit";
 
 export const prerender = false;
 
@@ -8,6 +9,9 @@ export const GET: APIRoute = async ({ url, locals }) => {
   if (!locals.user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
+
+  const limited = checkRateLimit(`met-search:${locals.user.id}`, { limit: 20, windowMs: 60_000 });
+  if (!limited.ok) return rateLimitResponse(limited);
 
   const q = url.searchParams.get("q")?.trim();
   if (!q) {
@@ -20,6 +24,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "private, max-age=300",
+        "X-RateLimit-Remaining": String(limited.remaining),
       },
     });
   } catch (err) {

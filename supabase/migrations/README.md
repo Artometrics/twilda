@@ -32,6 +32,7 @@ The scripts are **idempotent** (safe to re-run).
 | `003_novel_drafts.sql` | Drafts / timelines + cross-draft references |
 | `004_atlas_schema.sql` | Atlas DB tables + GOTHA genealogy tables + `gotha_ancestors` RPC |
 | `005_atlas_museum.sql` | Museum collections (`atlas_collections`), enrich cache, `gotha_persons.atlas_seed_id` |
+| `006_security_hardening.sql` | Harden `gotha_ancestors` to `auth.uid()`, revoke anon execute |
 
 ## After migration
 

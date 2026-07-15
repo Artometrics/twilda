@@ -1,7 +1,7 @@
 import { defineMiddleware } from "astro:middleware";
 import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/ssr";
 
-const PROTECTED_PREFIXES = ["/novels", "/account"];
+const PROTECTED_PREFIXES = ["/novels", "/account", "/atlas", "/gotha"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.user = null;

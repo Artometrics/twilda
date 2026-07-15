@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { wikipediaSummary } from "@/lib/atlas/enrich";
+import { checkRateLimit, rateLimitResponse } from "@/lib/api/rate-limit";
 
 export const prerender = false;
 
@@ -8,6 +9,9 @@ export const GET: APIRoute = async ({ url, locals }) => {
   if (!locals.user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
+
+  const limited = checkRateLimit(`wiki:${locals.user.id}`, { limit: 40, windowMs: 60_000 });
+  if (!limited.ok) return rateLimitResponse(limited);
 
   const title = url.searchParams.get("title")?.trim();
   if (!title) {
@@ -23,6 +27,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "private, max-age=600",
+        "X-RateLimit-Remaining": String(limited.remaining),
       },
     });
   } catch (err) {

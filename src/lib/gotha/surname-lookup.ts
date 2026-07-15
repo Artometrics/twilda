@@ -20,16 +20,28 @@ export interface SurnameInfo {
 const ENDPOINT = "https://query.wikidata.org/sparql";
 const CACHE = new Map<string, SurnameInfo>();
 
+function escapeLiteral(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 export async function lookupSurname(surname: string): Promise<SurnameInfo> {
   const key = surname.toLowerCase().trim();
   if (CACHE.has(key)) return CACHE.get(key)!;
 
+  const safe = escapeLiteral(surname.trim());
+
+  // Bind P625 as ?coord then project lat/lng via BIND so results populate.
   const sparql = `
 SELECT ?item ?itemLabel ?countryLabel ?countryCoordLat ?countryCoordLng ?description WHERE {
-  ?item wdt:P31 wd:Q101352 .        # instance of: family name
-  ?item rdfs:label "${surname}"@en .
-  OPTIONAL { ?item wdt:P17 ?country .
-    OPTIONAL { ?country wdt:P625 ?coord . }
+  ?item wdt:P31 wd:Q101352 .
+  ?item rdfs:label "${safe}"@en .
+  OPTIONAL {
+    ?item wdt:P17 ?country .
+    OPTIONAL {
+      ?country wdt:P625 ?coord .
+      BIND(geof:latitude(?coord) AS ?countryCoordLat)
+      BIND(geof:longitude(?coord) AS ?countryCoordLng)
+    }
   }
   OPTIONAL { ?item schema:description ?description FILTER(LANG(?description) = "en") }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
@@ -40,7 +52,10 @@ LIMIT 1
   try {
     const url = `${ENDPOINT}?query=${encodeURIComponent(sparql)}&format=json`;
     const res = await fetch(url, {
-      headers: { Accept: "application/sparql-results+json", "User-Agent": "Twilda/1.0 (twilda.com)" },
+      headers: {
+        Accept: "application/sparql-results+json",
+        "User-Agent": "TwildaResearchBot/1.0",
+      },
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) throw new Error(`SPARQL HTTP ${res.status}`);
@@ -60,7 +75,10 @@ LIMIT 1
       description: b.description?.value,
     };
     if (b.countryCoordLat?.value && b.countryCoordLng?.value) {
-      info.coords = { lat: parseFloat(b.countryCoordLat.value), lng: parseFloat(b.countryCoordLng.value) };
+      info.coords = {
+        lat: parseFloat(b.countryCoordLat.value),
+        lng: parseFloat(b.countryCoordLng.value),
+      };
     }
     CACHE.set(key, info);
     return info;
