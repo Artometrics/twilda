@@ -7,9 +7,8 @@ import "@/styles/atlas.css";
 import { atlasScenes, getEntity, getScene } from "@/lib/atlas/data";
 import {
   focusCardPayload,
-  searchIndex,
   serializeCallouts,
-  timelineMarks,
+  serializeFocusPins,
 } from "@/lib/atlas/focus-payload";
 import { timelineBounds } from "@/lib/atlas/data";
 import { requireAuth } from "@/lib/auth/guards";
@@ -25,6 +24,15 @@ const focus = getEntity(focusId) ?? getEntity(scene.focusId)!;
 const bounds = timelineBounds();
 const card = focusCardPayload(focus.id);
 const callouts = serializeCallouts(scene.id);
+const pins = serializeFocusPins(focus.id);
+/** Deep-link / museum Open in Atlas: prefer focus pins over scene callouts. */
+const useFocusPins =
+  Boolean(Astro.url.searchParams.get("e")) &&
+  !scene.calloutIds.includes(focus.id);
+const initialYear =
+  useFocusPins && (focus.startYear ?? focus.endYear) != null
+    ? Number(focus.startYear ?? focus.endYear)
+    : scene.year;
 
 // Credits are non-critical for Atlas — don't block first paint on a slow DB hop.
 const creditsPromise = supabase
@@ -40,17 +48,22 @@ const subscription = await Promise.race([
   new Promise<null>((resolve) => setTimeout(() => resolve(null), 120)),
 ]);
 
+// search + timeline load lazily via /api/atlas/search-index after map shell paints
 const clientPayload = {
   sceneId: scene.id,
   focusId: focus.id,
   bounds,
   callouts,
+  pins,
+  pinMode: useFocusPins ? "focus" : "scene",
   center: scene.center,
   zoom: scene.zoom,
   badge: scene.badge,
   year: scene.year,
-  search: searchIndex(),
-  timeline: timelineMarks(),
+  scrubYear: initialYear,
+  search: [],
+  timeline: [],
+  indexReady: false,
   card,
 };
 ---
@@ -102,7 +115,10 @@ const clientPayload = {
             ["person", "People"],
             ["place", "Places"],
             ["work", "Artifacts"],
+            ["idea", "Ideas"],
+            ["event", "Events"],
             ["deity", "Gods"],
+            ["dynasty", "Dynasties"],
             ["concept", "Concepts"],
           ].map(([id, label]) => (
             <button type="button" class:list={["atlas-kind-btn", { "is-active": id === "all" }]} data-kind-filter={id}>
@@ -110,6 +126,10 @@ const clientPayload = {
             </button>
           ))
         }
+      </div>
+
+      <div class="atlas-hud atlas-empty-pins" data-atlas-empty hidden>
+        No pins match the current kind / timeline filters.
       </div>
 
       <!-- Search — results rendered client-side from compact index -->
@@ -125,6 +145,27 @@ const clientPayload = {
         <div class="atlas-results" data-atlas-results></div>
       </div>
 
+      <!-- Live Discover — Met OA / Wikidata enrich -->
+      <div class="atlas-hud atlas-discover glass">
+        <div class="atlas-discover__head">
+          <strong>Discover</strong>
+          <div class="atlas-discover__tabs" role="tablist" aria-label="Discover source">
+            <button type="button" class="atlas-discover__tab is-active" data-discover-tab="met" role="tab" aria-selected="true">Met</button>
+            <button type="button" class="atlas-discover__tab" data-discover-tab="wikidata" role="tab" aria-selected="false">Wikidata</button>
+          </div>
+        </div>
+        <label class="sr-only" for="atlas-discover-input">Discover open data</label>
+        <input
+          id="atlas-discover-input"
+          type="search"
+          placeholder="Search Met / Wikidata…"
+          data-discover-q
+          aria-label="Discover open data"
+        />
+        <p class="atlas-discover__status" data-discover-status hidden></p>
+        <div class="atlas-discover__results" data-discover-results></div>
+      </div>
+
       <!-- Period badge -->
       <div class="atlas-badge" data-atlas-badge>{scene.badge}</div>
 
@@ -134,14 +175,49 @@ const clientPayload = {
         <h1 class="atlas-card__title">{card.focus.name}</h1>
         {card.focus.years && <p class="atlas-card__years">{card.focus.years}</p>}
         <p class="atlas-card__summary">{card.focus.summary}</p>
+        <div data-atlas-extra>
+          {
+            card.focus.description && (
+              <details class="atlas-card__details">
+                <summary>Description</summary>
+                <p>{card.focus.description}</p>
+              </details>
+            )
+          }
+          {
+            card.focus.imageCredit && (
+              <details class="atlas-card__details">
+                <summary>Image credit</summary>
+                <p>{card.focus.imageCredit}</p>
+              </details>
+            )
+          }
+          {
+            card.focus.wikidataId && (
+              <details class="atlas-card__details">
+                <summary>Wikidata</summary>
+                <p>
+                  <a
+                    href={`https://www.wikidata.org/wiki/${card.focus.wikidataId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {card.focus.wikidataId}
+                  </a>
+                </p>
+              </details>
+            )
+          }
+        </div>
         <div data-atlas-tags>{card.focus.tags.map((t) => <span class="atlas-chip">{t}</span>)}</div>
         <div class="atlas-card__actions" data-atlas-actions>
-          <button class="atlas-btn" type="button" data-save-museum>Save to My Museum</button>
+          <button class="atlas-btn" type="button" data-save-museum data-save-label>Save to My Museum</button>
           {card.focus.sourceUrl && (
             <a class="atlas-btn" href={card.focus.sourceUrl} target="_blank" rel="noopener noreferrer">Open source</a>
           )}
           <a class="atlas-btn" href="/account/#museum-heading">My Museum</a>
         </div>
+        <p class="atlas-card__status" data-atlas-status hidden></p>
         <p class="atlas-card__sources" data-atlas-sources>
           {[
             card.focus.license && `License: ${card.focus.license}`,
@@ -204,7 +280,7 @@ const clientPayload = {
             <span data-timeline-label>Focus {scene.year < 0 ? Math.abs(scene.year) + " BCE" : scene.year + " CE"}</span>
             <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--at-dim);">
               Scrub
-              <input type="range" min={bounds.min} max={bounds.max} value={scene.year} data-timeline-year />
+              <input type="range" min={bounds.min} max={bounds.max} value={initialYear} data-timeline-year />
             </label>
           </div>
           <div class="atlas-dock__track" data-timeline-track>
@@ -219,6 +295,8 @@ const clientPayload = {
       </div>
     </div>
   </div>
+
+  <div class="nc-toast" data-atlas-toast hidden></div>
 
   <script type="application/json" id="atlas-boot-data" is:inline set:html={JSON.stringify(clientPayload)} />
   <script>
@@ -235,6 +313,8 @@ const clientPayload = {
     /** @type {maplibregl.Marker[]} */
     let markers = [];
     let navBusy = false;
+    /** @type {Set<string>} */
+    const savedMuseumIds = new Set();
 
     function esc(s) {
       return String(s ?? "")
@@ -242,6 +322,65 @@ const clientPayload = {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    function showToast(message) {
+      const toast = document.querySelector("[data-atlas-toast]");
+      if (!toast) return;
+      toast.textContent = message;
+      toast.hidden = false;
+      toast.classList.add("is-visible");
+      window.clearTimeout(showToast._t);
+      showToast._t = window.setTimeout(() => {
+        toast.classList.remove("is-visible");
+        window.setTimeout(() => {
+          toast.hidden = true;
+        }, 200);
+      }, 2400);
+    }
+
+    function setCardStatus(message) {
+      const el = document.querySelector("[data-atlas-status]");
+      if (!el) return;
+      if (!message) {
+        el.hidden = true;
+        el.textContent = "";
+        return;
+      }
+      el.hidden = false;
+      el.textContent = message;
+    }
+
+    function saveButtonLabel(focus) {
+      const id = focus?.id;
+      if (id && savedMuseumIds.has(id)) return "Saved ✓";
+      const kind = String(focus?.kind || "").toLowerCase();
+      if (kind === "work" || kind === "artifact") return "Save artifact";
+      return "Save to My Museum";
+    }
+
+    function syncSaveButton() {
+      const btn = document.querySelector("[data-save-museum]");
+      if (!btn) return;
+      const f = state.card?.focus;
+      btn.textContent = saveButtonLabel(f);
+      btn.disabled = Boolean(f?.id && savedMuseumIds.has(f.id));
+    }
+
+    async function loadMuseumIds() {
+      try {
+        const res = await fetch("/api/account/museum");
+        if (!res.ok) return;
+        const rows = await res.json();
+        if (!Array.isArray(rows)) return;
+        savedMuseumIds.clear();
+        for (const row of rows) {
+          if (row?.seed_entity_id) savedMuseumIds.add(String(row.seed_entity_id));
+        }
+        syncSaveButton();
+      } catch {
+        /* museum table may be missing */
+      }
     }
 
     function yearStr(y) {
@@ -262,6 +401,7 @@ const clientPayload = {
       const title = root.querySelector(".atlas-card__title");
       const years = root.querySelector(".atlas-card__years");
       const summary = root.querySelector(".atlas-card__summary");
+      const extra = root.querySelector("[data-atlas-extra]");
       const tags = root.querySelector("[data-atlas-tags]");
       const body = root.querySelector("[data-atlas-card-body]");
       const hint = root.querySelector("[data-atlas-hint]");
@@ -283,6 +423,21 @@ const clientPayload = {
         }
       }
 
+      if (extra) {
+        let extraHtml = "";
+        if (card.focus.description) {
+          extraHtml += `<details class="atlas-card__details"><summary>Description</summary><p>${esc(card.focus.description)}</p></details>`;
+        }
+        if (card.focus.imageCredit) {
+          extraHtml += `<details class="atlas-card__details"><summary>Image credit</summary><p>${esc(card.focus.imageCredit)}</p></details>`;
+        }
+        if (card.focus.wikidataId) {
+          const q = esc(card.focus.wikidataId);
+          extraHtml += `<details class="atlas-card__details"><summary>Wikidata</summary><p><a href="https://www.wikidata.org/wiki/${q}" target="_blank" rel="noopener noreferrer">${q}</a></p></details>`;
+        }
+        extra.innerHTML = extraHtml;
+      }
+
       if (tags) {
         tags.innerHTML = card.focus.tags.map((t) => `<span class="atlas-chip">${esc(t)}</span>`).join("");
       }
@@ -301,7 +456,8 @@ const clientPayload = {
         const open = card.focus.sourceUrl
           ? `<a class="atlas-btn" href="${esc(card.focus.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open source</a>`
           : "";
-        actions.innerHTML = `<button class="atlas-btn" type="button" data-save-museum>Save to My Museum</button>${open}<a class="atlas-btn" href="/account/#museum-heading">My Museum</a>`;
+        actions.innerHTML = `<button class="atlas-btn" type="button" data-save-museum data-save-label>${esc(saveButtonLabel(card.focus))}</button>${open}<a class="atlas-btn" href="/account/#museum-heading">My Museum</a>`;
+        syncSaveButton();
       }
 
       if (body) {
@@ -330,17 +486,40 @@ const clientPayload = {
     }
 
     let kindFilter = "all";
+    /** @type {number} */
+    let scrubYear = Number(state.scrubYear ?? state.year);
+    const YEAR_WINDOW = 15;
+
+    function inYearWindow(e, year) {
+      const lo = year - YEAR_WINDOW;
+      const hi = year + YEAR_WINDOW;
+      const start = e.startYear ?? e.endYear;
+      const end = e.endYear ?? e.startYear;
+      if (start == null && end == null) return true;
+      const s = Number(start);
+      const en = Number(end ?? start);
+      return s <= hi && en >= lo;
+    }
+
+    function activePinList() {
+      return state.pinMode === "focus" && Array.isArray(state.pins) && state.pins.length
+        ? state.pins
+        : state.callouts || [];
+    }
+
     function applyKindFilter() {
       document.querySelectorAll("[data-kind-filter]").forEach((btn) => {
         btn.classList.toggle("is-active", btn.getAttribute("data-kind-filter") === kindFilter);
       });
-      paintCallouts(state.callouts, state.focusId, { fit: false });
+      paintCallouts(activePinList(), state.focusId, { fit: false });
+      paintTimelineMarks();
     }
 
-    async function saveToMuseum() {
-      const f = state.card?.focus;
-      if (!f) return;
+    async function saveToMuseum(payload) {
+      const f = payload || state.card?.focus;
+      if (!f?.id) return;
       try {
+        setCardStatus("Saving…");
         const res = await fetch("/api/account/museum", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -357,10 +536,45 @@ const clientPayload = {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || "Save failed");
-        alert("Saved to My Museum");
+        savedMuseumIds.add(String(f.id));
+        syncSaveButton();
+        setCardStatus("Saved to My Museum");
+        showToast("Saved to My Museum");
       } catch (err) {
-        alert(err instanceof Error ? err.message : "Save failed");
+        const msg = err instanceof Error ? err.message : "Save failed";
+        setCardStatus(msg);
+        showToast(msg);
       }
+    }
+
+    /** Preview enrich / Met hit on the detail card without a curated seed id. */
+    function previewDiscoverCard(focusPartial) {
+      const card = {
+        focus: {
+          id: focusPartial.id || null,
+          kind: focusPartial.kind || "work",
+          name: focusPartial.name || "Untitled",
+          summary: focusPartial.summary || "",
+          description: focusPartial.description || null,
+          years: focusPartial.years || "",
+          tags: focusPartial.tags || [],
+          portraitUrl: focusPartial.portraitUrl || null,
+          sourceUrl: focusPartial.sourceUrl || null,
+          license: focusPartial.license || null,
+          attribution: focusPartial.attribution || null,
+          imageCredit: focusPartial.imageCredit || null,
+          wikidataId: focusPartial.wikidataId || null,
+          metObjectId: focusPartial.metObjectId || null,
+          provenance: [],
+        },
+        peers: [],
+        related: [],
+        hint: focusPartial.hint || "Live Discover preview — not a curated Atlas seed.",
+      };
+      state.focusId = card.focus.id;
+      state.card = card;
+      renderCard(card);
+      setCardStatus("Preview from Discover");
     }
 
     function calloutHtml(c, isFocus) {
@@ -397,14 +611,18 @@ const clientPayload = {
       markers = [];
     }
 
-    function paintCallouts(callouts, focusId, { fit = true } = {}) {
+    function paintCallouts(callouts, focusId, { fit = true, flyToFocus = false } = {}) {
       if (!map) return;
       clearMarkers();
       const boundsArr = [];
+      /** @type {{ lng: number, lat: number } | null} */
+      let focusCoords = null;
       for (const c of callouts) {
         if (!c.coords) continue;
         if (kindFilter !== "all" && c.kind !== kindFilter) continue;
+        if (!inYearWindow(c, scrubYear)) continue;
         const isFocus = c.id === focusId;
+        if (isFocus) focusCoords = c.coords;
         const wrap = document.createElement("div");
         wrap.innerHTML = calloutHtml(c, isFocus);
         const inner = wrap.firstElementChild;
@@ -415,12 +633,19 @@ const clientPayload = {
         markers.push(marker);
         boundsArr.push([c.coords.lng, c.coords.lat]);
       }
-      if (fit && boundsArr.length > 1) {
+      const emptyEl = document.querySelector("[data-atlas-empty]");
+      if (emptyEl) emptyEl.hidden = markers.length > 0;
+
+      if (flyToFocus && focusCoords) {
+        map.flyTo({ center: [focusCoords.lng, focusCoords.lat], zoom: Math.max(map.getZoom(), 6), essential: true });
+      } else if (fit && boundsArr.length > 1) {
         const b = boundsArr.reduce(
           (acc, p) => [[Math.min(acc[0][0], p[0]), Math.min(acc[0][1], p[1])], [Math.max(acc[1][0], p[0]), Math.max(acc[1][1], p[1])]],
           [[180, 90], [-180, -90]],
         );
         map.fitBounds(b, { padding: 90, maxZoom: 14 });
+      } else if (fit && boundsArr.length === 1) {
+        map.flyTo({ center: boundsArr[0], zoom: Math.max(map.getZoom(), 6), essential: true });
       }
     }
 
@@ -440,9 +665,19 @@ const clientPayload = {
         const data = await res.json();
         state.focusId = id;
         state.card = data.card;
+        state.pins = data.pins || [];
+        state.pinMode = "focus";
+        const focusPin = (state.pins || []).find((p) => p.id === id) || (state.search || []).find((p) => p.id === id);
+        const focusYear = focusPin?.startYear ?? focusPin?.endYear;
+        if (focusYear != null) {
+          scrubYear = Number(focusYear);
+          const yearInputEl = document.querySelector("[data-timeline-year]");
+          if (yearInputEl) yearInputEl.value = String(scrubYear);
+          updateTimeline(scrubYear, { repaint: false });
+        }
         renderCard(data.card);
-        // Refresh focus styling on existing markers without remounting map
-        paintCallouts(state.callouts, id, { fit: false });
+        paintCallouts(state.pins, id, { fit: false, flyToFocus: true });
+        paintTimelineMarks();
       } catch (err) {
         console.warn("[atlas]", err);
         window.location.search = `?scene=${encodeURIComponent(state.sceneId)}&e=${encodeURIComponent(id)}`;
@@ -464,11 +699,14 @@ const clientPayload = {
         state.sceneId = data.scene.id;
         state.focusId = data.card.focus.id;
         state.callouts = data.callouts;
+        state.pins = data.pins || [];
+        state.pinMode = "scene";
         state.center = data.scene.center;
         state.zoom = data.scene.zoom;
         state.badge = data.scene.badge;
         state.year = data.scene.year;
         state.card = data.card;
+        scrubYear = Number(data.scene.year);
         setUrl({ scene: data.scene.id, e: data.card.focus.id });
         setActiveSceneButton(data.scene.id);
         const badge = document.querySelector("[data-atlas-badge]");
@@ -491,13 +729,31 @@ const clientPayload = {
       }
     }
 
-    // Delegated clicks (card / timeline / search results)
+    // Delegated clicks (card / timeline / search results / discover)
     document.querySelector(".atlas")?.addEventListener("click", (e) => {
       const t = e.target;
       if (!(t instanceof Element)) return;
       if (t.closest("[data-save-museum]")) {
         e.preventDefault();
         saveToMuseum();
+        return;
+      }
+      const discoverTabBtn = t.closest("[data-discover-tab]");
+      if (discoverTabBtn) {
+        e.preventDefault();
+        setDiscoverTab(discoverTabBtn.getAttribute("data-discover-tab") || "met");
+        return;
+      }
+      const previewBtn = t.closest("[data-discover-preview]");
+      if (previewBtn) {
+        e.preventDefault();
+        previewFromDiscoverButton(previewBtn);
+        return;
+      }
+      const saveMetBtn = t.closest("[data-discover-save-met]");
+      if (saveMetBtn) {
+        e.preventDefault();
+        saveMetFromDiscover(saveMetBtn);
         return;
       }
       const kindBtn = t.closest("[data-kind-filter]");
@@ -532,6 +788,11 @@ const clientPayload = {
         results.innerHTML = "";
         return;
       }
+      if (!state.indexReady) {
+        results.innerHTML = `<div class="atlas-results__item" style="opacity:.7">Loading catalog…</div>`;
+        results.classList.add("is-open");
+        return;
+      }
       const hits = (state.search || []).filter((e) => e.haystack.includes(q)).slice(0, 40);
       results.innerHTML = hits
         .map(
@@ -552,6 +813,205 @@ const clientPayload = {
       }
     });
 
+    // Discover panel (Met / Wikidata live APIs)
+    let discoverTab = "met";
+    let discoverTimer = 0;
+    const discoverInput = document.querySelector("[data-discover-q]");
+    const discoverResults = document.querySelector("[data-discover-results]");
+    const discoverStatus = document.querySelector("[data-discover-status]");
+
+    function setDiscoverStatus(msg) {
+      if (!discoverStatus) return;
+      if (!msg) {
+        discoverStatus.hidden = true;
+        discoverStatus.textContent = "";
+        return;
+      }
+      discoverStatus.hidden = false;
+      discoverStatus.textContent = msg;
+    }
+
+    function setDiscoverTab(tab) {
+      discoverTab = tab === "wikidata" ? "wikidata" : "met";
+      document.querySelectorAll("[data-discover-tab]").forEach((btn) => {
+        const active = btn.getAttribute("data-discover-tab") === discoverTab;
+        btn.classList.toggle("is-active", active);
+        btn.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      if (discoverInput instanceof HTMLInputElement && discoverInput.value.trim()) {
+        runDiscover(discoverInput.value.trim());
+      }
+    }
+
+    function yearsFromEnrich(ent) {
+      if (ent.startYear != null && ent.endYear != null) return `${ent.startYear}–${ent.endYear}`;
+      if (ent.startYear != null) return String(ent.startYear);
+      return "";
+    }
+
+    function renderDiscoverResults(items) {
+      if (!discoverResults) return;
+      if (!items.length) {
+        discoverResults.innerHTML = `<p class="atlas-discover__empty">No results</p>`;
+        return;
+      }
+      discoverResults.innerHTML = items
+        .map((item) => {
+          const thumb = item.portraitUrl
+            ? `<img class="atlas-discover__thumb" src="${esc(item.portraitUrl)}" alt="" loading="lazy" />`
+            : `<div class="atlas-discover__thumb atlas-discover__thumb--empty">${esc((item.title || "?").charAt(0))}</div>`;
+          const meta = item.meta ? `<span class="atlas-discover__meta">${esc(item.meta)}</span>` : "";
+          const save =
+            item.source === "met"
+              ? `<button type="button" class="atlas-btn" data-discover-save-met="${esc(String(item.metObjectId))}" data-title="${esc(item.title)}" data-artist="${esc(item.artist || "")}" data-date="${esc(item.date || "")}" data-portrait="${esc(item.portraitUrl || "")}" data-source-url="${esc(item.sourceUrl || "")}">Save to Museum</button>`
+              : "";
+          return `<div class="atlas-discover__row" data-discover-item>
+            ${thumb}
+            <div class="atlas-discover__body">
+              <div class="atlas-discover__title">${esc(item.title)}</div>
+              ${meta}
+              <div class="atlas-discover__actions">
+                <button type="button" class="atlas-btn" data-discover-preview
+                  data-source="${esc(item.source)}"
+                  data-id="${esc(item.id || "")}"
+                  data-title="${esc(item.title)}"
+                  data-summary="${esc(item.summary || "")}"
+                  data-description="${esc(item.description || "")}"
+                  data-years="${esc(item.years || "")}"
+                  data-portrait="${esc(item.portraitUrl || "")}"
+                  data-source-url="${esc(item.sourceUrl || "")}"
+                  data-license="${esc(item.license || "")}"
+                  data-attribution="${esc(item.attribution || "")}"
+                  data-wikidata="${esc(item.wikidataId || "")}"
+                  data-met="${esc(item.metObjectId != null ? String(item.metObjectId) : "")}"
+                  data-kind="${esc(item.kind || "work")}"
+                >Preview</button>
+                ${save}
+              </div>
+            </div>
+          </div>`;
+        })
+        .join("");
+    }
+
+    function previewFromDiscoverButton(btn) {
+      const source = btn.getAttribute("data-source");
+      const metId = btn.getAttribute("data-met");
+      const qid = btn.getAttribute("data-wikidata") || btn.getAttribute("data-id");
+      const focus = {
+        id:
+          source === "met" && metId
+            ? `met-live-${metId}`
+            : qid
+              ? `wd-live-${qid}`
+              : `discover-${Date.now()}`,
+        kind: btn.getAttribute("data-kind") || (source === "met" ? "work" : "person"),
+        name: btn.getAttribute("data-title") || "Untitled",
+        summary: btn.getAttribute("data-summary") || "",
+        description: btn.getAttribute("data-description") || null,
+        years: btn.getAttribute("data-years") || "",
+        portraitUrl: btn.getAttribute("data-portrait") || null,
+        sourceUrl: btn.getAttribute("data-source-url") || null,
+        license: btn.getAttribute("data-license") || null,
+        attribution: btn.getAttribute("data-attribution") || null,
+        wikidataId: source === "wikidata" ? qid : null,
+        metObjectId: metId ? Number(metId) : null,
+        tags: source === "met" ? ["met", "open-access"] : ["wikidata"],
+        hint: source === "met" ? "Met Open Access · CC0" : "Wikidata enrich preview",
+      };
+      previewDiscoverCard(focus);
+    }
+
+    async function saveMetFromDiscover(btn) {
+      const objectId = btn.getAttribute("data-discover-save-met");
+      if (!objectId) return;
+      const focus = {
+        id: `met-live-${objectId}`,
+        kind: "work",
+        name: btn.getAttribute("data-title") || "Untitled",
+        summary: [btn.getAttribute("data-artist"), btn.getAttribute("data-date")].filter(Boolean).join(" · "),
+        portraitUrl: btn.getAttribute("data-portrait") || null,
+        sourceUrl: btn.getAttribute("data-source-url") || null,
+        license: "CC0",
+        attribution: "The Metropolitan Museum of Art",
+      };
+      previewDiscoverCard({ ...focus, tags: ["met", "open-access"], metObjectId: Number(objectId), hint: "Met Open Access · CC0" });
+      await saveToMuseum(focus);
+    }
+
+    async function runDiscover(q) {
+      if (!q) {
+        setDiscoverStatus("");
+        if (discoverResults) discoverResults.innerHTML = "";
+        return;
+      }
+      setDiscoverStatus("Searching…");
+      try {
+        if (discoverTab === "met") {
+          const res = await fetch(`/api/atlas/met/search?q=${encodeURIComponent(q)}`);
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || "Met search failed");
+          const items = (Array.isArray(json) ? json : []).map((o) => ({
+            source: "met",
+            id: `met-live-${o.metObjectId}`,
+            metObjectId: o.metObjectId,
+            title: o.title || "Untitled",
+            artist: o.artist || "",
+            date: o.date || "",
+            summary: [o.artist, o.date].filter(Boolean).join(" · "),
+            meta: [o.artist, o.date].filter(Boolean).join(" · ") || "Met · CC0",
+            portraitUrl: o.primaryImageSmall,
+            sourceUrl: o.objectURL,
+            license: "CC0",
+            attribution: "The Metropolitan Museum of Art",
+            kind: "work",
+          }));
+          renderDiscoverResults(items);
+          setDiscoverStatus(items.length ? `${items.length} Met results` : "No Met results");
+        } else {
+          const res = await fetch(`/api/atlas/enrich?q=${encodeURIComponent(q)}`);
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || "Enrich failed");
+          const list = Array.isArray(json) ? json : json ? [json] : [];
+          const items = list.map((ent) => ({
+            source: "wikidata",
+            id: ent.wikidataId || ent.id,
+            wikidataId: ent.wikidataId || ent.id,
+            title: ent.name,
+            summary: ent.description || "",
+            description: ent.description || "",
+            years: yearsFromEnrich(ent),
+            meta: ent.description || ent.wikidataId || "",
+            portraitUrl: ent.portraitUrl || null,
+            sourceUrl: ent.sourceUrl || null,
+            license: "CC0",
+            attribution: "Wikidata",
+            kind: "person",
+          }));
+          renderDiscoverResults(items);
+          setDiscoverStatus(items.length ? `${items.length} Wikidata results` : "No Wikidata results");
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Discover failed";
+        setDiscoverStatus(msg);
+        if (discoverResults) discoverResults.innerHTML = "";
+      }
+    }
+
+    discoverInput?.addEventListener("input", () => {
+      window.clearTimeout(discoverTimer);
+      const q = (discoverInput instanceof HTMLInputElement ? discoverInput.value : "").trim();
+      discoverTimer = window.setTimeout(() => runDiscover(q), 400);
+    });
+    discoverInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        window.clearTimeout(discoverTimer);
+        const q = (discoverInput instanceof HTMLInputElement ? discoverInput.value : "").trim();
+        runDiscover(q);
+      }
+    });
+
     // Timeline
     const yearInput = document.querySelector("[data-timeline-year]");
     const yearLabel = document.querySelector("[data-timeline-label]");
@@ -560,25 +1020,39 @@ const clientPayload = {
     const badge = document.querySelector("[data-atlas-badge]");
     const { min, max } = state.bounds;
 
-    function updateTimeline(year) {
+    function updateTimeline(year, { repaint = true } = {}) {
       const y = Number(year);
-      if (yearLabel) yearLabel.textContent = `Focus ${yearStr(y)}`;
+      scrubYear = y;
+      if (yearLabel) yearLabel.textContent = `Focus ${yearStr(y)} · ±${YEAR_WINDOW}y`;
       if (rangeEl) {
-        const left = ((y - 15 - min) / (max - min)) * 100;
-        const width = (30 / (max - min)) * 100;
+        const left = ((y - YEAR_WINDOW - min) / (max - min)) * 100;
+        const width = ((YEAR_WINDOW * 2) / (max - min)) * 100;
         rangeEl.style.left = `${Math.max(0, left)}%`;
         rangeEl.style.width = `${Math.min(100 - Math.max(0, left), width)}%`;
       }
       if (badge && Math.abs(y - state.year) > 5) badge.textContent = yearStr(y);
       else if (badge) badge.textContent = state.badge;
+      if (repaint) {
+        paintCallouts(activePinList(), state.focusId, { fit: false });
+        paintTimelineMarks();
+      }
     }
 
     function paintTimelineMarks() {
       if (!track) return;
       track.querySelectorAll(".atlas-dock__mark").forEach((n) => n.remove());
       for (const e of state.timeline || []) {
+        if (kindFilter !== "all" && e.kind !== kindFilter) continue;
+        if (!inYearWindow(e, scrubYear)) continue;
         const pct = ((e.startYear - min) / (max - min)) * 100;
-        const color = e.kind === "deity" ? "#c9a227" : e.kind === "event" ? "#8a9bb8" : "var(--at-gold)";
+        const color =
+          e.kind === "deity"
+            ? "#c9a227"
+            : e.kind === "event"
+              ? "#8a9bb8"
+              : e.kind === "dynasty" || e.kind === "idea"
+                ? "#a78bfa"
+                : "var(--at-gold)";
         const btn = document.createElement("button");
         btn.className = "atlas-dock__mark";
         btn.type = "button";
@@ -591,9 +1065,11 @@ const clientPayload = {
     }
 
     yearInput?.addEventListener("input", () => updateTimeline(yearInput.value));
-    updateTimeline(yearInput?.value ?? state.year);
+    updateTimeline(yearInput?.value ?? state.year, { repaint: false });
     paintTimelineMarks();
     renderCard(state.card);
+    loadMuseumIds();
+    syncSaveButton();
 
     window.addEventListener("popstate", () => {
       const url = new URL(window.location.href);
@@ -602,6 +1078,22 @@ const clientPayload = {
       if (scene !== state.sceneId) selectScene(scene);
       else if (e && e !== state.focusId) selectEntity(e);
     });
+
+    async function loadSearchIndex() {
+      try {
+        const res = await fetch("/api/atlas/search-index");
+        if (!res.ok) throw new Error(`search-index ${res.status}`);
+        const data = await res.json();
+        state.search = data.search || [];
+        state.timeline = data.timeline || [];
+        state.indexReady = true;
+        paintTimelineMarks();
+        if (search instanceof HTMLInputElement && search.value.trim()) filterResults();
+      } catch (err) {
+        console.warn("[atlas search-index]", err);
+        state.indexReady = false;
+      }
+    }
 
     async function bootMap() {
       const host = document.getElementById("atlas-map");
@@ -622,7 +1114,10 @@ const clientPayload = {
       map.on("error", (e) => console.warn("[atlas map]", e?.error ?? e));
       map.on("load", () => {
         map?.resize();
-        paintCallouts(state.callouts, state.focusId, { fit: true });
+        const fly = state.pinMode === "focus";
+        paintCallouts(activePinList(), state.focusId, { fit: !fly, flyToFocus: fly });
+        // Catalog after map init — search/timeline can wait; pins already in boot payload
+        void loadSearchIndex();
       });
       requestAnimationFrame(() => map?.resize());
     }

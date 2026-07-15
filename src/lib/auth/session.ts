@@ -1,6 +1,9 @@
 import type { User } from "@supabase/supabase-js";
 import type { AstroCookies } from "astro";
 import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/ssr";
+import { isSafeInternalPath } from "@/lib/auth/safe-path";
+
+export { isSafeInternalPath };
 
 export async function getSessionUser(cookies: AstroCookies, request?: Request): Promise<User | null> {
   if (!isSupabaseConfigured()) return null;
@@ -10,8 +13,12 @@ export async function getSessionUser(cookies: AstroCookies, request?: Request): 
   return data.user;
 }
 
-export function getRedirectParam(url: URL): string {
+export function getRedirectParam(url: URL, fallback = "/novels/"): string {
   const redirect = url.searchParams.get("redirect");
-  if (!redirect || !redirect.startsWith("/")) return "/novels/";
-  return redirect;
+  return isSafeInternalPath(redirect) ? redirect : fallback;
+}
+
+export function getSafeNextParam(url: URL, fallback = "/novels/"): string {
+  const next = url.searchParams.get("next");
+  return isSafeInternalPath(next) ? next : fallback;
 }

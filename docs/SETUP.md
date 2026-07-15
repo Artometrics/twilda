@@ -27,8 +27,10 @@ Create project **`twilda`** under org **Artometrics** (separate from other apps)
 4. Run database schema in Supabase **SQL Editor** (idempotent; see `supabase/migrations/README.md`):
    - `001_initial_schema.sql` — novels / profiles / subscriptions
    - `003_novel_drafts.sql` — drafts / timelines
-   - **`004_atlas_schema.sql` — required for Atlas user tables + GOTHA**
+   - **`004_atlas_schema.sql` — required for GOTHA** (Atlas entity tables are reserved/future; live map content is TypeScript seeds)
    - **`005_atlas_museum.sql` — required for My Museum collections + enrich cache**
+   - **`006_security_hardening.sql` — harden `gotha_ancestors` (auth.uid; revoke anon)**
+   - **`007_onboarding.sql` — `profiles.onboarding_completed` for welcome modal**
 
 ```bash
 npx supabase gen types typescript --project-id <ref> > src/lib/supabase/database.types.ts
@@ -60,16 +62,29 @@ npx netlify env:set SUPABASE_SERVICE_ROLE_KEY "…" --secret
 
 Prefer Netlify’s exact records from the domain panel if they differ.
 
-## 4. Verify
+## 4. Remote images (Atlas / My Museum)
+
+Portrait and artifact URLs often come from third-party CDNs (hotlinked, not stored in this repo):
+
+| Origin | Typical use |
+|--------|-------------|
+| `https://images.metmuseum.org` | Met Open Access seed + Discover previews |
+| `https://upload.wikimedia.org` | Wikimedia Commons portraits in seeds |
+| Your Supabase project host | Auth / storage if enabled later |
+
+**Astro `astro:assets` Image CDN** does not automatically proxy arbitrary remote hosts. These `<img src="https://…">` tags load in the browser. If you later switch to Netlify Image CDN (`/.netlify/images?url=…`), allowlist the same origins in Netlify remote-image settings. CSP Report-Only in `netlify.toml` already lists Met + Wikimedia `img-src` hosts.
+
+## 5. Verify
 
 ```bash
 npm run dev          # http://localhost:4321/api/health
+# Optional deep probe (needs service role locally): /api/health?deep=1
 npm run build
 ```
 
 Push to `main` → production deploy. Or `npx netlify deploy --prod`.
 
-## 5. Stripe billing (optional until you enable paid plans)
+## 6. Stripe billing (optional until you enable paid plans)
 
 Twilda uses **Stripe** for Pro subscriptions. Supabase does not process payments; Polar is not wired in this repo.
 
@@ -92,7 +107,7 @@ npx netlify env:set STRIPE_PRICE_STUDIO "price_..." --secret
 4. Stripe → **Settings → Billing → Customer portal** → enable (cancel, update payment method).
 5. Test: sign up with `?plan=pro` → `/account/billing/` auto-starts Checkout → return → **Manage subscription** opens portal.
 
-## 6. Google OAuth
+## 7. Google OAuth
 
 1. Supabase → **Authentication → Providers → Google** → enable, paste Client ID + Secret from Google Cloud Console.
 2. Google Cloud → OAuth client → Authorized redirect URI:
@@ -102,6 +117,6 @@ npx netlify env:set STRIPE_PRICE_STUDIO "price_..." --secret
    - Redirect URLs: add `/auth/callback/` and `/forms/reset-password/` on prod and localhost
 4. Publish OAuth consent screen (or add test users while in Testing).
 
-## 7. Cursor
+## 8. Cursor
 
 Rules in `.cursor/rules/`. Never paste service-role keys into chat.

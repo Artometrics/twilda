@@ -80,7 +80,13 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
       </a>
       <a class="nc-ws__brand" href="/">Twilda</a>
-      <button class="nc-iconbtn" type="button" data-mode-btn="settings" aria-label="Settings">
+      <button
+        class="nc-iconbtn"
+        type="button"
+        data-mode-btn="settings"
+        aria-label="Settings"
+        aria-controls="mode-panel-settings"
+      >
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L14.5 3h-4l-.3 2.4a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.3 2.4h4l.3-2.4a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6c.1-.3.1-.7.1-1z"/></svg>
       </button>
       <div class="nc-ws__novel">
@@ -109,22 +115,67 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
         </div>
       </div>
 
-      <div class="nc-modes" role="tablist">
-        <button class="is-active" data-mode-btn="plan" type="button">
+      <div class="nc-modes" role="tablist" aria-label="Editor mode">
+        <button
+          class="is-active"
+          data-mode-btn="plan"
+          type="button"
+          role="tab"
+          id="mode-tab-plan"
+          aria-selected="true"
+          aria-controls="mode-panel-plan"
+          tabindex="0"
+        >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="3" y="15" width="7" height="5" rx="1"/><rect x="14" y="15" width="7" height="5" rx="1"/></svg>
           Plan
         </button>
-        <button data-mode-btn="write" type="button">
+        <button
+          data-mode-btn="write"
+          type="button"
+          role="tab"
+          id="mode-tab-write"
+          aria-selected="false"
+          aria-controls="mode-panel-write"
+          tabindex="-1"
+        >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
           Write
         </button>
-        <button data-mode-btn="chat" type="button">
+        <button
+          data-mode-btn="chat"
+          type="button"
+          role="tab"
+          id="mode-tab-chat"
+          aria-selected="false"
+          aria-controls="mode-panel-chat"
+          tabindex="-1"
+        >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           Chat
         </button>
-        <button data-mode-btn="review" type="button">
+        <button
+          data-mode-btn="review"
+          type="button"
+          role="tab"
+          id="mode-tab-review"
+          aria-selected="false"
+          aria-controls="mode-panel-review"
+          tabindex="-1"
+        >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
           Review
+        </button>
+        <button
+          data-mode-btn="settings"
+          type="button"
+          role="tab"
+          id="mode-tab-settings"
+          aria-selected="false"
+          aria-controls="mode-panel-settings"
+          tabindex="-1"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L14.5 3h-4l-.3 2.4a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.3 2.4h4l.3-2.4a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6c.1-.3.1-.7.1-1z"/></svg>
+          Settings
         </button>
       </div>
 
@@ -288,7 +339,13 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
           <span class="nc-avatar-sm" style="width:24px;height:24px;font-size:11px;">
             {(user.email?.[0] ?? "U").toUpperCase()}
           </span>
-          <span class="nc-credits" style="padding:2px 8px;">{creditsRemaining}/{creditsMax}</span>
+          <span
+            class="nc-credits"
+            style="padding:2px 8px;"
+            aria-label={`AI credits remaining: ${creditsRemaining} of ${creditsMax}`}
+          >
+            {creditsRemaining}/{creditsMax}
+          </span>
           <a href="/helpcenter/">Help</a>
           <button class="nc-btn nc-btn--ghost" type="button" data-export>Export</button>
         </div>
@@ -297,7 +354,13 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
       <!-- Main -->
       <div class="nc-main">
         <!-- PLAN -->
-        <section class="nc-mode-panel is-active" data-mode="plan">
+        <section
+          class="nc-mode-panel is-active"
+          data-mode="plan"
+          role="tabpanel"
+          id="mode-panel-plan"
+          aria-labelledby="mode-tab-plan"
+        >
           <div class="nc-plan">
             <div class="nc-plan__actions">
               <button class="nc-btn" type="button" data-add-chapter>+ Add chapter</button>
@@ -333,7 +396,14 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
         </section>
 
         <!-- WRITE -->
-        <section class="nc-mode-panel" data-mode="write">
+        <section
+          class="nc-mode-panel"
+          data-mode="write"
+          role="tabpanel"
+          id="mode-panel-write"
+          aria-labelledby="mode-tab-write"
+          hidden
+        >
           <div class="nc-manuscript" data-novel={novel.id}>
             {
               totalWords === 0 ? (
@@ -352,6 +422,9 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
                       class="nc-ms-scene"
                       contenteditable="true"
                       spellcheck="false"
+                      role="textbox"
+                      aria-multiline="true"
+                      aria-label={sc.title ? `Write scene: ${sc.title}` : `Write scene ${si + 1} in ${ch.title}`}
                       data-scene-id={sc.id}
                       data-scene-index={`${ci}-${si}`}
                     >
@@ -371,7 +444,14 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
         </section>
 
         <!-- CHAT -->
-        <section class="nc-mode-panel" data-mode="chat">
+        <section
+          class="nc-mode-panel"
+          data-mode="chat"
+          role="tabpanel"
+          id="mode-panel-chat"
+          aria-labelledby="mode-tab-chat"
+          hidden
+        >
           <div class="nc-placeholder nc-chat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <h2>Chat with your story</h2>
@@ -387,7 +467,14 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
         </section>
 
         <!-- REVIEW -->
-        <section class="nc-mode-panel" data-mode="review">
+        <section
+          class="nc-mode-panel"
+          data-mode="review"
+          role="tabpanel"
+          id="mode-panel-review"
+          aria-labelledby="mode-tab-review"
+          hidden
+        >
           <div class="nc-placeholder">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
             <h2>Review your manuscript</h2>
@@ -398,7 +485,14 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
         </section>
 
         <!-- SETTINGS -->
-        <section class="nc-mode-panel" data-mode="settings">
+        <section
+          class="nc-mode-panel"
+          data-mode="settings"
+          role="tabpanel"
+          id="mode-panel-settings"
+          aria-labelledby="mode-tab-settings"
+          hidden
+        >
           <div class="nc-plan">
             <article class="nc-chapter">
               <div class="nc-chapter__head"><h3>Metadata</h3></div>
@@ -447,14 +541,19 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
           <div class="nc-detail__tags">
             {e.tags.map((t) => (<span class="nc-tag">{t}</span>))}
           </div>
-          <div class="nc-detail__tabs" role="tablist">
-            <button type="button" class="is-active" data-detail-tab="details">Details</button>
-            <button type="button" data-detail-tab="research">Research</button>
-            <button type="button" data-detail-tab="relations">Relations</button>
-            <button type="button" data-detail-tab="mentions">Mentions</button>
-            <button type="button" data-detail-tab="tracking">Tracking</button>
+          <div class="nc-detail__tabs" role="tablist" aria-label={`${e.name} details`}>
+            <button type="button" class="is-active" role="tab" aria-selected="true" data-detail-tab="details">
+              Details
+            </button>
+            {
+              typeof e.mentions === "number" && (
+                <button type="button" role="tab" aria-selected="false" data-detail-tab="mentions">
+                  Mentions
+                </button>
+              )
+            }
           </div>
-          <div class="nc-detail__pane is-active" data-detail-pane="details">
+          <div class="nc-detail__pane is-active" data-detail-pane="details" role="tabpanel">
             {e.aliases && e.aliases.length > 0 && (
               <>
                 <p class="nc-detail__label">ALIASES / NICKNAMES</p>
@@ -464,26 +563,14 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
             <p class="nc-detail__label">DESCRIPTION</p>
             <div class="nc-detail__field">{e.description}</div>
           </div>
-          <div class="nc-detail__pane" data-detail-pane="research">
-            <p class="nc-detail__label">RESEARCH NOTES</p>
-            <div class="nc-detail__field">Add source material, historical context, and reference links for {e.name}.</div>
-          </div>
-          <div class="nc-detail__pane" data-detail-pane="relations">
-            <p class="nc-detail__label">RELATIONS</p>
-            <div class="nc-detail__field">Map connections between {e.name} and other Codex entries as your story grows.</div>
-          </div>
-          <div class="nc-detail__pane" data-detail-pane="mentions">
-            <p class="nc-detail__label">MENTIONS</p>
-            <div class="nc-detail__field">
-              {typeof e.mentions === "number"
-                ? `${e.mentions} mentions in the manuscript`
-                : "Mention tracking will appear once the manuscript is connected."}
-            </div>
-          </div>
-          <div class="nc-detail__pane" data-detail-pane="tracking">
-            <p class="nc-detail__label">TRACKING</p>
-            <div class="nc-detail__field">Track arc beats, status changes, and continuity flags for {e.name}.</div>
-          </div>
+          {
+            typeof e.mentions === "number" && (
+              <div class="nc-detail__pane" data-detail-pane="mentions" role="tabpanel" hidden>
+                <p class="nc-detail__label">MENTIONS</p>
+                <div class="nc-detail__field">{e.mentions} mentions in the manuscript</div>
+              </div>
+            )
+          }
         </div>
       ))
     }
@@ -695,12 +782,38 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
     const panels = document.querySelectorAll(".nc-mode-panel");
     const topModeBtns = document.querySelectorAll(".nc-modes [data-mode-btn]");
     function setMode(mode) {
-      panels.forEach((p) => p.classList.toggle("is-active", p.dataset.mode === mode));
-      topModeBtns.forEach((b) => b.classList.toggle("is-active", b.dataset.modeBtn === mode));
+      panels.forEach((p) => {
+        const on = p.dataset.mode === mode;
+        p.classList.toggle("is-active", on);
+        if (on) p.removeAttribute("hidden");
+        else p.setAttribute("hidden", "");
+      });
+      topModeBtns.forEach((b) => {
+        const on = b.dataset.modeBtn === mode;
+        b.classList.toggle("is-active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+        b.setAttribute("tabindex", on ? "0" : "-1");
+      });
     }
     modeBtns.forEach((b) =>
       b.addEventListener("click", () => setMode(b.dataset.modeBtn)),
     );
+    // Arrow-key navigation within the mode tablist
+    document.querySelector(".nc-modes")?.addEventListener("keydown", (event) => {
+      const tabs = Array.from(topModeBtns);
+      const current = tabs.indexOf(document.activeElement);
+      if (current < 0) return;
+      let next = -1;
+      if (event.key === "ArrowRight" || event.key === "ArrowDown") next = (current + 1) % tabs.length;
+      if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = (current - 1 + tabs.length) % tabs.length;
+      if (event.key === "Home") next = 0;
+      if (event.key === "End") next = tabs.length - 1;
+      if (next < 0) return;
+      event.preventDefault();
+      const tab = tabs[next];
+      setMode(tab.dataset.modeBtn);
+      tab.focus();
+    });
 
     const params = new URLSearchParams(window.location.search);
     const initialMode = params.get("mode");
@@ -807,10 +920,17 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
       tabs.forEach((tab) => {
         tab.addEventListener("click", () => {
           const name = tab.dataset.detailTab;
-          tabs.forEach((t) => t.classList.toggle("is-active", t === tab));
-          panes.forEach((p) =>
-            p.classList.toggle("is-active", p.dataset.detailPane === name),
-          );
+          tabs.forEach((t) => {
+            const on = t === tab;
+            t.classList.toggle("is-active", on);
+            t.setAttribute("aria-selected", on ? "true" : "false");
+          });
+          panes.forEach((p) => {
+            const on = p.dataset.detailPane === name;
+            p.classList.toggle("is-active", on);
+            if (on) p.removeAttribute("hidden");
+            else p.setAttribute("hidden", "");
+          });
         });
       });
     });

@@ -28,6 +28,7 @@ export interface DbNovelSummary {
   synopsis: string;
   cover_kind: CoverKind;
   series_name: string | null;
+  is_template: boolean;
   active_draft_id: string | null;
   updated_at: string;
   last_opened_at: string | null;
@@ -76,14 +77,25 @@ export async function listNovels(supabase: Client, userId: string): Promise<DbNo
   const { data, error } = await supabase
     .from("novels")
     .select(
-      "id, title, author, synopsis, cover_kind, series_name, active_draft_id, updated_at, last_opened_at",
+      "id, title, author, synopsis, cover_kind, series_name, is_template, active_draft_id, updated_at, last_opened_at",
     )
     .eq("user_id", userId)
-    .eq("is_template", false)
     .order("last_opened_at", { ascending: false, nullsFirst: false });
 
   if (error) throw error;
   return (data ?? []) as DbNovelSummary[];
+}
+
+/**
+ * Classic starter badge: prefer `is_template`.
+ * Starters are seeded with cover_kind in (gatsby, trinity, cardinal) and is_template=true —
+ * cover_kind alone cannot be used because user novels also use those covers.
+ */
+export function isClassicTemplate(novel: {
+  is_template?: boolean;
+  cover_kind?: CoverKind;
+}): boolean {
+  return novel.is_template === true;
 }
 
 export async function getNovelFull(
@@ -524,7 +536,7 @@ async function seedNovelShell(
       synopsis: seed.synopsis,
       cover_kind: seed.cover,
       series_name: seed.series ?? null,
-      is_template: false,
+      is_template: true,
     })
     .select("id")
     .single();
@@ -580,7 +592,7 @@ export async function ensureStarterNovels(supabase: Client, userId: string) {
         synopsis: trinityV2Seed.synopsis,
         cover_kind: "trinity",
         series_name: trinityV2Seed.series ?? "Trinity",
-        is_template: false,
+        is_template: true,
       })
       .select("id")
       .single();

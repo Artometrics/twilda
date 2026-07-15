@@ -3,9 +3,10 @@ export const prerender = false;
 
 import { createSupabaseServerClient } from "@/lib/supabase/ssr";
 import { ensureUserProfile } from "@/lib/auth/profile";
+import { getSafeNextParam } from "@/lib/auth/session";
 
 const code = Astro.url.searchParams.get("code");
-const next = Astro.url.searchParams.get("next") ?? "/novels/";
+const next = getSafeNextParam(Astro.url, "/novels/");
 
 if (code) {
   const supabase = createSupabaseServerClient(Astro.cookies, Astro.request);
@@ -26,5 +27,5 @@ if (code) {
   }
 }
 
-return Astro.redirect(next.startsWith("/") ? next : "/novels/");
+return Astro.redirect(next);
 ---

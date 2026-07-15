@@ -13,7 +13,7 @@ const navigationLinks = [
   { title: "Atlas", href: "/atlas/" },
   { title: "GOTHA", href: "/gotha/" },
   { title: "Research", href: "/research/" },
-  { title: "Pricing", href: "#pricing-section" },
+  { title: "Pricing", href: "/#pricing-section" },
   { title: "Help Center", href: "/helpcenter/" },
   { title: "Changelog", href: "/changelog/" },
 ];
@@ -132,9 +132,8 @@ const userEmail = user?.email ?? null;
   document.addEventListener("DOMContentLoaded", () => {
     const menuToggle = document.getElementById("menu-toggle");
     const menuClose = document.getElementById("menu-close");
-    const menuIcon = document.getElementById("menu-icon");
-    const closeIcon = document.getElementById("close-icon");
     const navigationMenu = document.getElementById("navigation-menu");
+    if (!menuToggle || !menuClose || !navigationMenu) return;
 
     function toggleMenu(open) {
       navigationMenu.classList.toggle("opacity-100", open);
@@ -143,10 +142,11 @@ const userEmail = user?.email ?? null;
       navigationMenu.classList.toggle("opacity-0", !open);
       navigationMenu.classList.toggle("-translate-y-4", !open);
       navigationMenu.classList.toggle("pointer-events-none", !open);
-      menuIcon.classList.toggle("hidden", open);
-      closeIcon.classList.toggle("hidden", !open);
+      menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
     }
 
+    menuToggle.setAttribute("aria-expanded", "false");
+    menuToggle.setAttribute("aria-controls", "navigation-menu");
     menuToggle.addEventListener("click", () => toggleMenu(true));
     menuClose.addEventListener("click", () => toggleMenu(false));
   });

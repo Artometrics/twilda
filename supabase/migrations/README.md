@@ -32,6 +32,18 @@ The scripts are **idempotent** (safe to re-run).
 | `003_novel_drafts.sql` | Drafts / timelines + cross-draft references |
 | `004_atlas_schema.sql` | Atlas DB tables + GOTHA genealogy tables + `gotha_ancestors` RPC |
 | `005_atlas_museum.sql` | Museum collections (`atlas_collections`), enrich cache, `gotha_persons.atlas_seed_id` |
+| `006_security_hardening.sql` | Harden `gotha_ancestors` to `auth.uid()`, revoke anon execute |
+| `007_onboarding.sql` | `profiles.onboarding_completed` for welcome modal persistence |
+
+## Atlas: TypeScript seeds vs DB tables
+
+**Runtime Atlas** (map scenes, pins, search index) is served from **TypeScript seed modules** under `src/lib/atlas/` (e.g. `seed-met.ts`, `seed-vienna.ts`). Those are the source of truth today.
+
+DB tables from `004_atlas_schema.sql` (`atlas_entities`, `atlas_links`, `atlas_scenes`) are **reserved / future** — they are not required for the current seed-driven Atlas UX. Apply `004` mainly for **GOTHA** (`gotha_persons`, `gotha_relations`, `gotha_ancestors`).
+
+User-facing museum + enrich cache live in `005_atlas_museum.sql` (`atlas_collections`, `atlas_enrich_cache`, plus `gotha_persons.atlas_seed_id`).
+
+`007_onboarding.sql` adds `profiles.onboarding_completed` so the `/novels/` welcome modal can persist dismissals.
 
 ## After migration
 
@@ -39,5 +51,6 @@ The scripts are **idempotent** (safe to re-run).
 - Set URL Configuration: Site URL + `/auth/callback/` redirect
 - Sign in at `/forms/login/` → library at `/novels/`
 - Starters: Gatsby, Trinity (v1 + v2 drafts), and Cardinal are seeded automatically
-- Atlas and GOTHA: run `004_atlas_schema.sql` to enable DB-backed atlas entities and GOTHA genealogy
+- GOTHA: run `004_atlas_schema.sql` (+ `006_security_hardening.sql`)
 - Museum collections + enrich cache: run `005_atlas_museum.sql`
+- Onboarding flag: run `007_onboarding.sql`

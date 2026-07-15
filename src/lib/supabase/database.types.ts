@@ -8,6 +8,7 @@ export interface Database {
           id: string;
           display_name: string | null;
           pen_name: string | null;
+          onboarding_completed: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -15,6 +16,7 @@ export interface Database {
           id: string;
           display_name?: string | null;
           pen_name?: string | null;
+          onboarding_completed?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -22,6 +24,7 @@ export interface Database {
           id?: string;
           display_name?: string | null;
           pen_name?: string | null;
+          onboarding_completed?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -356,6 +359,129 @@ export interface Database {
           role?: "user" | "assistant" | "system";
           content?: string;
           created_at?: string;
+        };
+      };
+      atlas_collections: {
+        Row: {
+          id: string;
+          user_id: string;
+          seed_entity_id: string;
+          title: string | null;
+          kind: string | null;
+          summary: string | null;
+          portrait_url: string | null;
+          source_url: string | null;
+          license: string | null;
+          attribution: string | null;
+          notes: string | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          seed_entity_id: string;
+          title?: string | null;
+          kind?: string | null;
+          summary?: string | null;
+          portrait_url?: string | null;
+          source_url?: string | null;
+          license?: string | null;
+          attribution?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          seed_entity_id?: string;
+          title?: string | null;
+          kind?: string | null;
+          summary?: string | null;
+          portrait_url?: string | null;
+          source_url?: string | null;
+          license?: string | null;
+          attribution?: string | null;
+          notes?: string | null;
+          created_at?: string | null;
+        };
+      };
+      atlas_enrich_cache: {
+        Row: {
+          cache_key: string;
+          payload: Json;
+          fetched_at: string | null;
+        };
+        Insert: {
+          cache_key: string;
+          payload: Json;
+          fetched_at?: string | null;
+        };
+        Update: {
+          cache_key?: string;
+          payload?: Json;
+          fetched_at?: string | null;
+        };
+      };
+      gotha_persons: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          birth_year: number | null;
+          birth_month: number | null;
+          birth_day: number | null;
+          birth_place: string | null;
+          birth_lat: number | null;
+          birth_lng: number | null;
+          death_year: number | null;
+          family_name: string | null;
+          notes: string | null;
+          portrait_url: string | null;
+          is_self: boolean;
+          atlas_entity_id: string | null;
+          atlas_seed_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          birth_year?: number | null;
+          birth_month?: number | null;
+          birth_day?: number | null;
+          birth_place?: string | null;
+          birth_lat?: number | null;
+          birth_lng?: number | null;
+          death_year?: number | null;
+          family_name?: string | null;
+          notes?: string | null;
+          portrait_url?: string | null;
+          is_self?: boolean;
+          atlas_entity_id?: string | null;
+          atlas_seed_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          birth_year?: number | null;
+          birth_month?: number | null;
+          birth_day?: number | null;
+          birth_place?: string | null;
+          birth_lat?: number | null;
+          birth_lng?: number | null;
+          death_year?: number | null;
+          family_name?: string | null;
+          notes?: string | null;
+          portrait_url?: string | null;
+          is_self?: boolean;
+          atlas_entity_id?: string | null;
+          atlas_seed_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
     };

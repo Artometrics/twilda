@@ -18,7 +18,14 @@ const relatedPosts = allPosts.filter((post) => post.data.team === teamSlug);
 const { frontmatter } = Astro.props;
 ---
 
-<BaseLayout>
+<BaseLayout
+  title={`${frontmatter.name} · Team · Twilda`}
+  description={frontmatter.bio
+    ? String(frontmatter.bio).split("\n")[0]
+    : `${frontmatter.name} — ${frontmatter.role} at Twilda.`}
+  canonicalPath={Astro.url.pathname}
+  noindex={true}
+>
   <section>
     <Wrapper variant="standard" class="py-32">
       <div class="max-w-md mx-auto text-center text-balance">

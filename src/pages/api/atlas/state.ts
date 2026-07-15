@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { getEntity, getScene, atlasScenes } from "@/lib/atlas/data";
-import { focusCardPayload, scenePayload } from "@/lib/atlas/focus-payload";
+import { focusCardPayload, scenePayload, serializeFocusPins } from "@/lib/atlas/focus-payload";
 
 export const prerender = false;
 
@@ -14,17 +14,23 @@ export const GET: APIRoute = async ({ url, locals }) => {
   const entityId = url.searchParams.get("e");
   const mode = url.searchParams.get("mode") ?? (entityId && !url.searchParams.has("scene") ? "focus" : "scene");
 
-  // mode=focus → card only; mode=scene → callouts + card (+ optional e)
+  // mode=focus → card + focusPins (rebuild markers + flyTo); mode=scene → callouts + card
   if (mode === "focus" && entityId) {
     if (!getEntity(entityId)) {
       return new Response(JSON.stringify({ error: "Not found" }), { status: 404 });
     }
-    return new Response(JSON.stringify({ card: focusCardPayload(entityId) }), {
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=300",
+    return new Response(
+      JSON.stringify({
+        card: focusCardPayload(entityId),
+        pins: serializeFocusPins(entityId),
+      }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=300",
+        },
       },
-    });
+    );
   }
 
   if (!getScene(sceneId) && sceneId !== atlasScenes[0].id) {

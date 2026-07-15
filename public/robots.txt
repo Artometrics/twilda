@@ -4,7 +4,6 @@ Allow: /research/
 Allow: /helpcenter/
 Allow: /changelog/
 Allow: /legal/
-Allow: /team/
 
 Disallow: /account
 Disallow: /novels
@@ -16,6 +15,8 @@ Disallow: /system
 Disallow: /auth
 Disallow: /customers
 Disallow: /integrations
+Disallow: /team
 
-# Set Sitemap to ${PUBLIC_SITE_URL}/sitemap-index.xml in production (Netlify / host).
+# Absolute URL is preferred; relative path works for same-host crawlers.
+# Netlify production should set PUBLIC_SITE_URL so sitemap + OG stay accurate.
 Sitemap: /sitemap-index.xml

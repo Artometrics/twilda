@@ -13,39 +13,10 @@ import Cta from "@/components/ctas/Cta.astro";
 import Faq from "@/components/helpcenter/Faq.astro";
 import Testimonial from "@/components/testimonials/Testimonial.astro";
 import { getSiteUrl } from "@/lib/site";
+import { homepageFaqJsonLd } from "@/lib/marketing/faqs";
 
 const siteUrl = getSiteUrl();
-
-const faqLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "How do I get started?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Sign up free, open your library, explore sample novels, then visit Atlas and GOTHA.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "What is Atlas?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Atlas is Twilda’s historical map of people, places, artifacts, and ideas—including Met Open Access works you can save to My Museum.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "What is GOTHA?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "GOTHA is personal genealogy inspired by the Almanach de Gotha—trace ancestors on the map and link them to Atlas history.",
-      },
-    },
-  ],
-};
+const faqLd = homepageFaqJsonLd();
 
 const orgLd = {
   "@context": "https://schema.org",

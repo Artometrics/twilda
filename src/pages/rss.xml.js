@@ -3,10 +3,11 @@ import { getCollection } from "astro:content";
 
 export async function GET(context) {
   const research = await getCollection("research");
+  const site = context.site ?? "http://localhost:4321";
   return rss({
     title: "Twilda | Investigations",
     description: "Pre-registered research and writing from Twilda",
-    site: context.site ?? "[REDACTED]",
+    site,
     items: research.map((entry) => ({
       title: entry.data.title,
       pubDate: entry.data.pubDate,
