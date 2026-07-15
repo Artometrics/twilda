@@ -30,6 +30,7 @@ The scripts are **idempotent** (safe to re-run).
 | `001_initial_schema.sql` | **Canonical** full base schema — use this first |
 | `002_fix_partial_schema.sql` | Pointer only (legacy recovery name) |
 | `003_novel_drafts.sql` | Drafts / timelines + cross-draft references |
+| `004_atlas_schema.sql` | Atlas DB tables + GOTHA genealogy tables + `gotha_ancestors` RPC |
 
 ## After migration
 
@@ -37,3 +38,4 @@ The scripts are **idempotent** (safe to re-run).
 - Set URL Configuration: Site URL + `/auth/callback/` redirect
 - Sign in at `/forms/login/` → library at `/novels/`
 - Starters: Gatsby, Trinity (v1 + v2 drafts), and Cardinal are seeded automatically
+- Atlas and GOTHA: run `004_atlas_schema.sql` to enable DB-backed atlas entities and GOTHA genealogy
