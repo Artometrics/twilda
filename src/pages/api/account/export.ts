@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { listJournalEntries } from "@/lib/journal/service";
+import { listStoryboardPanels } from "@/lib/novels/storyboard";
 import { createSupabaseServerClient } from "@/lib/supabase/ssr";
 import { exportNovelText, listNovels } from "@/lib/novels/service";
 
@@ -14,12 +15,23 @@ export const GET: APIRoute = async ({ cookies, request }) => {
 
   const novels = await listNovels(supabase, user.id);
   const manuscripts: Record<string, string> = {};
+  const storyboards: Record<string, Awaited<ReturnType<typeof listStoryboardPanels>>> = {};
 
   for (const novel of novels) {
     try {
       manuscripts[novel.id] = await exportNovelText(supabase, user.id, novel.id);
     } catch {
       manuscripts[novel.id] = "";
+    }
+    try {
+      storyboards[novel.id] = await listStoryboardPanels(
+        supabase,
+        user.id,
+        novel.id,
+        novel.active_draft_id,
+      );
+    } catch {
+      storyboards[novel.id] = [];
     }
   }
 
@@ -47,6 +59,7 @@ export const GET: APIRoute = async ({ cookies, request }) => {
       updated_at: n.updated_at,
     })),
     manuscripts,
+    storyboards,
     journal,
   };
 

@@ -3,6 +3,7 @@ import { dbErrorMessage } from "@/lib/auth/guards";
 import {
   deleteStoryboardPanel,
   isStoryboardSetupError,
+  reorderStoryboardPanel,
   updateStoryboardPanel,
   uploadStoryboardImage,
 } from "@/lib/novels/storyboard";
@@ -40,11 +41,29 @@ export const PATCH: APIRoute = async ({ cookies, request, params }) => {
       });
     }
 
-    let body: { caption?: string; prompt?: string; sort_order?: number };
+    let body: {
+      caption?: string;
+      prompt?: string;
+      sort_order?: number;
+      move?: "up" | "down";
+    };
     try {
       body = await request.json();
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400 });
+    }
+
+    if (body.move === "up" || body.move === "down") {
+      const panels = await reorderStoryboardPanel(
+        supabase,
+        user.id,
+        params.id!,
+        params.panelId!,
+        body.move,
+      );
+      return new Response(JSON.stringify({ panels }), {
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const panel = await updateStoryboardPanel(supabase, user.id, params.id!, params.panelId!, {

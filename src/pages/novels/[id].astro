@@ -453,12 +453,20 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
               <div>
                 <h2>Storyboard</h2>
                 <p>
-                  16:9 panels for AI image sessions — frame, shot line, then a prompt you can copy.
+                  16:9 panels for AI image sessions — drop a frame, write the shot line, keep the prompt ready to copy.
                 </p>
               </div>
-              <button class="nc-btn nc-btn--primary" type="button" data-add-panel>
-                + Add panel
-              </button>
+              <div class="nc-board__intro-actions">
+                <button class="nc-btn" type="button" data-copy-all-prompts>
+                  Copy all prompts
+                </button>
+                <button class="nc-btn" type="button" data-export-prompts>
+                  Export .txt
+                </button>
+                <button class="nc-btn nc-btn--primary" type="button" data-add-panel>
+                  + Add panel
+                </button>
+              </div>
             </div>
 
             {
@@ -478,16 +486,24 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
                     <article class="nc-panel-card" data-panel-id={panel.id}>
                       <div class="nc-panel-card__top">
                         <span class="nc-panel-card__num">Panel {index + 1}</span>
-                        <button
-                          class="nc-btn nc-btn--ghost"
-                          type="button"
-                          data-delete-panel
-                          aria-label={`Delete panel ${index + 1}`}
-                        >
-                          Delete
-                        </button>
+                        <div class="nc-panel-card__top-actions">
+                          <button class="nc-btn nc-btn--ghost" type="button" data-move-panel="up" aria-label="Move panel up">
+                            ↑
+                          </button>
+                          <button class="nc-btn nc-btn--ghost" type="button" data-move-panel="down" aria-label="Move panel down">
+                            ↓
+                          </button>
+                          <button
+                            class="nc-btn nc-btn--ghost"
+                            type="button"
+                            data-delete-panel
+                            aria-label={`Delete panel ${index + 1}`}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
-                      <label class="nc-panel-card__frame">
+                      <label class="nc-panel-card__frame" data-panel-dropzone>
                         <input
                           type="file"
                           accept="image/jpeg,image/png,image/webp,image/gif"
@@ -499,7 +515,7 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
                         ) : (
                           <span class="nc-panel-card__empty" data-panel-empty>
                             <strong>Upload 16:9</strong>
-                            <em>Tap to add a frame</em>
+                            <em>Tap, drop, or paste a frame</em>
                           </span>
                         )}
                         {!panel.image_url ? null : (
@@ -539,7 +555,7 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
             {
               !storyboardError && storyboardPanels.length === 0 && (
                 <p class="nc-board__empty" data-board-empty>
-                  No panels yet. Add one and drop a 16:9 still, then keep the prompt next to it.
+                  No panels yet. Add one, drop a 16:9 still, then keep the prompt next to it for your image model.
                 </p>
               )
             }
@@ -1226,6 +1242,7 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
       const boardList = boardRoot.querySelector("[data-board-list]");
       const boardEmpty = boardRoot.querySelector("[data-board-empty]");
       const panelTimers = new Map();
+      const dirtyPanels = new Set();
 
       function renumberPanels() {
         boardList?.querySelectorAll("[data-panel-id]").forEach((card, i) => {
@@ -1234,13 +1251,73 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
         });
       }
 
+      function collectPrompts() {
+        const chunks = [];
+        boardList?.querySelectorAll("[data-panel-id]").forEach((card, i) => {
+          const caption = card.querySelector("[data-panel-caption]");
+          const prompt = card.querySelector("[data-panel-prompt]");
+          const line = caption instanceof HTMLInputElement ? caption.value.trim() : "";
+          const text = prompt instanceof HTMLTextAreaElement ? prompt.value.trim() : "";
+          if (!line && !text) return;
+          chunks.push(
+            `## Panel ${i + 1}${line ? ` — ${line}` : ""}\n${text || "(no prompt)"}`,
+          );
+        });
+        return chunks.join("\n\n");
+      }
+
+      function applyPreview(card, url) {
+        const frame = card.querySelector(".nc-panel-card__frame");
+        const fileEl = card.querySelector("[data-panel-image]");
+        if (!frame || !url) return;
+        let img = frame.querySelector("[data-panel-preview]");
+        if (!(img instanceof HTMLImageElement)) {
+          frame.querySelector("[data-panel-empty]")?.remove();
+          img = document.createElement("img");
+          img.setAttribute("data-panel-preview", "");
+          img.alt = "";
+          frame.insertBefore(img, fileEl?.nextSibling ?? null);
+          if (!frame.querySelector(".nc-panel-card__replace")) {
+            const tip = document.createElement("span");
+            tip.className = "nc-panel-card__replace";
+            tip.textContent = "Replace image";
+            frame.appendChild(tip);
+          }
+        }
+        img.src = url;
+      }
+
+      async function uploadPanelFile(card, panelId, file, setPanelStatus) {
+        setPanelStatus("Uploading…");
+        const form = new FormData();
+        form.append("image", file);
+        try {
+          const res = await fetch(`/api/novels/${novelId}/storyboard/${panelId}/`, {
+            method: "PATCH",
+            body: form,
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || "Upload failed");
+          applyPreview(card, data.panel?.image_url);
+          setPanelStatus("Uploaded");
+          window.setTimeout(() => setPanelStatus("", false), 1600);
+          showToast("Frame uploaded.");
+        } catch (err) {
+          setPanelStatus(err instanceof Error ? err.message : "Upload failed");
+          showToast(err instanceof Error ? err.message : "Upload failed");
+        }
+      }
+
       function bindPanelCard(card) {
+        if (card.dataset.bound === "1") return;
+        card.dataset.bound = "1";
         const panelId = card.getAttribute("data-panel-id");
         if (!panelId) return;
         const statusEl = card.querySelector("[data-panel-status]");
         const captionEl = card.querySelector("[data-panel-caption]");
         const promptEl = card.querySelector("[data-panel-prompt]");
         const fileEl = card.querySelector("[data-panel-image]");
+        const dropzone = card.querySelector("[data-panel-dropzone]");
 
         function setPanelStatus(message, show = true) {
           if (!(statusEl instanceof HTMLElement)) return;
@@ -1248,7 +1325,7 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
           statusEl.hidden = !show;
         }
 
-        async function savePanelFields() {
+        async function savePanelFields({ keepalive = false } = {}) {
           try {
             const res = await fetch(`/api/novels/${novelId}/storyboard/${panelId}/`, {
               method: "PATCH",
@@ -1257,11 +1334,13 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
                 caption: captionEl instanceof HTMLInputElement ? captionEl.value : "",
                 prompt: promptEl instanceof HTMLTextAreaElement ? promptEl.value : "",
               }),
+              keepalive,
             });
             if (!res.ok) {
               const data = await res.json().catch(() => ({}));
               throw new Error(data.error || "Save failed");
             }
+            dirtyPanels.delete(panelId);
             setPanelStatus("Saved");
             window.setTimeout(() => setPanelStatus("", false), 1600);
           } catch (err) {
@@ -1270,6 +1349,7 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
         }
 
         function schedulePanelSave() {
+          dirtyPanels.add(panelId);
           setPanelStatus("Unsaved…");
           if (panelTimers.has(panelId)) window.clearTimeout(panelTimers.get(panelId));
           panelTimers.set(
@@ -1299,6 +1379,34 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
           }
         });
 
+        card.querySelectorAll("[data-move-panel]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const move = btn.getAttribute("data-move-panel");
+            if (move !== "up" && move !== "down") return;
+            try {
+              const res = await fetch(`/api/novels/${novelId}/storyboard/${panelId}/`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ move }),
+              });
+              if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || "Reorder failed");
+              }
+              if (!boardList) return;
+              const sibling =
+                move === "up" ? card.previousElementSibling : card.nextElementSibling;
+              if (!sibling) return;
+              if (move === "up") boardList.insertBefore(card, sibling);
+              else boardList.insertBefore(sibling, card);
+              renumberPanels();
+              showToast("Panel moved.");
+            } catch (err) {
+              showToast(err instanceof Error ? err.message : "Reorder failed");
+            }
+          });
+        });
+
         card.querySelector("[data-delete-panel]")?.addEventListener("click", async () => {
           if (!confirm("Delete this storyboard panel?")) return;
           try {
@@ -1323,45 +1431,42 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
         fileEl?.addEventListener("change", async () => {
           const file = fileEl instanceof HTMLInputElement ? fileEl.files?.[0] : null;
           if (!file) return;
-          setPanelStatus("Uploading…");
-          const form = new FormData();
-          form.append("image", file);
-          try {
-            const res = await fetch(`/api/novels/${novelId}/storyboard/${panelId}/`, {
-              method: "PATCH",
-              body: form,
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error || "Upload failed");
-            const url = data.panel?.image_url;
-            const frame = card.querySelector(".nc-panel-card__frame");
-            if (frame && url) {
-              let img = frame.querySelector("[data-panel-preview]");
-              if (!(img instanceof HTMLImageElement)) {
-                frame.querySelector("[data-panel-empty]")?.remove();
-                img = document.createElement("img");
-                img.setAttribute("data-panel-preview", "");
-                img.alt = "";
-                frame.insertBefore(img, fileEl.nextSibling);
-                if (!frame.querySelector(".nc-panel-card__replace")) {
-                  const tip = document.createElement("span");
-                  tip.className = "nc-panel-card__replace";
-                  tip.textContent = "Replace image";
-                  frame.appendChild(tip);
-                }
-              }
-              img.src = url;
-            }
-            setPanelStatus("Uploaded");
-            window.setTimeout(() => setPanelStatus("", false), 1600);
-            showToast("Frame uploaded.");
-          } catch (err) {
-            setPanelStatus(err instanceof Error ? err.message : "Upload failed");
-            showToast(err instanceof Error ? err.message : "Upload failed");
-          } finally {
-            if (fileEl instanceof HTMLInputElement) fileEl.value = "";
-          }
+          await uploadPanelFile(card, panelId, file, setPanelStatus);
+          if (fileEl instanceof HTMLInputElement) fileEl.value = "";
         });
+
+        if (dropzone) {
+          ["dragenter", "dragover"].forEach((evt) => {
+            dropzone.addEventListener(evt, (e) => {
+              e.preventDefault();
+              dropzone.classList.add("is-drop");
+            });
+          });
+          ["dragleave", "drop"].forEach((evt) => {
+            dropzone.addEventListener(evt, (e) => {
+              e.preventDefault();
+              dropzone.classList.remove("is-drop");
+            });
+          });
+          dropzone.addEventListener("drop", async (e) => {
+            const file = e.dataTransfer?.files?.[0];
+            if (file) await uploadPanelFile(card, panelId, file, setPanelStatus);
+          });
+          dropzone.addEventListener("paste", async (e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+              if (item.type.startsWith("image/")) {
+                e.preventDefault();
+                const file = item.getAsFile();
+                if (file) await uploadPanelFile(card, panelId, file, setPanelStatus);
+                break;
+              }
+            }
+          });
+          // Make paste work when the frame is focused via click
+          dropzone.setAttribute("tabindex", "0");
+        }
       }
 
       boardList?.querySelectorAll("[data-panel-id]").forEach((card) => bindPanelCard(card));
@@ -1380,6 +1485,54 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
           window.location.href = url.toString();
         } catch (err) {
           showToast(err instanceof Error ? err.message : "Could not add panel");
+        }
+      });
+
+      boardRoot.querySelector("[data-copy-all-prompts]")?.addEventListener("click", async () => {
+        const text = collectPrompts();
+        if (!text) {
+          showToast("No prompts to copy.");
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast("All prompts copied.");
+        } catch {
+          showToast("Could not copy — try Export .txt");
+        }
+      });
+
+      boardRoot.querySelector("[data-export-prompts]")?.addEventListener("click", () => {
+        const text = collectPrompts();
+        if (!text) {
+          showToast("No prompts to export.");
+          return;
+        }
+        const blob = new Blob([`${novelTitle} — Storyboard\n\n${text}\n`], {
+          type: "text/plain;charset=utf-8",
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${(novelTitle || "storyboard").replace(/\s+/g, "-").toLowerCase()}-storyboard.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast("Exported prompts.");
+      });
+
+      window.addEventListener("pagehide", () => {
+        for (const id of dirtyPanels) {
+          const card = boardList?.querySelector(`[data-panel-id="${id}"]`);
+          const captionEl = card?.querySelector("[data-panel-caption]");
+          const promptEl = card?.querySelector("[data-panel-prompt]");
+          void fetch(`/api/novels/${novelId}/storyboard/${id}/`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              caption: captionEl instanceof HTMLInputElement ? captionEl.value : "",
+              prompt: promptEl instanceof HTMLTextAreaElement ? promptEl.value : "",
+            }),
+            keepalive: true,
+          });
         }
       });
     }

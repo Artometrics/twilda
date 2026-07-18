@@ -202,6 +202,43 @@ export async function uploadStoryboardImage(
   return updateStoryboardPanel(supabase, userId, novelId, panelId, { image_path: path });
 }
 
+export async function reorderStoryboardPanel(
+  supabase: Client,
+  userId: string,
+  novelId: string,
+  panelId: string,
+  direction: "up" | "down",
+) {
+  await assertNovelOwner(supabase, userId, novelId);
+
+  const { data: current, error: findErr } = await supabase
+    .from("storyboard_panels")
+    .select("id, draft_id, sort_order")
+    .eq("id", panelId)
+    .eq("novel_id", novelId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (findErr) throw findErr;
+  if (!current) throw new Error("Panel not found");
+
+  const panels = await listStoryboardPanels(supabase, userId, novelId, current.draft_id);
+  const index = panels.findIndex((p) => p.id === panelId);
+  if (index < 0) throw new Error("Panel not found");
+  const swapWith = direction === "up" ? index - 1 : index + 1;
+  if (swapWith < 0 || swapWith >= panels.length) return panels;
+
+  const a = panels[index]!;
+  const b = panels[swapWith]!;
+
+  // Swap via temporary order to avoid unique collisions if any
+  const temp = Math.max(a.sort_order, b.sort_order) + 1000;
+  await updateStoryboardPanel(supabase, userId, novelId, a.id, { sort_order: temp });
+  await updateStoryboardPanel(supabase, userId, novelId, b.id, { sort_order: a.sort_order });
+  await updateStoryboardPanel(supabase, userId, novelId, a.id, { sort_order: b.sort_order });
+
+  return listStoryboardPanels(supabase, userId, novelId, current.draft_id);
+}
+
 export function isStoryboardSetupError(message: string): boolean {
   return /storyboard_panels|storyboard|bucket|does not exist|schema cache|relation/i.test(message);
 }
