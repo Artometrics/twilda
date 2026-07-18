@@ -55,6 +55,44 @@ export interface Database {
           updated_at?: string;
         };
       };
+      storyboard_panels: {
+        Row: {
+          id: string;
+          novel_id: string;
+          draft_id: string | null;
+          user_id: string;
+          sort_order: number;
+          caption: string;
+          prompt: string;
+          image_path: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          novel_id: string;
+          draft_id?: string | null;
+          user_id: string;
+          sort_order?: number;
+          caption?: string;
+          prompt?: string;
+          image_path?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          novel_id?: string;
+          draft_id?: string | null;
+          user_id?: string;
+          sort_order?: number;
+          caption?: string;
+          prompt?: string;
+          image_path?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       subscriptions: {
         Row: {
           id: string;

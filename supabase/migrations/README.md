@@ -35,6 +35,7 @@ The scripts are **idempotent** (safe to re-run).
 | `006_security_hardening.sql` | Harden `gotha_ancestors` to `auth.uid()`, revoke anon execute |
 | `007_onboarding.sql` | `profiles.onboarding_completed` for welcome modal persistence |
 | `008_journal_entries.sql` | Private journal entries for `/blog` (RLS per user) |
+| `009_storyboard_panels.sql` | Storyboard panels + private Storage bucket `storyboard` |
 
 ## Atlas: TypeScript seeds vs DB tables
 
@@ -58,3 +59,4 @@ User-facing museum + enrich cache live in `005_atlas_museum.sql` (`atlas_collect
 - Museum collections + enrich cache: run `005_atlas_museum.sql` — optional / unused by solo app
 - Onboarding flag: run `007_onboarding.sql`
 - Journal: run `008_journal_entries.sql`
+- Storyboard / Board: run `009_storyboard_panels.sql` (creates table + Storage bucket)

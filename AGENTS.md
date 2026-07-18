@@ -58,7 +58,7 @@ Collections use **`defineCollection` + `glob` loaders only** — no Zod `schema`
 | Account | `/account/` |
 | Auth | `/forms/login`, `/forms/signup`, `/auth/callback` |
 
-Novel workspace modes: **Plan**, **Write**, **Settings** (+ Codex / Snippets / Refs sidebar).
+Novel workspace modes: **Plan**, **Write**, **Board** (storyboard panels), **Settings** (+ Codex / Snippets / Refs sidebar).
 
 ## Guardrails
 
