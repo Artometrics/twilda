@@ -336,6 +336,25 @@ export async function ensureTrinityDrafts(
       chapters: trinityPilotSeed.chapters,
     });
     changed = true;
+  } else if (pilot.summary !== trinityPilotDraftMeta.summary) {
+    // Refresh template manuscript when seed summary bumps (e.g. screenplay → novel)
+    await supabase.from("chapters").delete().eq("draft_id", pilot.id);
+    await supabase.from("codex_entries").delete().eq("draft_id", pilot.id);
+    await supabase.from("snippets").delete().eq("draft_id", pilot.id);
+    await supabase
+      .from("novel_drafts")
+      .update({
+        name: trinityPilotDraftMeta.name,
+        summary: trinityPilotDraftMeta.summary,
+      })
+      .eq("id", pilot.id);
+    await seedDraftContent(supabase, novelId, pilot.id, {
+      codex: trinityPilotSeed.codex,
+      snippets: trinityPilotSnippets,
+      chapters: trinityPilotSeed.chapters,
+    });
+    pilot = { ...pilot, name: trinityPilotDraftMeta.name, summary: trinityPilotDraftMeta.summary };
+    changed = true;
   }
 
   // Prefer PILOT as active (Book I); fall back to v2

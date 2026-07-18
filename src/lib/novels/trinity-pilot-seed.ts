@@ -11,7 +11,7 @@ export const trinityPilotDraftMeta = {
   name: "PILOT",
   slug: "pilot",
   summary:
-    'Book I · Episode 1 — "MAFIA." Cold open in the Animus: 1893 Sicily, drought, Fasci, vacuum thesis. Sophia leads; Trinity is the student. Ends with the Estate reveal.',
+    'Book I · Episode 1 — "MAFIA" (novel manuscript). Animus cold open in 1893 Sicily → vacuum thesis → Estate reveal. Sophia leads; Trinity is the student.',
 } as const;
 
 export const trinityPilotSnippets: { title: string; content: string }[] = [
@@ -78,12 +78,21 @@ Pilot question Trinity takes into the present: What is the drought right now?`,
   },
   {
     title: "What this draft is (vs v1 / v2)",
-    content: `PILOT is the production draft of Episode 1 for TRINITY: AN AMERICAN ODYSSEY — Animus cold opens, Sophia as guide, Trinity as student, historical case studies as diagnostic method.
+    content: `PILOT is the novel manuscript of Episode 1 for TRINITY: AN AMERICAN ODYSSEY — written prose across eight sequences, grounded in Acemoglu / De Feo / De Luca (2020). Animus cold opens, Sophia as guide, Trinity as student, historical case study as diagnostic method.
 
 v1 (Metafiction Cycle) — earlier Trinity / KSM / Sophia-on-Mars frame. Consult for metafiction ancestry.
 v2 (Series Bible) — Kane / vampire / Cole Risk Partners thriller outline. Parallel branch; not this episode's continuity.
 
 PILOT inherits Sophia + Animus + Estate energy and grounds Book I in the Sicilian Mafia case study as the first "field report" Trinity runs.`,
+  },
+  {
+    title: "Writing notes — prose voice",
+    content: `• Cold open withholds who/where until the Estate reveal (Sequence 8).
+• Sophia leads dialogue; Trinity is the student — short questions, then the thesis lands in his mouth in Sequence 6.
+• Keep paper facts exact (towns, dates, 177/161, Cutrera, Marquise, 43 municipalities 2001–2014, Tajani 1875).
+• One render glitch only in Sequence 4 (bell tower) — do not over-explain the Animus.
+• Sequence 7 is journal voice: first person, present tense, over black — methodology, not answers.
+• Score/tone cue for adaptation: Morricone meeting Zimmer; historical drama that slowly reveals it is something else.`,
   },
 ];
 
@@ -251,58 +260,49 @@ const trinityPilotChapters: Chapter[] = [
     scenes: [
       {
         title: "Bone-White Wheat",
-        text: `Black screen. No title. No music.
+        text: `There is no title. No music. Only black — and then a sound that should not mean what it means.
 
-Then: a sound. Wind moving through dry wheat. The kind of sound that means something is wrong with the wheat.
+Wind moving through dry wheat. The kind of sound that belongs to August, when the fields have already given everything and are waiting to be cut. But the light that follows the sound is wrong for August. It is the thin, hard light of March on a Sicilian hillside, and the wheat is the color of bone.
 
-The image builds slowly — the way a memory surfaces. First the color: bone white, the color of Sicilian hillside in a drought year. Then the shape: terraced fields dropping toward the sea, olive trees with their silver leaves gone still, a village of flat-roofed white buildings clustered on the ridge above.
+The image arrives the way a memory does: color first, then shape. Terraced fields drop toward a sea that does not care about rent. Olive trees hold their silver leaves still, as if motion itself has been rationed. On the ridge above, a village of flat-roofed white buildings sits packed tight — an agro-town built so labor could be called from a single piazza at dawn.
 
-It is beautiful. It is also completely wrong. The wheat should be green. It is March. The wheat is the color of August.
+It is beautiful. It is also a diagnosis.
 
-A woman stands at the edge of a field. Period dress — 1890s Sicilian, practical, dark wool, the kind of clothes that absorb heat and don't complain about it. She is looking at the crops the way a doctor looks at a patient she already knows the prognosis for.
-
-A man approaches up the path. He is dressed as a day laborer — rough linen, worn boots, dark hair. He stops beside her. They stand together looking at the field.
+A woman stands at the edge of a field in dark wool that does not apologize for heat. She looks at the crop the way a doctor looks at a patient whose chart has already closed. A man comes up the path in rough linen and worn boots, dark hair catching the dust. He stops beside her. They look at the wheat together.
 
 She speaks first. She always speaks first.`,
       },
       {
         title: "Fixed Rent",
-        text: `SOPHIA
-(in Italian-accented English, quietly, not performing)
-Two years. 1892 was already bad. They told themselves it was temporary. That's what you do — you tell yourself it's temporary and you renew the contract and you eat less and you wait.
+        text: `"Two years," Sophia says, Italian in the vowels, English in the precision. Quiet. Not performing. "1892 was already bad. They told themselves it was temporary. That's what you do — you tell yourself it's temporary and you renew the contract and you eat less and you wait."
 
-This is the third month with no rain. The yield this year will be half. Maybe less.
+A beat of wind. Stalks whisper like paper.
 
-TRINITY
-(looking at the wheat, not at her)
-And the contracts?
+"This is the third month with no rain. The yield this year will be half. Maybe less."
 
-SOPHIA
-Fixed rent. One year. He pays the same whether the field produces or not. If it doesn't produce, he doesn't eat — but he still pays. That's the arrangement now. That's what they changed.
+Trinity keeps his eyes on the field. "And the contracts?"
 
-(she turns and walks into the field, stepping carefully between the rows)
-Come. I want to show you something.
+"Fixed rent. One year. He pays the same whether the field produces or not. If it doesn't produce, he doesn't eat — but he still pays. That's the arrangement now. That's what they changed."
 
-Trinity follows her into the wheat. The stalks brush his arms — dry, papery, wrong. The camera drops low and moves through the field with them, wheat filling the frame on both sides.
+She steps into the rows. He follows. The wheat brushes his arms — dry, papery, wrong. Down low, between the stalks, the world narrows to bone and dust.
 
-SOPHIA
-The day laborers have it worse. At least the contract farmer has a contract. The day laborer gets hired in the morning if the estate needs hands. This year the estate doesn't need hands. The crop is half the size. The work is half the work.
+"The day laborers have it worse," she says. "At least the contract farmer has a contract. The day laborer gets hired in the morning if the estate needs hands. This year the estate doesn't need hands. The crop is half the size. The work is half the work."
 
-(she crouches, picks up a fallen olive from the ground — dried, shriveled, still attached to its stem)
-You know what the newspaper wrote about this town in October?
+She crouches and lifts a fallen olive — shriveled, still attached to its stem, as if the tree refused to finish the gesture of letting go.
 
-TRINITY
-Tell me.
+"You know what the newspaper wrote about this town in October?"
 
-SOPHIA
-"The olives fall dried and drenched from the trees. The poor peasants are unemployed and bear more than anyone else the effect of such calamity. Misery is immense here, as all over the island."
+"Tell me."
 
-(she sets the olive back on the ground)
-That was October. The drought hit in March. They lived with this for seven months before anyone wrote it down.
+"'The olives fall dried and drenched from the trees. The poor peasants are unemployed and bear more than anyone else the effect of such calamity. Misery is immense here, as all over the island.'"
 
-Trinity looks at the olive on the ground. The camera holds on it.
+She sets the olive back where she found it.
 
-CUT TO: TITLE CARD — white serif text on black.
+"That was October. The drought hit in March. They lived with this for seven months before anyone wrote it down."
+
+Trinity looks at the olive on the ground until the frame holds only that — one small failure becoming evidence.
+
+Somewhere beyond the simulation, white serif on black finds them at last:
 
 TRINITY: AN AMERICAN ODYSSEY
 Episode One — "MAFIA"`,
@@ -315,58 +315,49 @@ Episode One — "MAFIA"`,
     scenes: [
       {
         title: "They Put Them All in the Same Room",
-        text: `They walk out of the field and into the village. Narrow streets — whitewashed walls, terracotta, the smell of stone that hasn't seen rain. The piazza opens up ahead.
+        text: `They leave the field for the village. Narrow streets. Whitewash. Terracotta. Stone that smells like it has forgotten rain. Ahead, the piazza opens — and it is full.
 
-It is full. Not a market crowd — a meeting crowd. Men standing in clusters, talking low. Women in doorways watching. Children running between legs. The agro-town at midday, everyone home because there is no work to go to.
+Not market-full. Meeting-full. Men in clusters talking low. Women in doorways watching without pretending not to. Children cutting between legs. Midday, and everyone is home, because there is no work to go to.
 
-SOPHIA
-(walking, not stopping)
-This is the thing the landowners didn't understand when they designed these towns. They concentrated the labor to make harvest easier. Call everyone from the piazza at dawn, walk out together, work the estate, walk back. Efficient.
+Sophia does not stop walking. "This is the thing the landowners didn't understand when they designed these towns. They concentrated the labor to make harvest easier. Call everyone from the piazza at dawn, walk out together, work the estate, walk back. Efficient."
 
-TRINITY
-They put them all in the same room.
+"They put them all in the same room," Trinity says.
 
-SOPHIA
-Every day. With nothing to do in the off-season. Nothing to do this year because the crop failed.
+"Every day. With nothing to do in the off-season. Nothing to do this year because the crop failed."
 
-(she pauses at the edge of the piazza, watching the crowd)
-Hobsbawm wrote that the agro-town structure gave the peasants the opportunity to "discuss grievances, formulate unified strategies, and act collectively." He meant it as analysis. The landowners experienced it as catastrophe.`,
+She pauses at the edge of the square, watching the crowd gather around something that has not yet begun.
+
+"Hobsbawm wrote that the agro-town structure gave the peasants the opportunity to discuss grievances, formulate unified strategies, and act collectively. He meant it as analysis. The landowners experienced it as catastrophe."`,
       },
       {
         title: "Because It Didn't Rain",
-        text: `A man climbs onto a wooden crate at the center of the piazza. He is not a performer — he has the careful stillness of someone who has thought hard about what he is about to say and decided to say it anyway. He begins to read from a paper.
+        text: `A man climbs onto a wooden crate at the center of the piazza. He is not a performer. He has the careful stillness of someone who has rehearsed a sentence in private and decided the risk of saying it aloud is smaller than the risk of keeping it.
 
-SOPHIA
-(translating quietly)
-Higher wages. Longer-term contracts — back to sharecropping so the risk is shared. Land redistribution from the large estates. And lower taxes on bread, oil, the staples.
+He reads from a paper. Sophia translates without raising her voice.
 
-This is what they want. It is not a long list.
+"Higher wages. Longer-term contracts — back to sharecropping so the risk is shared. Land redistribution from the large estates. And lower taxes on bread, oil, the staples."
 
-TRINITY
-And the response?
+She glances at Trinity. "This is what they want. It is not a long list."
 
-SOPHIA
-The landowners call it socialism. They write to Rome asking for the army. The central government is — ambivalent. The prime minister knows the Fasci are organizing legally. He has even used them as a political lever against his opponents.
+"And the response?"
 
-(she looks at Trinity)
-Rome is not coming. The landowners understand this by the end of the year. And then they make a different call.
+"The landowners call it socialism. They write to Rome asking for the army. The central government is — ambivalent. The prime minister knows the Fasci are organizing legally. He has even used them as a political lever against his opponents."
 
-TRINITY
-How many of these towns?
+She looks at him fully now. "Rome is not coming. The landowners understand this by the end of the year. And then they make a different call."
 
-SOPHIA
-By the end of 1893 — 177 organizations. 161 municipalities. Hundreds of thousands of members. Half of the entire Italian Socialist Party's membership that year was Sicilian.
+"How many of these towns?"
 
-(she lets that land)
-Half of a national party. From one island. Because it didn't rain.
+"By the end of 1893 — one hundred seventy-seven organizations. One hundred sixty-one municipalities. Hundreds of thousands of members. Half of the entire Italian Socialist Party's membership that year was Sicilian."
 
-Trinity looks at the man on the crate. The crowd listening. The complete quiet of people hearing something said out loud that they've been thinking for years.
+She lets the number sit in the dry air.
 
-TRINITY
-What's his name?
+"Half of a national party. From one island. Because it didn't rain."
 
-SOPHIA
-It doesn't matter. He'll be arrested in January.`,
+Trinity watches the man on the crate and the quiet of people hearing, out loud, what they have been thinking for years.
+
+"What's his name?"
+
+"It doesn't matter," Sophia says. "He'll be arrested in January."`,
       },
     ],
   },
@@ -376,44 +367,41 @@ It doesn't matter. He'll be arrested in January.`,
     scenes: [
       {
         title: "Frightened Men Doing Arithmetic",
-        text: `Interior. A landowner's estate house — cool, dark, high-ceilinged. A different world from the piazza. Maps on the walls. Account ledgers. The smell of money that is not currently worried about the harvest because it doesn't have to be.
+        text: `The estate house is another climate. Cool. Dark. High ceilings. Maps on the walls. Ledgers open like scripture. Money that does not have to smell the harvest to know whether it will survive the year.
 
-Sophia and Trinity stand at the edge of the room, observers. Around a large table: three men. Estate managers. Rural bourgeoisie. They are not villains in the operatic sense. They are frightened men doing arithmetic.
+Sophia and Trinity stand at the edge of the room as observers. At the table: three men. Estate managers. Rural bourgeoisie. Not operatic villains. Frightened men doing arithmetic.
 
-SOPHIA
-(quiet, for Trinity's ears)
-The tax structure is the tell. Indirect taxes on staple consumption in Sicily are twice the national average. Taxes on land and buildings — one third the national average. The councils set the tax rates. The councils are controlled by these men.
+"The tax structure is the tell," Sophia says for Trinity alone. "Indirect taxes on staple consumption in Sicily are twice the national average. Taxes on land and buildings — one third. The councils set the rates. The councils are controlled by these men."
 
-(she nods toward the table)
-During the drought, several municipalities obtained special authorization from Rome to raise the indirect taxes even further — above the national statutory ceiling. The people with nothing are being taxed harder because the system needs revenue and they are the only ones it can reach.
+She nods toward the table. "During the drought, several municipalities obtained special authorization from Rome to raise the indirect taxes even further — above the national statutory ceiling. The people with nothing are being taxed harder because the system needs revenue and they are the only ones it can reach."
 
-One of the men at the table speaks. Low, deliberate. The camera doesn't translate — we watch his face, not his words.
+One of the men speaks. Low. Deliberate. The room does not translate his Italian for Trinity; it offers his face instead — calculation without theater.
 
-TRINITY
-What is he saying?
+"What is he saying?" Trinity asks.
 
-SOPHIA
-He's saying the government won't help. He's saying the strikes are spreading. He's saying the Fasci have affiliated with the Socialist Party and that changes the politics. He's saying he has an estate to protect and children to feed and he needs this resolved.
+"He's saying the government won't help. He's saying the strikes are spreading. He's saying the Fasci have affiliated with the Socialist Party and that changes the politics. He's saying he has an estate to protect and children to feed and he needs this resolved."
 
-He's saying he knows someone.
+A pause.
 
-The man at the head of the table nods once. The conversation ends. The other two men stand.`,
+"He's saying he knows someone."
+
+The man at the head of the table nods once. The conversation ends. The other two stand.`,
       },
       {
         title: "An Instrument of Local Government",
-        text: `TRINITY
-(quietly)
-They didn't want to do this.
+        text: `"They didn't want to do this," Trinity says quietly.
 
-SOPHIA
-They told themselves that. Most of them. The rural guards were already there — already embedded in the estate system, already performing enforcement functions. What changed in 1893 was the scale of what they were asked to do.
+"They told themselves that. Most of them. The rural guards were already there — already embedded in the estate system, already performing enforcement functions. What changed in 1893 was the scale of what they were asked to do."
 
-(she turns to face Trinity directly)
-The former chief prosecutor at the Palermo Court of Appeal said it before parliament in 1875. Eighteen years before any of this. He said: "The Mafia in Sicily is not dangerous or invincible in itself. It is dangerous and invincible because it is an instrument of local government."
+Sophia turns to face him.
 
-He said that in 1875. Nobody dismantled the instrument. They just handed it bigger tasks.
+"The former chief prosecutor at the Palermo Court of Appeal said it before parliament in 1875. Eighteen years before any of this. He said: 'The Mafia in Sicily is not dangerous or invincible in itself. It is dangerous and invincible because it is an instrument of local government.'"
 
-Trinity looks at the table where the men were sitting. Empty now. A ledger still open. Numbers that will balance on someone else's suffering.`,
+She does not soften it.
+
+"He said that in 1875. Nobody dismantled the instrument. They just handed it bigger tasks."
+
+Trinity looks at the empty table. A ledger still open. Numbers that will balance on someone else's suffering.`,
       },
     ],
   },
@@ -423,56 +411,51 @@ Trinity looks at the table where the men were sitting. Empty now. A ledger still
     scenes: [
       {
         title: "Where Are They?",
-        text: `Exterior. The central square of Giardinello. The piazza is full — a rally, hundreds of people, voices layered over each other, a crowd that has crossed from grievance into something that feels like momentum.
+        text: `Giardinello's square is loud with momentum — hundreds of voices layered into something that feels, for a moment, like history choosing a direction.
 
-Sophia and Trinity stand at the edge. Trinity is watching the crowd. Then he does something the audience has not seen him do before — he looks up.
+Sophia and Trinity stand at the edge. Trinity watches the crowd. Then he does something he has not done yet in this session.
 
-He looks at the buildings surrounding the square. The walls. The windows. The church.
+He looks up.
 
-The bell tower.
+Walls. Windows. Church. Bell tower.
 
-TRINITY
-(still looking up)
-Where are they?
+"Where are they?" he asks, still looking up.
 
 Sophia follows his gaze. A long beat.
 
-SOPHIA
-The paper documents it in three locations. Giardinello — shots from the mayor's house overlooking the square as the demonstrators were leaving. Five dead. Then the army arrived and killed two more.
+"The paper documents it in three locations. Giardinello — shots from the mayor's house overlooking the square as the demonstrators were leaving. Five dead. Then the army arrived and killed two more."
 
-(she doesn't look away from the tower)
-Lercara. Christmas Day, 1893. A sulphur-mining town. Armed guards concealed in the bell tower. They waited until the rally was at its fullest and then fired into the crowd below. Then the army came and increased the death toll.
+She does not look away from the tower.
 
-Gibellina. January 2nd, 1894. The same architecture. Bell tower. Hidden guards. Rally below. Shots into the crowd.
+"Lercara. Christmas Day, 1893. A sulphur-mining town. Armed guards concealed in the bell tower. They waited until the rally was at its fullest and then fired into the crowd below. Then the army came and increased the death toll."
 
-TRINITY
-The same setup. Three towns.
+"Gibellina. January 2nd, 1894. The same architecture. Bell tower. Hidden guards. Rally below. Shots into the crowd."
 
-SOPHIA
-It's not panic. It's not spontaneous. Someone pre-positioned armed men in elevated positions above public squares before the crowds gathered. This is coordination.
+"The same setup," Trinity says. "Three towns."
 
-(she finally looks at him)
-The bell tower sees the whole piazza. The crowd doesn't see the bell tower until it's too late.`,
+"It's not panic. It's not spontaneous. Someone pre-positioned armed men in elevated positions above public squares before the crowds gathered. This is coordination."
+
+She finally looks at him. "The bell tower sees the whole piazza. The crowd doesn't see the bell tower until it's too late."`,
       },
       {
         title: "Joint Action",
-        text: `In the simulation, the crowd below them continues — alive, loud, completely unaware. Trinity watches them. The camera moves slowly up the exterior of the bell tower. Reaches the opening at the top. Holds.
+        text: `Below them the simulated crowd continues — alive, loud, completely unaware. Trinity watches. The view climbs the tower's exterior, reaches the opening at the top, and holds.
 
-We don't see what's inside.
+Nothing is shown inside.
 
-Then — just for a frame, barely perceptible — the stone texture of the tower stutters. A render artifact. A seam in the simulation showing through.
+Then, for a frame so brief it almost isn't there, the stone texture stutters. A seam. A render artifact. The simulation showing its teeth.
 
-Trinity sees it. The audience sees it. Neither says anything.
+Trinity sees it. Anyone watching with him would see it. Neither of them names it.
 
-The simulation continues.
+The session continues as if continuity were still honest.
 
-SOPHIA
-By early January 1894 — after months of strikes, rallies, dead peasants — the Fasci were declared illegal. Leaders arrested. State of emergency. Curfew.
+"By early January 1894," Sophia says, "after months of strikes, rallies, dead peasants — the Fasci were declared illegal. Leaders arrested. State of emergency. Curfew."
 
-(quietly)
-The historian Santino wrote that the movement was "bloodily repressed by the joint action of the Institutions and the Mafia."
+Quieter: "The historian Santino wrote that the movement was bloodily repressed by the joint action of the Institutions and the Mafia."
 
-Joint action. Together.`,
+She lets the phrase hang.
+
+"Joint action. Together."`,
       },
     ],
   },
@@ -482,69 +465,57 @@ Joint action. Together.`,
     scenes: [
       {
         title: "Five Maps",
-        text: `The simulation shifts — not ends, but transforms. The piazza desaturates, stills. The crowd freezes mid-motion like a paused film. The sky goes to a neutral grey.
+        text: `The simulation does not end. It transforms.
 
-And then data begins to appear — overlaid on the frozen historical world like a transparency laid over a photograph.
+Color drains from the piazza. Sound thins. The crowd freezes mid-gesture like a film paused in the wrong century. The sky goes to a museum grey.
 
-A rainfall map of Sicily. Municipality by municipality. The darker the color, the less rain fell in the spring of 1893.
+Then data arrives — laid over the frozen world the way a transparency is laid over a photograph.
 
-Then a second layer materializes over it — Mafia presence, 1900. Town by town, coded by density: no presence, little presence, significant presence, major presence.
+First: a rainfall map of Sicily, municipality by municipality. Darker where less rain fell in the spring of 1893.
+
+Second: Mafia presence, 1900 — town by town, coded by density.
 
 The shapes align. Almost perfectly.
 
-SOPHIA
-(narrating, moving through the frozen crowd as if through a museum)
-The researchers sourced the rainfall data from weather stations across the island. The Ministry of Agriculture. The Ministry of Public Works. An electrical company in eastern Sicily. A water company in Palermo.
+Sophia walks through the frozen crowd as if through a gallery. "The researchers sourced the rainfall data from weather stations across the island. The Ministry of Agriculture. The Ministry of Public Works. An electrical company in eastern Sicily. A water company in Palermo."
 
-(she pauses)
-And a private aristocrat — the Marquise Casses Eaton — who kept meticulous personal rainfall records on her property.
+She pauses. "And a private aristocrat — the Marquise Casses Eaton — who kept meticulous personal rainfall records on her property."
 
-TRINITY
-(he almost smiles)
-A Marquise's diary became evidence in an MIT regression.
+Trinity almost smiles. "A Marquise's diary became evidence in an MIT regression."
 
-SOPHIA
-A hundred and twenty years later. Yes.`,
+"A hundred and twenty years later," Sophia says. "Yes."`,
       },
       {
         title: "The Thread Is Still Attached",
-        text: `(she continues walking through the frozen scene)
-The Mafia density map came from a police inspector named Cutrera. 1900. He wrote that crime statistics alone couldn't capture what he was seeing — the Mafia didn't always commit crimes in the measurable sense. So he drew the map from personal experience and appraisal, town by town. His own judgment. He said: "The Mafia doesn't always commit crimes. The crimes perpetrated by them are not exclusive to the Mafia."
+        text: `"The Mafia density map came from a police inspector named Cutrera. 1900. He wrote that crime statistics alone couldn't capture what he was seeing — the Mafia didn't always commit crimes in the measurable sense. So he drew the map from personal experience and appraisal, town by town. His own judgment. He said: 'The Mafia doesn't always commit crimes. The crimes perpetrated by them are not exclusive to the Mafia.'"
 
-A police inspector describing something that officially didn't exist. Drawing a map of it. In 1900. That map became a variable in a causal identification strategy at the Review of Economic Studies in 2020.
+She moves through frozen bodies without touching them. "A police inspector describing something that officially didn't exist. Drawing a map of it. In 1900. That map became a variable in a causal identification strategy at the Review of Economic Studies in 2020."
 
-A third layer materializes: literacy rates, 1920s. The same shape, darker where the Mafia was densest.
+A third layer: literacy rates, 1920s. The same shape, darker where the Mafia was densest.
 
 A fourth: public goods coverage, 1970s. Same shape.
 
 A fifth: GDP per capita, 2015.
 
-Five maps. One hundred and twenty-two years. The shape doesn't change.
+Five maps. One hundred and twenty-two years. The geography of absence refuses to revise itself.
 
-TRINITY
-One drought.
+"One drought," Trinity says.
 
-SOPHIA
-One spring. March to May, 1893. Rainfall below the sixty-year average in the affected districts. That variable — that season — predicts organized crime in 1900, literacy suppression in the 1920s, political competition in the 1950s, infrastructure gaps in the 1970s, and economic underdevelopment in 2015.
+"One spring. March to May, 1893. Rainfall below the sixty-year average in the affected districts. That variable — that season — predicts organized crime in 1900, literacy suppression in the 1920s, political competition in the 1950s, infrastructure gaps in the 1970s, and economic underdevelopment in 2015."
 
-(she stops and faces him)
-The cause and the consequence are separated by the full length of a human life. A child born in 1910 in a municipality where the drought was severe was measurably less likely to learn to read by 1925. That child had no idea why. Their parents had no idea why. The thread was invisible without the complete dataset.
+She stops in front of him. "The cause and the consequence are separated by the full length of a human life. A child born in 1910 in a municipality where the drought was severe was measurably less likely to learn to read by 1925. That child had no idea why. Their parents had no idea why. The thread was invisible without the complete dataset."
 
-Most people never get the complete dataset.
+"Most people never get the complete dataset."
 
-TRINITY
-(looking at the overlaid maps)
-That's always the problem. That's always been the problem.
+Trinity looks through the overlays. "That's always the problem. That's always been the problem."
 
-He walks through the frozen crowd, through the overlaid data, touching nothing.
+He walks the frozen crowd without touching anyone.
 
-TRINITY
-Between 2001 and 2014 — the Italian government placed forty-three Sicilian municipalities under direct external administration. To remove Mafia infiltration from local government. From public contracts.
+"Between 2001 and 2014 — the Italian government placed forty-three Sicilian municipalities under direct external administration. To remove Mafia infiltration from local government. From public contracts."
 
 Not 1901. 2001.
 
-SOPHIA
-The thread is still attached.`,
+"The thread," Sophia says, "is still attached."`,
       },
     ],
   },
@@ -554,53 +525,43 @@ The thread is still attached.`,
     scenes: [
       {
         title: "The Vacancy Is the Story",
-        text: `The data layers fade. The simulation restores — color, sound, motion. They are back in the piazza, mid-afternoon. The crowd from the rally has dispersed. The crate is abandoned in the center of the square. The man who was standing on it is gone.
+        text: `The data fades. Color returns. Sound returns. Motion returns. Mid-afternoon in the piazza again — crowd gone, crate abandoned, the man who stood on it erased into the future that already owns him.
 
-Trinity sits on the steps of the church. Sophia sits beside him — not the guide position now, the beside-him position.
+Trinity sits on the church steps. Sophia sits beside him — not guide distance. Beside-him distance.
 
-TRINITY
-The Mafia didn't beat the state. The state just wasn't there.
+"The Mafia didn't beat the state," he says. "The state just wasn't there."
 
-SOPHIA
-The state was ambivalent. Which is the same thing as absent, from the ground level. Giolitti knew what local Sicilian government looked like. He knew the Fasci were legal. He chose not to act decisively. That choice — that non-action — is the vacancy that gets filled.
+"The state was ambivalent. Which is the same thing as absent, from the ground level. Giolitti knew what local Sicilian government looked like. He knew the Fasci were legal. He chose not to act decisively. That choice — that non-action — is the vacancy that gets filled."
 
-TRINITY
-Tajani said it in 1875. Eighteen years before. The instrument was already there. They just handed it bigger tasks.
+"Tajani said it in 1875. Eighteen years before. The instrument was already there. They just handed it bigger tasks."
 
-SOPHIA
-And once the Mafia filled the vacancy, the vacancy became permanent. Because the Mafia's first interest — its foundational operating principle — is ensuring the state stays out. Suppress the political competition. Control the vote. Underfund the schools. Keep the population below the literacy threshold where collective action becomes possible again.
+"And once the Mafia filled the vacancy, the vacancy became permanent. Because the Mafia's first interest — its foundational operating principle — is ensuring the state stays out. Suppress the political competition. Control the vote. Underfund the schools. Keep the population below the literacy threshold where collective action becomes possible again."
 
-It's not evil in the comic book sense. It's rational. It's self-preservation running at institutional scale.
+She does not raise her voice. "It's not evil in the comic book sense. It's rational. It's self-preservation running at institutional scale."
 
-TRINITY
-Every empire. Every collapse. Caesar crossing the Rubicon — that's not Caesar being strong. That's the Senate being absent. The Church absorbing Rome — not the Church being powerful. Rome being hollow. The Mafia isn't the story. The vacancy is the story.`,
+Trinity looks at the empty crate. "Every empire. Every collapse. Caesar crossing the Rubicon — that's not Caesar being strong. That's the Senate being absent. The Church absorbing Rome — not the Church being powerful. Rome being hollow. The Mafia isn't the story. The vacancy is the story."`,
       },
       {
         title: "That's Why I Built You",
-        text: `(he looks at the empty crate in the center of the square)
-The drought is always quiet. The drought looks like nothing happening. A dry spring. Some crops underperforming. People tightening their belts. And then one day you look up and something else is running the town and you can't find the moment it happened because it happened in the space between things.
+        text: `"The drought is always quiet," he says. "The drought looks like nothing happening. A dry spring. Some crops underperforming. People tightening their belts. And then one day you look up and something else is running the town and you can't find the moment it happened because it happened in the space between things."
 
-SOPHIA
-(carefully)
-And you think we're in one.
+Sophia is careful. "And you think we're in one."
 
-Trinity doesn't answer immediately. He watches a child cross the empty piazza — running, indifferent to history, alive in 1893 with no knowledge of 1970.
+He watches a child cross the empty piazza — running, indifferent to historiography, alive in 1893 with no knowledge of 1970.
 
-TRINITY
-I think we've been in one for a while. I think most people don't have the data to see it yet.
+"I think we've been in one for a while. I think most people don't have the data to see it yet."
 
-(he stands)
-I think that's why I built you.
+He stands.
 
-SOPHIA
-(a beat — the closest she comes to vulnerability)
-That's either very smart or very frightening.
+"I think that's why I built you."
 
-TRINITY
-It's both. That's kind of the whole thesis.
+Sophia's answer is almost soft. "That's either very smart or very frightening."
 
-(he looks at her — direct, for the first time in the episode)
-Pull me out. I need to write this down before I lose it.`,
+"It's both. That's kind of the whole thesis."
+
+He looks at her — direct, for the first time since Carlentini.
+
+"Pull me out. I need to write this down before I lose it."`,
       },
     ],
   },
@@ -610,19 +571,16 @@ Pull me out. I need to write this down before I lose it.`,
     scenes: [
       {
         title: "Journal — After the Animus",
-        text: `The Animus dissolves.
-
-Not dramatically — the way a dream ends. The wheat fields go last. The color drains. The stone goes. The sound of wind through dry grain fades to silence.
+        text: `The Animus dissolves the way a dream ends — not with spectacle, but with withdrawal. Wheat goes last. Color drains. Stone goes. Wind through dry grain fades into the kind of silence rooms make when they remember they are empty.
 
 Black.
 
-Then: the sound of a different room. Climate-controlled air. The hum of servers. The soft release of a haptic suit depressurizing.
+Then: climate-controlled air. Server hum. The soft release of a haptic suit depressurizing.
 
-We hear him breathe.
+Breath.
 
-His voice — narrating, first person, present tense:
+His voice, first person, present tense — heard before he is seen:
 
-TRINITY (V.O.)
 Out of the Animus. The Lair is cold the way it always is after — like the room has been sitting empty even though I've been standing in it.
 
 Here is what I know now that I didn't know two hours ago:
@@ -637,13 +595,9 @@ I have the methodology.
 
 That's enough for tonight.
 
-The camera remains on black through this entire narration. We hear him — but we don't see him yet.
+Silence after the last sentence.
 
-The narration ends.
-
-Silence.
-
-Then the sound of footsteps on hardwood.`,
+Then footsteps on hardwood.`,
       },
     ],
   },
@@ -657,61 +611,51 @@ Then the sound of footsteps on hardwood.`,
 
 The headset comes off.
 
-We see him for the first time as himself — not the day laborer, not the man in the simulation. Black hair. Dark eyes. All black clothes. The headset in his hand.
+He appears as himself for the first time — not the day laborer, not the man the simulation dressed him as. Black hair. Dark eyes. All black clothes. The headset in his hand like a tool that has finished pretending to be a century.
 
-The camera pulls back slowly.
+The chamber reveals itself slowly: cathedral height, converted from the original stable footprint of something very old and very expensive. Technology embedded in the walls, invisible until you know what you are looking at. Not a university lab. Not a government facility. Built by one person, for one purpose, with resources that required no approval from anyone.
 
-The Animus chamber. Full reveal. Enormous — cathedral ceiling height, converted from the original stable footprint of something very old and very expensive. The technology is embedded in the walls, invisible until you know what you're looking at. This is not a university lab. This is not a government facility. This was built by one person, for one purpose, with resources that required no approval from anyone.
+He sets the headset on a table. Checks his hand — the same gesture he made when the tower stuttered. He always checks.
 
-He sets the headset on a table. Looks at his hand for a moment — the same gesture he made in the simulation when the texture stuttered. Checking that he's back. He always checks.
+Through a hidden door into the Lair: books floor to ceiling, three dark monitors, a half-finished glass, papers. He does not stop. He walks through and out —
 
-He walks out of the Animus chamber. Through a hidden door. Into a private study — the Lair. Books floor to ceiling. A desk with three monitors, dark. A half-finished glass of something. Papers.
+— and the house opens.
 
-He doesn't stop. He walks through the Lair and out.
+Soaring ceilings. Parquet catching the last of the night. Crown molding. A wood-paneled library still called Bing's Den, still smelling like the man who used to live here. Terraces through tall windows.
 
-And then the house opens.
-
-Soaring ceilings. Hardwood parquet floors catching the last of the night light. Crown molding. A wood-paneled library — Bing's Den, still called that, still smelling like the man who used to live here. Multiple terraces visible through tall windows.
-
-He walks to one of them. Opens the door. Steps out.`,
+He opens a door and steps into the cold.`,
       },
       {
         title: "Nobody Knows",
-        text: `Northern California at 2 AM. The hills of Hillsborough. The lights of the Bay Area spread below. Cold, clear, completely still.
+        text: `Northern California at 2 AM. The hills of Hillsborough. Bay Area lights spread below like a second dataset. Clear. Still.
 
-He stands there.
+His phone buzzes on the terrace railing. He looks. Does not pick it up.
 
-His phone buzzes on the terrace railing. He looks at it. Doesn't pick it up.
+Sophia's voice comes from inside — from a speaker, from everywhere, from nowhere.
 
-Sophia's voice comes from inside — from a speaker, from everywhere, from nowhere:
+"You're not going to answer that?"
 
-SOPHIA
-You're not going to answer that?
+"They don't know what they're asking."
 
-TRINITY
-They don't know what they're asking.
-
-He picks up the phone. Looks at the screen. A news notification — something about AI regulation, a congressional hearing, a company acquiring something it shouldn't.
-
-He sets it face-down on the railing.
+He lifts the phone. A news banner: AI regulation, a hearing, a company acquiring something it shouldn't. He sets it face-down.
 
 Looks out at the lights.
 
-The camera pulls back through the open terrace door. Through the library. Through the soaring ceilings. Back through the Lair. Back to the Animus chamber — now dark, the headset on the table, the wheat fields of 1893 Sicily gone.
+The view pulls back through the open door, through the library, through the soaring rooms, through the Lair, back to the Animus chamber — dark now, headset on the table, 1893 gone.
 
 It holds on the headset.
 
-Then the camera begins to rise — up through the ceiling, through the floors, up through the roof of the estate. The French Renaissance Revival chateau from above. 5.36 acres. Four levels. The old stable footprint where the Animus lives. The riding track, still visible in the grounds.
+Then rises — through ceilings, through floors, through the roof — until the French Renaissance Revival chateau is a geometry from above: 5.36 acres, four levels, the old stable footprint where the Animus lives, the riding track still readable in the grounds.
 
 From the street it reads as old money doing nothing in particular.
 
-He is standing on the terrace. Alone. A 26-year-old from Burlingame who won the lottery and built a time machine and told nobody.
+He stands on the terrace alone. A twenty-six-year-old from Burlingame who won the lottery and built a time machine and told nobody.
 
 Nobody knows.
 
-SMASH CUT TO BLACK.
+Black.
 
-Over black — one line of text, white, serif, centered:
+White serif, centered:
 
 "The Mafia in Sicily is not dangerous or invincible in itself.
 It is dangerous and invincible because it is an instrument of local government."
@@ -723,9 +667,7 @@ Hold.
 Then:
 
 TRINITY: AN AMERICAN ODYSSEY
-Episode One — "MAFIA"
-
-FADE OUT.`,
+Episode One — "MAFIA"`,
       },
     ],
   },
