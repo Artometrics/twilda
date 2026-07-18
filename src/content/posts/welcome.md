@@ -4,9 +4,6 @@ description: "A private space for notes, drafts of thought, and whatever you wan
 pubDate: 2026-07-18
 tags:
   - journal
-image:
-  url: "/src/images/blog/1.jpg"
-  alt: "Journal cover"
 ---
 
 This is your **Journal** — markdown posts under `src/content/posts/`.

@@ -29,11 +29,11 @@ const allPosts = (await getCollection("posts")).sort(
           Journal
         </Text>
         <Text tag="p" variant="textBase" class="mt-4 text-accent-900 text-balance">
-          Notes beside the novel. Add entries as markdown in
-          <code class="text-sm">src/content/posts/</code>.
+          Notes beside the novel. Add a markdown file in
+          <code class="text-sm">src/content/posts/</code> to create an entry.
         </Text>
       </div>
-      <div class="grid gap-10 mt-16 md:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-6 mt-12 md:grid-cols-2">
         {allPosts.map((post) => <BlogCard post={post} />)}
       </div>
     </Wrapper>

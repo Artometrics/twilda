@@ -1,5 +1,4 @@
 ---
-import { Image } from "astro:assets";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Text from "@/components/fundations/elements/Text.astro";
 import Wrapper from "@/components/fundations/containers/Wrapper.astro";
@@ -14,36 +13,23 @@ const { frontmatter } = Astro.props;
 >
   <section>
     <Wrapper variant="standard" class="py-32">
-      <div class="flex flex-col justify-between max-w-3xl mx-auto text-center text-balance">
-        <div>
-          <Text
-            tag="h1"
-            variant="displayMD"
-            class="font-semibold tracking-tight text-accent-900"
-          >
-            {frontmatter.title}
-          </Text>
-          <Text tag="p" variant="textBase" class="mt-4 text-accent-900">
-            {frontmatter.description}
-          </Text>
+      <div class="max-w-2xl mx-auto">
+        <Text
+          tag="h1"
+          variant="displayMD"
+          class="font-semibold tracking-tight text-accent-900 text-balance"
+        >
+          {frontmatter.title}
+        </Text>
+        <Text tag="p" variant="textBase" class="mt-4 text-accent-800 text-balance">
+          {frontmatter.description}
+        </Text>
+        <div class="mt-10">
+          <Wrapper variant="prose">
+            <slot />
+          </Wrapper>
         </div>
-        {
-          frontmatter.image?.url && (
-            <Image
-              width={1000}
-              height={800}
-              alt={frontmatter.image.alt ?? frontmatter.title}
-              src={frontmatter.image.url}
-              class="object-cover object-center mt-8 size-full max-h-96 rounded-xl"
-            />
-          )
-        }
-      </div>
-      <div class="max-w-xl mx-auto mt-12">
-        <Wrapper variant="prose">
-          <slot />
-        </Wrapper>
-        <p class="mt-12 text-center">
+        <p class="mt-12">
           <a href="/blog/" class="text-accent-900 underline underline-offset-4">← Journal</a>
         </p>
       </div>

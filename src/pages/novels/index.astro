@@ -1,8 +1,9 @@
 ---
 export const prerender = false;
 
-import NovelcrafterLayout from "@/layouts/NovelcrafterLayout.astro";
-import NovelsTopbar from "@/components/novels/NovelsTopbar.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import Button from "@/components/fundations/elements/Button.astro";
 import Cover from "@/apps/novelcrafter/Cover.astro";
 import {
   listNovels,
@@ -12,6 +13,8 @@ import {
 } from "@/lib/novels/service";
 import { requireAuth, dbErrorMessage, isDbSetupError } from "@/lib/auth/guards";
 import { ensureUserProfile } from "@/lib/auth/profile";
+import "@/styles/library.css";
+import "@/styles/novelcrafter.css";
 
 const auth = requireAuth(Astro);
 if (auth instanceof Response) return auth;
@@ -35,7 +38,6 @@ try {
     .select("onboarding_completed")
     .eq("id", user.id)
     .maybeSingle();
-  // If 007 is not applied yet, only honor ?welcome=1 (treat as completed otherwise).
   onboardingCompleted = profileError ? true : Boolean(profile?.onboarding_completed);
 } catch {
   onboardingCompleted = true;
@@ -53,125 +55,136 @@ const showWelcome =
   Astro.url.searchParams.get("welcome") === "1" || !onboardingCompleted;
 ---
 
-<NovelcrafterLayout title="Your Novels · Twilda" description="Your Twilda novel library.">
-  <NovelsTopbar active="novels" userEmail={user.email} />
-
-  <main class="nc-library">
-    {
-      dbError && (
-        <div class="nc-library__alert" role="alert">
-          <p>
-            {isDbSetupError(dbError)
-              ? "Your library database is not set up yet. Apply supabase/migrations/001_initial_schema.sql and 003_novel_drafts.sql to your Supabase project, then refresh."
-              : `Could not load your library: ${dbError}`}
-          </p>
-        </div>
-      )
-    }
-    <div class="nc-library__head">
-      <h1>Your Novels</h1>
-      <p>This is your personal library of novels. Which one do you want to work on today?</p>
-    </div>
-
-    {
-      recent.length > 0 && (
-        <>
-          <p class="nc-section-label">CONTINUE WHERE YOU LEFT OFF</p>
-          <div class="nc-continue">
-            {recent.map((n) => (
-              <a class="nc-continue__card" href={`/novels/${n.id}/`}>
-                <span class="nc-continue__thumb">
-                  <Cover kind={n.cover_kind} title={n.title} author={n.author} />
-                </span>
-                <span class="nc-continue__meta">
-                  <strong>{n.title}</strong>
-                  <span>{n.author}</span>
-                  <em>{formatUpdated(n.last_opened_at ?? n.updated_at)}</em>
-                </span>
-              </a>
-            ))}
-          </div>
-        </>
-      )
-    }
-
-    <div class="nc-toolbar">
-      <button class="nc-btn nc-btn--primary" type="button" data-create-novel>
-        + Create Novel
-      </button>
-      <button class="nc-btn" type="button" data-import-trigger>Import</button>
-      <input type="file" accept=".txt,.md,.markdown" data-import-input hidden />
-      <div class="nc-toolbar__spacer"></div>
-      <div class="nc-field">
-        <label for="library-search">SEARCH/FILTER:</label>
-        <input
-          id="library-search"
-          class="nc-input"
-          type="search"
-          placeholder="Search name/series…"
-          data-library-search
-        />
-      </div>
-      <div class="nc-field">
-        <label for="library-sort">SORT BY:</label>
-        <select id="library-sort" class="nc-select" data-library-sort>
-          <option value="date">Date</option>
-          <option value="title">Title</option>
-        </select>
-      </div>
-      <div class="nc-field">
-        <label>VIEW AS:</label>
-        <div class="nc-viewtoggle" data-library-view>
-          <button class="is-active" type="button" data-view="grid">Grid</button>
-          <button type="button" data-view="list">List</button>
-        </div>
-      </div>
-    </div>
-
-    <h2 class="nc-group-title" data-library-count>
-      Your library <span>{novels.length} book{novels.length === 1 ? "" : "s"}</span>
-    </h2>
-    <div class="nc-grid" data-library-grid>
+<BaseLayout
+  title="Your Novels · Twilda"
+  description="Your Twilda novel library."
+  canonicalPath="/novels/"
+  noindex={true}
+  hideFooter={true}
+>
+  <section class="tw-lib">
+    <Wrapper variant="standard" class="pt-32 pb-24 lg:pt-40">
       {
-        novels.map((n) => (
-          <a
-            class="nc-book"
-            href={`/novels/${n.id}/`}
-            data-book
-            data-title={n.title.toLowerCase()}
-            data-sort-key={new Date(n.last_opened_at ?? n.updated_at).getTime()}
-            data-series={(n.series_name ?? "no series").toLowerCase()}
-          >
-            <div class="nc-book__cover">
-              <Cover kind={n.cover_kind} title={n.title} author={n.author} />
-            </div>
-            <div class="nc-book__meta">
-              <p class="nc-book__title">
-                {n.title}
-                {isClassicTemplate(n) && <span class="nc-book__badge">Classic template</span>}
-              </p>
-              <p class="nc-book__date">{formatUpdated(n.updated_at)}</p>
-              <p class="nc-book__author">{n.author}</p>
-            </div>
-          </a>
-        ))
+        dbError && (
+          <div class="tw-lib__alert" role="alert">
+            <p>
+              {isDbSetupError(dbError)
+                ? "Your library database is not set up yet. Apply supabase/migrations/001_initial_schema.sql and 003_novel_drafts.sql to your Supabase project, then refresh."
+                : `Could not load your library: ${dbError}`}
+            </p>
+          </div>
+        )
       }
-    </div>
-    <p class="nc-library__empty" data-library-empty hidden>
-      No novels match your search.
-    </p>
-  </main>
+
+      <div class="tw-lib__head">
+        <h1>Your Novels</h1>
+        <p>This is your personal library. Pick a novel to work on today.</p>
+      </div>
+
+      {
+        recent.length > 0 && (
+          <>
+            <p class="tw-lib__label">Continue where you left off</p>
+            <div class="tw-lib__continue">
+              {recent.map((n) => (
+                <a class="tw-lib__continue-card" href={`/novels/${n.id}/`}>
+                  <span class="tw-lib__thumb">
+                    <Cover kind={n.cover_kind} title={n.title} author={n.author} />
+                  </span>
+                  <span class="tw-lib__continue-meta">
+                    <strong>{n.title}</strong>
+                    <span>{n.author}</span>
+                    <em>{formatUpdated(n.last_opened_at ?? n.updated_at)}</em>
+                  </span>
+                </a>
+              ))}
+            </div>
+          </>
+        )
+      }
+
+      <div class="tw-lib__toolbar">
+        <Button size="sm" variant="accent" type="button" data-create-novel>
+          + Create Novel
+        </Button>
+        <Button size="sm" variant="muted" type="button" data-import-trigger>
+          Import
+        </Button>
+        <Button isLink={true} size="sm" variant="default" href="/novels/series/">
+          Series
+        </Button>
+        <input type="file" accept=".txt,.md,.markdown" data-import-input hidden />
+
+        <div class="tw-lib__field">
+          <label for="library-search">Search</label>
+          <input
+            id="library-search"
+            class="tw-lib__input"
+            type="search"
+            placeholder="Title or series…"
+            data-library-search
+          />
+        </div>
+        <div class="tw-lib__field" style="flex: 0 1 8rem; min-width: 7rem;">
+          <label for="library-sort">Sort by</label>
+          <select id="library-sort" class="tw-lib__select" data-library-sort>
+            <option value="date">Date</option>
+            <option value="title">Title</option>
+          </select>
+        </div>
+        <div class="tw-lib__field" style="flex: 0 0 auto; min-width: 0;">
+          <label>View</label>
+          <div class="tw-lib__viewtoggle" data-library-view>
+            <button class="is-active" type="button" data-view="grid">Grid</button>
+            <button type="button" data-view="list">List</button>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="tw-lib__group" data-library-count>
+        Your library <span>{novels.length} book{novels.length === 1 ? "" : "s"}</span>
+      </h2>
+
+      <div class="tw-lib__grid" data-library-grid>
+        {
+          novels.map((n) => (
+            <a
+              class="tw-lib__book"
+              href={`/novels/${n.id}/`}
+              data-book
+              data-title={n.title.toLowerCase()}
+              data-sort-key={new Date(n.last_opened_at ?? n.updated_at).getTime()}
+              data-series={(n.series_name ?? "no series").toLowerCase()}
+            >
+              <div class="tw-lib__cover">
+                <Cover kind={n.cover_kind} title={n.title} author={n.author} />
+              </div>
+              <div>
+                <p class="tw-lib__title">
+                  {n.title}
+                  {isClassicTemplate(n) && <span class="tw-lib__badge">Classic</span>}
+                </p>
+                <p class="tw-lib__meta">{formatUpdated(n.updated_at)}</p>
+                <p class="tw-lib__meta">{n.author}</p>
+              </div>
+            </a>
+          ))
+        }
+      </div>
+      <p class="tw-lib__empty" data-library-empty hidden>No novels match your search.</p>
+    </Wrapper>
+  </section>
 
   {
     showWelcome && (
       <div
-        class="nc-welcome"
+        class="tw-lib__welcome"
         data-welcome
         role="dialog"
         aria-modal="true"
         aria-labelledby="welcome-title"
       >
-        <div class="nc-welcome__card" data-welcome-card>
+        <div class="tw-lib__welcome-card" data-welcome-card>
           <h2 id="welcome-title">Welcome to Twilda</h2>
           <ol>
             <li>Open a starter novel below, or create a new one.</li>
@@ -182,15 +195,15 @@ const showWelcome =
               Update your name anytime in <a href="/account/">Account</a>.
             </li>
           </ol>
-          <button type="button" class="nc-btn nc-btn--primary" data-welcome-dismiss>
+          <Button size="sm" variant="accent" type="button" data-welcome-dismiss>
             Got it
-          </button>
+          </Button>
         </div>
       </div>
     )
   }
 
-  <div class="nc-toast" data-toast hidden></div>
+  <div class="tw-lib__toast" data-toast hidden></div>
 
   <script>
     const grid = document.querySelector("[data-library-grid]");
@@ -261,7 +274,7 @@ const showWelcome =
       viewToggle.querySelectorAll("button").forEach((btn) => {
         btn.classList.toggle("is-active", btn === target);
       });
-      grid?.classList.toggle("nc-grid--list", target.dataset.view === "list");
+      grid?.classList.toggle("is-list", target.dataset.view === "list");
     });
 
     createBtn?.addEventListener("click", async () => {
@@ -276,12 +289,7 @@ const showWelcome =
         if (!res.ok) throw new Error(data.error || "Create failed");
         window.location.href = `/novels/${data.id}/?mode=write`;
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Could not create novel";
-        if (msg.includes("Free plan allows")) {
-          showToast(msg);
-        } else {
-          showToast(msg);
-        }
+        showToast(err instanceof Error ? err.message : "Could not create novel");
         createBtn.removeAttribute("disabled");
       }
     });
@@ -308,7 +316,6 @@ const showWelcome =
 
     applySort();
 
-    // Welcome modal: focus trap, Escape, persist dismiss
     const welcome = document.querySelector("[data-welcome]");
     const welcomeCard = document.querySelector("[data-welcome-card]");
     const welcomeDismiss = document.querySelector("[data-welcome-dismiss]");
@@ -337,7 +344,7 @@ const showWelcome =
           body: "{}",
         });
       } catch {
-        /* ignore network errors — modal already closed */
+        /* ignore */
       }
     }
 
@@ -373,4 +380,4 @@ const showWelcome =
       welcomeDismiss?.addEventListener("click", () => dismissWelcome());
     }
   </script>
-</NovelcrafterLayout>
+</BaseLayout>
