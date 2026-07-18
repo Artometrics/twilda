@@ -1789,9 +1789,29 @@
 }
 .nc-board__empty {
   margin: 24px 0 0;
+  padding: 28px 16px;
   text-align: center;
   color: var(--nc-text-faint);
   font-size: 0.875rem;
+  border: 2px dashed var(--nc-border);
+  border-radius: 16px;
+  background: color-mix(in oklch, var(--nc-panel) 55%, transparent);
+}
+.nc-board__empty p {
+  margin: 0 0 8px;
+  line-height: 1.45;
+}
+.nc-board__empty p:first-child {
+  color: var(--nc-text);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.nc-board__empty .nc-btn {
+  margin-top: 12px;
+}
+.nc-board__intro-actions .nc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .nc-board__list {
   display: flex;

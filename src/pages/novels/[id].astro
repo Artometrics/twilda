@@ -457,13 +457,25 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
                 </p>
               </div>
               <div class="nc-board__intro-actions">
-                <button class="nc-btn" type="button" data-copy-all-prompts>
-                  Copy all prompts
-                </button>
-                <button class="nc-btn" type="button" data-export-prompts>
-                  Export .txt
-                </button>
-                <button class="nc-btn nc-btn--primary" type="button" data-add-panel>
+                {
+                  !storyboardError && storyboardPanels.length > 0 && (
+                    <>
+                      <button class="nc-btn" type="button" data-copy-all-prompts>
+                        Copy all prompts
+                      </button>
+                      <button class="nc-btn" type="button" data-export-prompts>
+                        Export .txt
+                      </button>
+                    </>
+                  )
+                }
+                <button
+                  class="nc-btn nc-btn--primary"
+                  type="button"
+                  data-add-panel
+                  disabled={Boolean(storyboardError)}
+                  title={storyboardError ? "Set up the storyboard database first" : "Add a panel"}
+                >
                   + Add panel
                 </button>
               </div>
@@ -473,7 +485,7 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
               storyboardError && (
                 <div class="nc-board__alert" role="alert">
                   {isStoryboardSetupError(storyboardError)
-                    ? "Storyboard is not set up yet. Apply supabase/migrations/009_storyboard_panels.sql in Supabase, then refresh."
+                    ? "Storyboard needs one Supabase setup step: run supabase/migrations/009_storyboard_panels.sql in the SQL Editor, then refresh this page."
                     : `Could not load storyboard: ${storyboardError}`}
                 </div>
               )
@@ -554,9 +566,13 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
 
             {
               !storyboardError && storyboardPanels.length === 0 && (
-                <p class="nc-board__empty" data-board-empty>
-                  No panels yet. Add one, drop a 16:9 still, then keep the prompt next to it for your image model.
-                </p>
+                <div class="nc-board__empty" data-board-empty>
+                  <p>No panels yet.</p>
+                  <p>Add a panel, drop a 16:9 still, then keep the prompt next to it for your image model.</p>
+                  <button class="nc-btn nc-btn--primary" type="button" data-add-panel>
+                    + Add panel
+                  </button>
+                </div>
               )
             }
           </div>
@@ -1471,21 +1487,24 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
 
       boardList?.querySelectorAll("[data-panel-id]").forEach((card) => bindPanelCard(card));
 
-      boardRoot.querySelector("[data-add-panel]")?.addEventListener("click", async () => {
-        try {
-          const res = await fetch(`/api/novels/${novelId}/storyboard/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ draft_id: activeDraftId }),
-          });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok) throw new Error(data.error || "Could not add panel");
-          const url = new URL(window.location.href);
-          url.searchParams.set("mode", "board");
-          window.location.href = url.toString();
-        } catch (err) {
-          showToast(err instanceof Error ? err.message : "Could not add panel");
-        }
+      boardRoot.querySelectorAll("[data-add-panel]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (btn instanceof HTMLButtonElement && btn.disabled) return;
+          try {
+            const res = await fetch(`/api/novels/${novelId}/storyboard/`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ draft_id: activeDraftId }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || "Could not add panel");
+            const url = new URL(window.location.href);
+            url.searchParams.set("mode", "board");
+            window.location.href = url.toString();
+          } catch (err) {
+            showToast(err instanceof Error ? err.message : "Could not add panel");
+          }
+        });
       });
 
       boardRoot.querySelector("[data-copy-all-prompts]")?.addEventListener("click", async () => {
