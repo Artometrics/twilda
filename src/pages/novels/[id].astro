@@ -145,16 +145,26 @@ function avatarStyle(seed: string): string {
     </header>
 
     <div class="nc-ws__body">
+      <button class="nc-side-scrim" type="button" data-side-scrim aria-label="Close sidebar"></button>
       <!-- Sidebar -->
       <aside class="nc-side">
         <div class="nc-side__tabs">
           <button class="is-active" data-side-tab="codex" type="button">Codex</button>
           <button data-side-tab="snippets" type="button">Snippets</button>
           <button data-side-tab="refs" type="button">Refs</button>
+          <button
+            class="nc-side__hide"
+            type="button"
+            data-side-hide
+            aria-label="Hide sidebar"
+            title="Hide sidebar"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
         </div>
 
         <!-- Codex tab -->
-        <div class="nc-side__pane" data-side-pane="codex" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+        <div class="nc-side__pane is-active" data-side-pane="codex">
           <div class="nc-side__search">
             <input class="nc-input" type="search" placeholder="Search all entries…" data-codex-search />
             <button class="nc-btn" type="button" data-new-entry>+ New Entry</button>
@@ -200,23 +210,23 @@ function avatarStyle(seed: string): string {
         </div>
 
         <!-- Snippets tab -->
-        <div class="nc-side__pane" data-side-pane="snippets" style="display:none;flex:1;">
-          {
-            snippets.length === 0 ? (
-              <div class="nc-side__empty" style="padding-top:60px;">
-                <p>No snippets yet.<br/>Save reusable text fragments here.</p>
-              </div>
-            ) : (
-              <div class="nc-side__scroll">
-                {snippets.map((s) => (
+        <div class="nc-side__pane" data-side-pane="snippets" hidden>
+          <div class="nc-side__scroll">
+            {
+              snippets.length === 0 ? (
+                <div class="nc-side__empty" style="padding-top:40px;">
+                  <p>No snippets yet.<br/>Save reusable text fragments here.</p>
+                </div>
+              ) : (
+                snippets.map((s) => (
                   <div class="nc-snippet">
                     <p class="nc-snippet__title">{s.title}</p>
                     <p class="nc-snippet__body">{s.content}</p>
                   </div>
-                ))}
-              </div>
-            )
-          }
+                ))
+              )
+            }
+          </div>
           <form class="nc-snippet-form" data-snippet-form>
             <input class="nc-input" name="title" placeholder="Snippet title" />
             <textarea class="nc-textarea" name="content" rows="3" placeholder="Snippet text"></textarea>
@@ -225,7 +235,7 @@ function avatarStyle(seed: string): string {
         </div>
 
         <!-- Refs tab — cross-draft timelines -->
-        <div class="nc-side__pane" data-side-pane="refs" style="display:none;flex:1;flex-direction:column;min-height:0;">
+        <div class="nc-side__pane" data-side-pane="refs" hidden>
           <div class="nc-side__scroll">
             <p class="nc-refs__intro">Pin another draft or timeline so you can consult it while writing in this one.</p>
             {
@@ -287,6 +297,9 @@ function avatarStyle(seed: string): string {
 
       <!-- Main -->
       <div class="nc-main">
+        <div class="nc-main__mobilebar">
+          <button class="nc-btn" type="button" data-side-show>Codex / Refs</button>
+        </div>
         <!-- PLAN -->
         <section
           class="nc-mode-panel is-active"
@@ -714,18 +727,35 @@ function avatarStyle(seed: string): string {
       setMode(initialMode);
     }
 
-    // Sidebar tabs
+    // Sidebar tabs — keep panes as flex so nested .nc-side__scroll can overflow
+    const side = document.querySelector(".nc-side");
     const sideTabs = document.querySelectorAll("[data-side-tab]");
     const sidePanes = document.querySelectorAll("[data-side-pane]");
+    function showSidePane(name) {
+      sideTabs.forEach((x) => x.classList.toggle("is-active", x.dataset.sideTab === name));
+      sidePanes.forEach((p) => {
+        const on = p.dataset.sidePane === name;
+        p.classList.toggle("is-active", on);
+        if (on) p.removeAttribute("hidden");
+        else p.setAttribute("hidden", "");
+      });
+      side?.classList.add("is-open");
+      document.body.classList.add("nc-side-open");
+    }
     sideTabs.forEach((t) =>
-      t.addEventListener("click", () => {
-        sideTabs.forEach((x) => x.classList.toggle("is-active", x === t));
-        sidePanes.forEach((p) => {
-          const on = p.dataset.sidePane === t.dataset.sideTab;
-          p.style.display = on ? (p.dataset.sidePane === "codex" ? "flex" : "block") : "none";
-        });
-      }),
+      t.addEventListener("click", () => showSidePane(t.dataset.sideTab)),
     );
+    function closeSideDrawer() {
+      side?.classList.remove("is-open");
+      document.body.classList.remove("nc-side-open");
+    }
+    document.querySelector("[data-side-show]")?.addEventListener("click", () => {
+      const active = document.querySelector("[data-side-tab].is-active");
+      showSidePane(active?.dataset.sideTab || "codex");
+    });
+    document.querySelector("[data-side-scrim]")?.addEventListener("click", () => {
+      closeSideDrawer();
+    });
 
     // Codex group collapse
     document.querySelectorAll("[data-cx-toggle]").forEach((h) =>
@@ -758,6 +788,11 @@ function avatarStyle(seed: string): string {
       activeItems.forEach((i) => i.classList.remove("is-active"));
       activeItems = [];
     }
+
+    document.querySelector("[data-side-hide]")?.addEventListener("click", () => {
+      closeSideDrawer();
+      closeDetail();
+    });
 
     function openStaticDetail(id, item) {
       closeDetail();
@@ -792,10 +827,10 @@ function avatarStyle(seed: string): string {
       b.addEventListener("click", closeDetail),
     );
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeDetail();
-        closeEntryModal();
-      }
+      if (e.key !== "Escape") return;
+      closeDetail();
+      closeEntryModal();
+      if (window.matchMedia("(max-width: 900px)").matches) closeSideDrawer();
     });
 
     // Detail sub-tabs
