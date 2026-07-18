@@ -12,14 +12,11 @@ if (!user) {
 }
 
 const supabase = Astro.locals.supabase!;
-const [{ data: profile }, { data: subscription }] = await Promise.all([
-  supabase.from("profiles").select("display_name, pen_name").eq("id", user.id).maybeSingle(),
-  supabase
-    .from("subscriptions")
-    .select("plan, ai_credits_remaining, ai_credits_monthly, status")
-    .eq("user_id", user.id)
-    .maybeSingle(),
-]);
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("display_name, pen_name")
+  .eq("id", user.id)
+  .maybeSingle();
 ---
 
 <BaseLayout
@@ -60,14 +57,6 @@ const [{ data: profile }, { data: subscription }] = await Promise.all([
           <Button size="sm" variant="accent" type="submit">Save profile</Button>
           <p class="text-sm text-base-600" data-profile-status hidden></p>
         </form>
-      </div>
-
-      <div class="p-6 border-2 border-accent-900 rounded-2xl bg-accent-100">
-        <p class="text-sm font-semibold uppercase tracking-wide text-base-600">AI credits</p>
-        <p class="mt-2 text-base text-accent-800">
-          {subscription?.ai_credits_remaining ?? 5} / {subscription?.ai_credits_monthly ?? 5} remaining
-          ({subscription?.plan ?? "free"})
-        </p>
       </div>
 
       <div class="flex flex-wrap gap-3">

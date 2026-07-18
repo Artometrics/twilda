@@ -10,12 +10,10 @@ import {
   novelWordCount,
   type CodexEntry,
 } from "@/apps/novelcrafter/data";
-import { prompts } from "@/apps/novelcrafter/prompts";
 import {
   getNovelFull,
   dbNovelToLegacy,
   listSnippets,
-  listChatThreads,
   ensureTrinityDrafts,
 } from "@/lib/novels/service";
 import { listDraftReferences, ensureDefaultDraft } from "@/lib/novels/drafts";
@@ -44,20 +42,8 @@ const draftRefs = activeDraft
 const otherDrafts = drafts.filter((d) => d.id !== activeDraft?.id);
 
 const totalWords = novelWordCount(novel);
-const pages = Math.max(1, Math.round(totalWords / 250));
-const readMin = Math.max(1, Math.round(totalWords / 250));
-
-const { data: subscription } = await supabase
-  .from("subscriptions")
-  .select("ai_credits_remaining, ai_credits_monthly")
-  .eq("user_id", user.id)
-  .maybeSingle();
-
-const creditsRemaining = subscription?.ai_credits_remaining ?? 5;
-const creditsMax = subscription?.ai_credits_monthly ?? 5;
 
 const snippets = await listSnippets(supabase, user.id, id!);
-const chatThreads = await listChatThreads(supabase, user.id, id!);
 
 const entriesByType = (t: string): CodexEntry[] =>
   novel.codex.filter((e) => e.type === t);
@@ -68,8 +54,6 @@ function avatarStyle(seed: string): string {
   const h2 = (h + 45) % 360;
   return `background-image:linear-gradient(135deg, hsl(${h} 68% 56%), hsl(${h2} 62% 40%));`;
 }
-
-const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
 ---
 
 <NovelcrafterLayout title={`${novel.title} · Twilda`}>
@@ -79,7 +63,7 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
       <a class="nc-iconbtn" href="/novels/" aria-label="Back to library">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
       </a>
-      <a class="nc-ws__brand" href="/">Twilda</a>
+      <a class="nc-ws__brand" href="/novels/">Twilda</a>
       <button
         class="nc-iconbtn"
         type="button"
@@ -142,30 +126,6 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
           Write
         </button>
         <button
-          data-mode-btn="chat"
-          type="button"
-          role="tab"
-          id="mode-tab-chat"
-          aria-selected="false"
-          aria-controls="mode-panel-chat"
-          tabindex="-1"
-        >
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          Chat
-        </button>
-        <button
-          data-mode-btn="review"
-          type="button"
-          role="tab"
-          id="mode-tab-review"
-          aria-selected="false"
-          aria-controls="mode-panel-review"
-          tabindex="-1"
-        >
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
-          Review
-        </button>
-        <button
           data-mode-btn="settings"
           type="button"
           role="tab"
@@ -191,7 +151,6 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
           <button class="is-active" data-side-tab="codex" type="button">Codex</button>
           <button data-side-tab="snippets" type="button">Snippets</button>
           <button data-side-tab="refs" type="button">Refs</button>
-          <button data-side-tab="chats" type="button">Chats</button>
         </div>
 
         <!-- Codex tab -->
@@ -316,37 +275,12 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
           </div>
         </div>
 
-        <!-- Chats tab -->
-        <div class="nc-side__pane" data-side-pane="chats" style="display:none;flex:1;">
-          {
-            chatThreads.length === 0 ? (
-              <div class="nc-side__empty" style="padding-top:60px;">
-                <p>No saved chats yet.<br/>Start a conversation in Chat mode.</p>
-              </div>
-            ) : (
-              <div class="nc-side__scroll">
-                {chatThreads.map((t) => (
-                  <button class="nc-chat-thread" type="button" data-thread-id={t.id}>
-                    {t.title}
-                  </button>
-                ))}
-              </div>
-            )
-          }
-        </div>
-
         <div class="nc-side__foot">
           <span class="nc-avatar-sm" style="width:24px;height:24px;font-size:11px;">
             {(user.email?.[0] ?? "U").toUpperCase()}
           </span>
-          <span
-            class="nc-credits"
-            style="padding:2px 8px;"
-            aria-label={`AI credits remaining: ${creditsRemaining} of ${creditsMax}`}
-          >
-            {creditsRemaining}/{creditsMax}
-          </span>
           <a href="/blog/">Journal</a>
+          <a href="/account/">Account</a>
           <button class="nc-btn nc-btn--ghost" type="button" data-export>Export</button>
         </div>
       </aside>
@@ -440,47 +374,6 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
                 </>
               ))
             }
-          </div>
-        </section>
-
-        <!-- CHAT -->
-        <section
-          class="nc-mode-panel"
-          data-mode="chat"
-          role="tabpanel"
-          id="mode-panel-chat"
-          aria-labelledby="mode-tab-chat"
-          hidden
-        >
-          <div class="nc-placeholder nc-chat">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <h2>Chat with your story</h2>
-            <p data-chat-intro>Brainstorm with an assistant that knows your novel synopsis and Codex.</p>
-            <p class="nc-chat-prompt" data-chat-prompt hidden></p>
-            <div class="nc-chat-log" data-chat-log></div>
-            <form class="nc-chat-form" data-chat-form>
-              <input class="nc-input" type="text" placeholder="Ask about your story…" data-chat-input />
-              <button class="nc-btn nc-btn--primary" type="submit">Send</button>
-            </form>
-            <a class="nc-btn" href="/novels/prompts/">Browse prompts</a>
-          </div>
-        </section>
-
-        <!-- REVIEW -->
-        <section
-          class="nc-mode-panel"
-          data-mode="review"
-          role="tabpanel"
-          id="mode-panel-review"
-          aria-labelledby="mode-tab-review"
-          hidden
-        >
-          <div class="nc-placeholder">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
-            <h2>Review your manuscript</h2>
-            <p>Run consistency checks across {novel.chapters.length} chapter{novel.chapters.length === 1 ? "" : "s"} — {totalWords.toLocaleString()} words, ~{pages} pages.</p>
-            <button class="nc-btn nc-btn--primary" type="button" data-review-run>Run review</button>
-            <pre class="nc-review-output" data-review-output></pre>
           </div>
         </section>
 
@@ -630,7 +523,7 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
 
   <div class="nc-toast" data-toast hidden></div>
 
-  <script define:vars={{ novelId: novel.id, novelTitle: novel.title, promptMap, activeDraftId: activeDraft?.id ?? null }}>
+  <script define:vars={{ novelId: novel.id, novelTitle: novel.title, activeDraftId: activeDraft?.id ?? null }}>
     const toast = document.querySelector("[data-toast]");
     function showToast(message) {
       if (!toast) return;
@@ -777,7 +670,7 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
       });
     });
 
-    // Mode tabs (Plan / Write / Chat / Review / Settings)
+    // Mode tabs (Plan / Write / Settings)
     const modeBtns = document.querySelectorAll("[data-mode-btn]");
     const panels = document.querySelectorAll(".nc-mode-panel");
     const topModeBtns = document.querySelectorAll(".nc-modes [data-mode-btn]");
@@ -817,16 +710,8 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
 
     const params = new URLSearchParams(window.location.search);
     const initialMode = params.get("mode");
-    if (initialMode) setMode(initialMode);
-
-    const promptId = params.get("prompt");
-    if (promptId && promptMap[promptId]) {
-      setMode("chat");
-      const promptEl = document.querySelector("[data-chat-prompt]");
-      if (promptEl) {
-        promptEl.textContent = `Prompt: ${promptMap[promptId]}`;
-        promptEl.hidden = false;
-      }
+    if (initialMode && ["plan", "write", "settings"].includes(initialMode)) {
+      setMode(initialMode);
     }
 
     // Sidebar tabs
@@ -1032,53 +917,6 @@ const promptMap = Object.fromEntries(prompts.map((p) => [p.id, p.text]));
       updateCount();
       if (initialMode === "write") scenes[0]?.focus();
     }
-
-    // Chat send
-    const chatForm = document.querySelector("[data-chat-form]");
-    chatForm?.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const input = chatForm.querySelector("[data-chat-input]");
-      const message = input?.value?.trim();
-      if (!message) return;
-      const log = document.querySelector("[data-chat-log]");
-      if (log) {
-        const userLine = document.createElement("p");
-        userLine.className = "nc-chat-line nc-chat-line--user";
-        userLine.textContent = message;
-        log.appendChild(userLine);
-      }
-      input.value = "";
-      try {
-        const res = await fetch(`/api/novels/${novelId}/chat/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, promptId }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Chat failed");
-        if (log) {
-          const aiLine = document.createElement("p");
-          aiLine.className = "nc-chat-line nc-chat-line--assistant";
-          aiLine.textContent = data.reply;
-          log.appendChild(aiLine);
-        }
-      } catch (err) {
-        showToast(err instanceof Error ? err.message : "Chat failed");
-      }
-    });
-
-    document.querySelector("[data-review-run]")?.addEventListener("click", async () => {
-      const out = document.querySelector("[data-review-output]");
-      if (out) out.textContent = "Running review…";
-      try {
-        const res = await fetch(`/api/novels/${novelId}/review/`, { method: "POST" });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Review failed");
-        if (out) out.textContent = data.feedback;
-      } catch (err) {
-        if (out) out.textContent = err instanceof Error ? err.message : "Review failed";
-      }
-    });
 
     document.querySelector("[data-add-chapter]")?.addEventListener("click", async () => {
       try {

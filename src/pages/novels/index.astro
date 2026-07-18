@@ -41,12 +41,6 @@ try {
   onboardingCompleted = true;
 }
 
-const { data: subscription } = await supabase
-  .from("subscriptions")
-  .select("ai_credits_remaining, ai_credits_monthly")
-  .eq("user_id", user.id)
-  .maybeSingle();
-
 const recent = [...novels]
   .sort((a, b) => {
     const aT = new Date(a.last_opened_at ?? a.updated_at).getTime();
@@ -60,12 +54,7 @@ const showWelcome =
 ---
 
 <NovelcrafterLayout title="Your Novels · Twilda" description="Your Twilda novel library.">
-  <NovelsTopbar
-    active="novels"
-    userEmail={user.email}
-    credits={subscription?.ai_credits_remaining ?? 5}
-    creditsMax={subscription?.ai_credits_monthly ?? 5}
-  />
+  <NovelsTopbar active="novels" userEmail={user.email} />
 
   <main class="nc-library">
     {

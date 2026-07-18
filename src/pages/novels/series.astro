@@ -12,12 +12,6 @@ if (auth instanceof Response) return auth;
 const { user, supabase } = auth;
 const novels = await listNovels(supabase, user.id);
 
-const { data: subscription } = await supabase
-  .from("subscriptions")
-  .select("ai_credits_remaining, ai_credits_monthly")
-  .eq("user_id", user.id)
-  .maybeSingle();
-
 const grouped = novels.reduce<Record<string, typeof novels>>((acc, novel) => {
   const key = novel.series_name ?? "No Series";
   (acc[key] ??= []).push(novel);
@@ -26,12 +20,7 @@ const grouped = novels.reduce<Record<string, typeof novels>>((acc, novel) => {
 ---
 
 <NovelcrafterLayout title="Series · Twilda">
-  <NovelsTopbar
-    active="series"
-    userEmail={user.email}
-    credits={subscription?.ai_credits_remaining ?? 5}
-    creditsMax={subscription?.ai_credits_monthly ?? 5}
-  />
+  <NovelsTopbar active="series" userEmail={user.email} />
 
   <main class="nc-library">
     <div class="nc-library__head">

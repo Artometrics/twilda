@@ -1,16 +1,9 @@
 ---
 interface Props {
-  active?: "novels" | "series" | "prompts" | "journal" | "account";
+  active?: "novels" | "series" | "journal" | "account";
   userEmail?: string | null;
-  credits?: number;
-  creditsMax?: number;
 }
-const {
-  active = "novels",
-  userEmail = null,
-  credits = 5,
-  creditsMax = 5,
-} = Astro.props;
+const { active = "novels", userEmail = null } = Astro.props;
 
 const initial = userEmail?.[0]?.toUpperCase() ?? "?";
 ---
@@ -27,17 +20,9 @@ const initial = userEmail?.[0]?.toUpperCase() ?? "?";
     <a class:list={[{ "is-active": active === "novels" }]} href="/novels/">Library</a>
     <a class:list={[{ "is-active": active === "journal" }]} href="/blog/">Journal</a>
     <a class:list={[{ "is-active": active === "series" }]} href="/novels/series/">Series</a>
-    <a class:list={[{ "is-active": active === "prompts" }]} href="/novels/prompts/">Prompts</a>
   </nav>
   <div class="nc-topbar__spacer"></div>
   <div class="nc-topbar__right">
-    <span
-      class="nc-credits"
-      aria-label={`AI credits remaining: ${credits} of ${creditsMax}`}
-      title={`${credits} of ${creditsMax} AI credits remaining`}
-    >
-      {credits}/{creditsMax}
-    </span>
     {
       userEmail ? (
         <>
