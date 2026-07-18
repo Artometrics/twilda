@@ -22,10 +22,10 @@
 | Area | Path | Role |
 |------|------|------|
 | Routes | `src/pages/` | Novels, blog/journal, account, auth forms, APIs |
-| Lib | `src/lib/` | Auth, novels service, Supabase clients |
-| Layouts | `src/layouts/` | `BaseLayout`, `NovelcrafterLayout`, `BlogLayout`, `LegalLayout` |
-| UI | `src/components/` | `global/`, `fundations/`, `blog/`, `novels/`, `auth/` |
-| Content | `src/content/` | `posts` (journal), `legal` |
+| Lib | `src/lib/` | Auth, novels, journal, Supabase clients |
+| Layouts | `src/layouts/` | `BaseLayout`, `NovelcrafterLayout`, `LegalLayout` |
+| UI | `src/components/` | `global/`, `fundations/`, `novels/`, `auth/` |
+| Content | `src/content/` | `legal` (static); journal lives in Supabase |
 | Tokens / global CSS | `src/styles/global.css` | Tailwind v4 `@theme` |
 | Novel styles | `src/styles/novelcrafter.css` | Workspace chrome |
 | Setup docs | `docs/SETUP.md` | Netlify + Supabase + env checklist |
@@ -35,11 +35,12 @@
 
 Collections use **`defineCollection` + `glob` loaders only** — no Zod `schema`.
 
-### `posts` (Journal)
+### Journal (Supabase)
 
-- **Folder:** `src/content/posts/`
-- **Fields (inferred):** `title`, `description`, `pubDate`, `tags`, optional `image.url` / `image.alt`
+- **Table:** `journal_entries` (`008_journal_entries.sql`)
+- **APIs:** `/api/journal/`, `/api/journal/[id]/`
 - **URLs:** `/blog/`, `/blog/posts/{id}/`
+- **RSS:** `/rss.xml` (auth-gated; current user’s entries)
 
 ### `legal`
 
@@ -63,7 +64,7 @@ Novel workspace modes: **Plan**, **Write**, **Settings** (+ Codex / Snippets / R
 
 - Keep the **`fundations`** folder name as-is.
 - Prefer **minimal diffs** matching existing Lexington patterns (`@/` imports, `Wrapper` / `Text` / `Button`).
-- Protected routes (middleware): `/novels`, `/account`, `/blog`.
+- Protected routes (middleware): `/novels`, `/account`, `/blog`, `/rss.xml`.
 
 ## Cursor Cloud specific instructions
 

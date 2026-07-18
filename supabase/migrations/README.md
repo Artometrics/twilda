@@ -34,6 +34,7 @@ The scripts are **idempotent** (safe to re-run).
 | `005_atlas_museum.sql` | Museum collections (`atlas_collections`), enrich cache, `gotha_persons.atlas_seed_id` |
 | `006_security_hardening.sql` | Harden `gotha_ancestors` to `auth.uid()`, revoke anon execute |
 | `007_onboarding.sql` | `profiles.onboarding_completed` for welcome modal persistence |
+| `008_journal_entries.sql` | Private journal entries for `/blog` (RLS per user) |
 
 ## Atlas: TypeScript seeds vs DB tables
 
@@ -45,12 +46,15 @@ User-facing museum + enrich cache live in `005_atlas_museum.sql` (`atlas_collect
 
 `007_onboarding.sql` adds `profiles.onboarding_completed` so the `/novels/` welcome modal can persist dismissals.
 
+`008_journal_entries.sql` adds `journal_entries` for the in-app Journal (`/blog`).
+
 ## After migration
 
 - Enable Google auth in Supabase → Authentication → Providers
 - Set URL Configuration: Site URL + `/auth/callback/` redirect
 - Sign in at `/forms/login/` → library at `/novels/`
 - Starters: Gatsby, Trinity (v1 + v2 drafts), and Cardinal are seeded automatically
-- GOTHA: run `004_atlas_schema.sql` (+ `006_security_hardening.sql`)
-- Museum collections + enrich cache: run `005_atlas_museum.sql`
+- GOTHA: run `004_atlas_schema.sql` (+ `006_security_hardening.sql`) — optional / unused by solo app
+- Museum collections + enrich cache: run `005_atlas_museum.sql` — optional / unused by solo app
 - Onboarding flag: run `007_onboarding.sql`
+- Journal: run `008_journal_entries.sql`

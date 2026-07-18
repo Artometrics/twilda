@@ -28,6 +28,7 @@ Create project **`twilda`** under org **Artometrics**.
    - `001_initial_schema.sql` — novels / profiles / subscriptions
    - `003_novel_drafts.sql` — drafts / timelines
    - `007_onboarding.sql` — `profiles.onboarding_completed` for welcome modal
+   - `008_journal_entries.sql` — private journal entries (`/blog`)
 
 Older Atlas/GOTHA migrations (`004`–`006`) are unused by the current app and can be skipped for a fresh solo setup.
 

@@ -1,19 +1,164 @@
 ---
-import BlogLayout from "@/layouts/BlogLayout.astro";
-import { getCollection, render } from "astro:content";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import {
+  formatJournalDate,
+  getJournalEntry,
+  isJournalSetupError,
+} from "@/lib/journal/service";
+import { requireAuth, dbErrorMessage } from "@/lib/auth/guards";
+import "@/styles/library.css";
 
 export const prerender = false;
 
+const auth = requireAuth(Astro);
+if (auth instanceof Response) return auth;
+const { user, supabase } = auth;
+
 const { slug } = Astro.params;
-const posts = await getCollection("posts");
-const entry = posts.find((p) => p.id === slug);
-if (!entry) {
+if (!slug) {
   return Astro.redirect("/blog/");
 }
 
-const { Content } = await render(entry);
+let entry: Awaited<ReturnType<typeof getJournalEntry>> = null;
+let dbError: string | null = null;
+
+try {
+  entry = await getJournalEntry(supabase, user.id, slug);
+} catch (error) {
+  dbError = dbErrorMessage(error);
+}
+
+if (!entry && !dbError) {
+  return Astro.redirect("/blog/");
+}
 ---
 
-<BlogLayout frontmatter={entry.data}>
-  <Content />
-</BlogLayout>
+<BaseLayout
+  title={`${entry?.title || "Entry"} · Journal`}
+  description="Private journal entry."
+  canonicalPath={`/blog/posts/${slug}/`}
+  noindex={true}
+  hideFooter={true}
+>
+  <section class="tw-lib">
+    <Wrapper variant="standard" class="pt-32 pb-24 lg:pt-40">
+      {
+        dbError ? (
+          <div class="tw-lib__alert" role="alert">
+            <p>
+              {isJournalSetupError(dbError)
+                ? "Journal is not set up yet. Apply supabase/migrations/008_journal_entries.sql, then refresh."
+                : `Could not load entry: ${dbError}`}
+            </p>
+            <p class="mt-4">
+              <a href="/blog/" class="underline underline-offset-4">← Journal</a>
+            </p>
+          </div>
+        ) : entry ? (
+          <div class="tw-lib__editor" data-entry-id={entry.id}>
+            <p class="tw-lib__back">
+              <a href="/blog/">← Journal</a>
+            </p>
+            <label class="tw-lib__title-field">
+              <span class="sr-only">Title</span>
+              <input
+                type="text"
+                name="title"
+                value={entry.title}
+                data-entry-title
+                placeholder="Untitled"
+              />
+            </label>
+            <p class="tw-lib__meta" data-entry-meta>
+              Updated {formatJournalDate(entry.updated_at)}
+            </p>
+            <label class="tw-lib__body-field">
+              <span class="sr-only">Body</span>
+              <textarea
+                name="body"
+                data-entry-body
+                rows="18"
+                placeholder="Write freely…"
+              >{entry.body}</textarea>
+            </label>
+            <div class="tw-lib__toolbar">
+              <Button size="sm" variant="accent" type="button" data-save-entry>
+                Save
+              </Button>
+              <Button size="sm" variant="muted" type="button" data-delete-entry>
+                Delete
+              </Button>
+              <span class="tw-lib__status" data-entry-status hidden></span>
+            </div>
+          </div>
+        ) : null
+      }
+    </Wrapper>
+  </section>
+</BaseLayout>
+
+<script>
+  const root = document.querySelector("[data-entry-id]");
+  if (root) {
+    const id = root.getAttribute("data-entry-id");
+    const titleEl = document.querySelector("[data-entry-title]");
+    const bodyEl = document.querySelector("[data-entry-body]");
+    const statusEl = document.querySelector("[data-entry-status]");
+    const metaEl = document.querySelector("[data-entry-meta]");
+
+    function setStatus(message, show = true) {
+      if (!(statusEl instanceof HTMLElement)) return;
+      statusEl.textContent = message;
+      statusEl.hidden = !show;
+    }
+
+    document.querySelector("[data-save-entry]")?.addEventListener("click", async () => {
+      if (!id || !(titleEl instanceof HTMLInputElement) || !(bodyEl instanceof HTMLTextAreaElement)) {
+        return;
+      }
+      setStatus("Saving…");
+      try {
+        const res = await fetch(`/api/journal/${id}/`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: titleEl.value, body: bodyEl.value }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setStatus(data.error || "Save failed");
+          return;
+        }
+        if (metaEl instanceof HTMLElement && data.entry?.updated_at) {
+          const d = new Date(data.entry.updated_at).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+          metaEl.textContent = `Updated ${d}`;
+        }
+        document.title = `${data.entry?.title || "Entry"} · Journal`;
+        setStatus("Saved");
+        setTimeout(() => setStatus("", false), 2000);
+      } catch {
+        setStatus("Save failed");
+      }
+    });
+
+    document.querySelector("[data-delete-entry]")?.addEventListener("click", async () => {
+      if (!id || !confirm("Delete this journal entry?")) return;
+      try {
+        const res = await fetch(`/api/journal/${id}/`, { method: "DELETE" });
+        if (!res.ok) {
+          const data = await res.json();
+          alert(data.error || "Could not delete");
+          return;
+        }
+        window.location.href = "/blog/";
+      } catch {
+        alert("Could not delete");
+      }
+    });
+  }
+</script>

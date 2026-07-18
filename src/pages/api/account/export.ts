@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { listJournalEntries } from "@/lib/journal/service";
 import { createSupabaseServerClient } from "@/lib/supabase/ssr";
 import { exportNovelText, listNovels } from "@/lib/novels/service";
 
@@ -22,6 +23,13 @@ export const GET: APIRoute = async ({ cookies, request }) => {
     }
   }
 
+  let journal = [];
+  try {
+    journal = await listJournalEntries(supabase, user.id);
+  } catch {
+    journal = [];
+  }
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("display_name, pen_name, created_at")
@@ -39,6 +47,7 @@ export const GET: APIRoute = async ({ cookies, request }) => {
       updated_at: n.updated_at,
     })),
     manuscripts,
+    journal,
   };
 
   return new Response(JSON.stringify(payload, null, 2), {

@@ -84,7 +84,7 @@ const { data: profile } = await supabase
   });
 
   document.querySelector("[data-delete-account]")?.addEventListener("click", async () => {
-    if (!confirm("Delete your account and all novels? This cannot be undone.")) return;
+    if (!confirm("Delete your account, novels, and journal? This cannot be undone.")) return;
     const res = await fetch("/api/account/", { method: "DELETE" });
     if (res.ok) {
       window.location.href = "/forms/login/";

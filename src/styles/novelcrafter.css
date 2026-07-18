@@ -489,63 +489,6 @@
   background: var(--nc-panel);
   border-color: var(--nc-border-soft);
 }
-.nc-chat-form {
-  display: flex;
-  gap: 8px;
-  max-width: 480px;
-  margin: 16px auto 12px;
-}
-.nc-chat-form .nc-input {
-  flex: 1;
-}
-.nc-chat-log {
-  max-width: 520px;
-  margin: 16px auto;
-  text-align: left;
-  max-height: 240px;
-  overflow-y: auto;
-}
-.nc-chat-line {
-  margin: 0 0 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-.nc-chat-line--user {
-  background: var(--nc-panel-2);
-  border: 1px solid var(--nc-border);
-}
-.nc-chat-line--assistant {
-  background: var(--nc-bg);
-  border: 1px solid var(--color-secondary-700);
-}
-.nc-review-output {
-  margin-top: 16px;
-  max-width: 520px;
-  text-align: left;
-  white-space: pre-wrap;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--nc-text-dim);
-  background: var(--nc-panel);
-  border: 2px solid var(--nc-border);
-  border-radius: 12px;
-  padding: 14px;
-  min-height: 120px;
-}
-.nc-chat-prompt {
-  margin: 16px auto 0;
-  max-width: 480px;
-  padding: 12px 16px;
-  background: var(--nc-panel);
-  border: 2px solid var(--nc-border);
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--nc-text-dim);
-}
-
 /* ---------- Modal & toast ---------- */
 .nc-textarea {
   width: 100%;
@@ -1564,21 +1507,6 @@ body.nc-side-open {
   flex-direction: column;
   gap: 8px;
   border-top: 1px solid var(--nc-border);
-}
-.nc-chat-thread {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 10px 16px;
-  border: none;
-  border-bottom: 1px solid var(--nc-border);
-  background: transparent;
-  color: var(--nc-text);
-  cursor: pointer;
-  font-size: 13px;
-}
-.nc-chat-thread:hover {
-  background: var(--nc-surface-2);
 }
 .nc-settings-form .nc-field {
   display: block;

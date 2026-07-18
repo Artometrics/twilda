@@ -1,15 +1,37 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import Text from "@/components/fundations/elements/Text.astro";
 import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import BlogCard from "@/components/blog/BlogCard.astro";
-import { getCollection } from "astro:content";
+import Button from "@/components/fundations/elements/Button.astro";
+import {
+  formatJournalDate,
+  isJournalSetupError,
+  listJournalEntries,
+} from "@/lib/journal/service";
+import { requireAuth, dbErrorMessage } from "@/lib/auth/guards";
+import { ensureUserProfile } from "@/lib/auth/profile";
+import "@/styles/library.css";
 
 export const prerender = false;
 
-const allPosts = (await getCollection("posts")).sort(
-  (a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime(),
-);
+const auth = requireAuth(Astro);
+if (auth instanceof Response) return auth;
+const { user, supabase } = auth;
+
+let entries: Awaited<ReturnType<typeof listJournalEntries>> = [];
+let dbError: string | null = null;
+
+try {
+  await ensureUserProfile(supabase, user);
+  entries = await listJournalEntries(supabase, user.id);
+} catch (error) {
+  dbError = dbErrorMessage(error);
+}
+
+function preview(body: string): string {
+  const plain = body.replace(/\s+/g, " ").trim();
+  if (!plain) return "Empty note";
+  return plain.length > 160 ? `${plain.slice(0, 157)}…` : plain;
+}
 ---
 
 <BaseLayout
@@ -17,25 +39,74 @@ const allPosts = (await getCollection("posts")).sort(
   description="Private writing journal for Twilda."
   canonicalPath="/blog/"
   noindex={true}
+  hideFooter={true}
 >
-  <section>
+  <section class="tw-lib">
     <Wrapper variant="standard" class="pt-32 pb-24 lg:pt-40">
-      <div class="max-w-2xl">
-        <Text
-          tag="h1"
-          variant="displayXL"
-          class="font-semibold tracking-tight text-accent-900"
-        >
-          Journal
-        </Text>
-        <Text tag="p" variant="textBase" class="mt-4 text-accent-900 text-balance">
-          Notes beside the novel. Entries are markdown files in the Twilda repo
-          (<code class="text-sm">src/content/posts/</code>) for now.
-        </Text>
+      {
+        dbError && (
+          <div class="tw-lib__alert" role="alert">
+            <p>
+              {isJournalSetupError(dbError)
+                ? "Journal is not set up yet. Apply supabase/migrations/008_journal_entries.sql in your Supabase SQL Editor, then refresh."
+                : `Could not load journal: ${dbError}`}
+            </p>
+          </div>
+        )
+      }
+
+      <div class="tw-lib__head">
+        <h1>Journal</h1>
+        <p>Private notes beside your novels. Stored in your account.</p>
       </div>
-      <div class="grid gap-6 mt-12 md:grid-cols-2">
-        {allPosts.map((post) => <BlogCard post={post} />)}
+
+      <div class="tw-lib__toolbar">
+        <Button size="sm" variant="accent" type="button" data-create-entry>
+          + New entry
+        </Button>
       </div>
+
+      {
+        !dbError && entries.length === 0 ? (
+          <p class="tw-lib__empty">No entries yet. Write your first note.</p>
+        ) : (
+          <div class="tw-lib__list">
+            {entries.map((entry) => (
+              <a class="tw-lib__row" href={`/blog/posts/${entry.id}/`}>
+                <span class="tw-lib__row-main">
+                  <strong>{entry.title || "Untitled"}</strong>
+                  <span>{preview(entry.body)}</span>
+                </span>
+                <em>{formatJournalDate(entry.updated_at)}</em>
+              </a>
+            ))}
+          </div>
+        )
+      }
     </Wrapper>
   </section>
 </BaseLayout>
+
+<script>
+  document.querySelector("[data-create-entry]")?.addEventListener("click", async () => {
+    const btn = document.querySelector("[data-create-entry]");
+    if (btn instanceof HTMLButtonElement) btn.disabled = true;
+    try {
+      const res = await fetch("/api/journal/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Untitled" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Could not create entry");
+        return;
+      }
+      window.location.href = `/blog/posts/${data.entry.id}/`;
+    } catch {
+      alert("Could not create entry");
+    } finally {
+      if (btn instanceof HTMLButtonElement) btn.disabled = false;
+    }
+  });
+</script>
