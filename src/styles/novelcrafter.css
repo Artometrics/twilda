@@ -549,14 +549,7 @@
 /* ---------- Modal & toast ---------- */
 .nc-textarea {
   width: 100%;
-  padding: 10px 12px;
-  background: var(--nc-panel);
-  border: 2px solid var(--nc-border);
-  border-radius: 12px;
-  color: var(--nc-text);
-  font-size: 13px;
   font-family: inherit;
-  resize: vertical;
 }
 .nc-textarea:focus {
   outline: none;
