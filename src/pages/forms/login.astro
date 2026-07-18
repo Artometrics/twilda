@@ -83,7 +83,12 @@ const reset = Astro.url.searchParams.get("reset");
             </Button>
             <p class="text-sm text-accent-900 lg:text-lg font-medium text-center">
               Not a member?
-              <a href="/forms/signup/" class="ml-2 underline hover:text-accent-700">Sign up</a>
+              <a
+                href={`/forms/signup/?redirect=${encodeURIComponent(redirect)}`}
+                class="ml-2 underline hover:text-accent-700"
+              >
+                Sign up
+              </a>
             </p>
           </div>
         </form>
@@ -94,6 +99,7 @@ const reset = Astro.url.searchParams.get("reset");
 
 <script>
   import { createSupabaseBrowserClient } from "@/lib/supabase/ssr";
+  import { isSafeInternalPath } from "@/lib/auth/safe-path";
 
   const form = document.querySelector("[data-login-form]");
   const message = document.querySelector("[data-auth-message]");
@@ -104,7 +110,8 @@ const reset = Astro.url.searchParams.get("reset");
     const data = new FormData(form);
     const email = data.get("email")?.toString().trim();
     const password = data.get("password")?.toString() ?? "";
-    const redirect = data.get("redirect")?.toString() || "/novels/";
+    const rawRedirect = data.get("redirect")?.toString();
+    const redirect = isSafeInternalPath(rawRedirect) ? rawRedirect : "/novels/";
 
     if (!email || !password) return;
 

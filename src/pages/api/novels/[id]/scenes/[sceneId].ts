@@ -11,13 +11,18 @@ export const PATCH: APIRoute = async ({ cookies, request, params }) => {
   } = await supabase.auth.getUser();
   if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
 
-  const { content } = await request.json();
-  if (typeof content !== "string") {
+  let body: { content?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400 });
+  }
+  if (typeof body.content !== "string") {
     return new Response(JSON.stringify({ error: "content required" }), { status: 400 });
   }
 
   try {
-    await updateSceneContent(supabase, user.id, params.sceneId!, content);
+    await updateSceneContent(supabase, user.id, params.sceneId!, body.content);
     return new Response(JSON.stringify({ ok: true }), {
       headers: { "Content-Type": "application/json" },
     });

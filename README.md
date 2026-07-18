@@ -16,7 +16,7 @@ See **[docs/SETUP.md](docs/SETUP.md)**.
 npm install
 cp .env.example .env
 # Fill PUBLIC_SITE_URL, PUBLIC_SUPABASE_*, SUPABASE_SERVICE_ROLE_KEY
-# Run SQL: 001, 003, 007 in Supabase SQL Editor (novels + onboarding)
+# Run SQL: 001, 003, 007, 008 in Supabase SQL Editor (novels + onboarding + journal)
 npm run dev
 ```
 

@@ -4,11 +4,12 @@ import Text from "@/components/fundations/elements/Text.astro";
 import Button from "@/components/fundations/elements/Button.astro";
 import Wrapper from "@/components/fundations/containers/Wrapper.astro";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton.astro";
+import { getRedirectParam } from "@/lib/auth/session";
 
 export const prerender = false;
 
 const email = Astro.url.searchParams.get("email") ?? "";
-const redirect = "/novels/?welcome=1";
+const redirect = getRedirectParam(Astro.url, "/novels/?welcome=1");
 ---
 
 <BaseLayout hideNav={true} hideFooter={true} title="Sign up · Twilda" description="Create a Twilda account." canonicalPath="/forms/signup/" noindex={true}>
@@ -35,6 +36,7 @@ const redirect = "/novels/?welcome=1";
           </div>
         </div>
         <form class="mt-4" data-signup-form>
+          <input type="hidden" name="redirect" value={redirect} />
           <div class="space-y-6">
             <div
               class="overflow-hidden border-2 border-accent-900 shadow divide-y-2 divide-accent-900 rounded-xl"
@@ -82,7 +84,12 @@ const redirect = "/novels/?welcome=1";
             </Button>
             <p class="text-sm text-accent-900 lg:text-lg font-medium text-center">
               Already have an account?
-              <a href="/forms/login/" class="ml-2 underline hover:text-accent-700">Log in</a>
+              <a
+                href={`/forms/login/?redirect=${encodeURIComponent(redirect)}`}
+                class="ml-2 underline hover:text-accent-700"
+              >
+                Log in
+              </a>
             </p>
           </div>
         </form>
@@ -93,6 +100,7 @@ const redirect = "/novels/?welcome=1";
 
 <script>
   import { createSupabaseBrowserClient } from "@/lib/supabase/ssr";
+  import { isSafeInternalPath } from "@/lib/auth/safe-path";
 
   const form = document.querySelector("[data-signup-form]");
   const message = document.querySelector("[data-auth-message]");
@@ -104,6 +112,8 @@ const redirect = "/novels/?welcome=1";
     const email = data.get("email")?.toString().trim();
     const password = data.get("password")?.toString() ?? "";
     const displayName = data.get("display_name")?.toString().trim();
+    const rawRedirect = data.get("redirect")?.toString();
+    const afterAuth = isSafeInternalPath(rawRedirect) ? rawRedirect : "/novels/?welcome=1";
 
     if (!email || !password) return;
 
@@ -115,7 +125,6 @@ const redirect = "/novels/?welcome=1";
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const afterAuth = "/novels/?welcome=1";
       const redirectTo = `${window.location.origin}/auth/callback/?next=${encodeURIComponent(afterAuth)}`;
       const { data: signUpData, error } = await supabase.auth.signUp({
         email,

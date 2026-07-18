@@ -345,10 +345,15 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
                     {ch.scenes.map((sc) => {
                       const preview = paragraphs(sc.text)[0] ?? "";
                       return (
-                        <div class="nc-scene">
+                        <button
+                          class="nc-scene nc-scene--jump"
+                          type="button"
+                          data-goto-scene={sc.id}
+                          disabled={!sc.id}
+                        >
                           <p class="nc-scene__title">{sc.title} · {wordCount(sc.text).toLocaleString()} words</p>
-                          <p class="nc-scene__preview">{preview || "Empty scene — start writing in Write mode."}</p>
-                        </div>
+                          <p class="nc-scene__preview">{preview || "Empty scene — open Write mode to start."}</p>
+                        </button>
                       );
                     })}
                   </article>
@@ -372,7 +377,12 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
               totalWords === 0 ? (
                 <div class="nc-ms-empty">
                   <h3>{novel.title}</h3>
-                  <p>Your manuscript is blank. Click below and start writing your first scene.</p>
+                  <p>
+                    Your manuscript is blank. Add a chapter in Plan, then write your first scene here.
+                  </p>
+                  <button class="nc-btn nc-btn--primary" type="button" data-mode-btn="plan">
+                    Go to Plan
+                  </button>
                 </div>
               ) : null
             }
@@ -384,7 +394,7 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
                     <div
                       class="nc-ms-scene"
                       contenteditable="true"
-                      spellcheck="false"
+                      spellcheck="true"
                       role="textbox"
                       aria-multiline="true"
                       aria-label={sc.title ? `Write scene: ${sc.title}` : `Write scene ${si + 1} in ${ch.title}`}
@@ -430,6 +440,9 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
                     <textarea class="nc-textarea" name="synopsis" rows="5">{novel.synopsis}</textarea>
                   </label>
                   <button class="nc-btn nc-btn--primary" type="submit">Save metadata</button>
+                  <button class="nc-btn nc-btn--ghost" type="button" data-delete-novel>
+                    Delete novel
+                  </button>
                 </div>
               </form>
             </article>
@@ -564,6 +577,7 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
     document.querySelector("[data-draft-select]")?.addEventListener("change", async (event) => {
       const draftId = event.target.value;
       try {
+        await flushPendingSaves();
         const res = await fetch(`/api/novels/${novelId}/drafts/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -583,6 +597,7 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
       const name = window.prompt("Name this draft or timeline", "New timeline");
       if (!name) return;
       try {
+        await flushPendingSaves();
         const res = await fetch(`/api/novels/${novelId}/drafts/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -740,6 +755,9 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
     const side = document.querySelector(".nc-side");
     const sideTabs = document.querySelectorAll("[data-side-tab]");
     const sidePanes = document.querySelectorAll("[data-side-pane]");
+    function isMobileSide() {
+      return window.matchMedia("(max-width: 900px)").matches;
+    }
     function showSidePane(name) {
       sideTabs.forEach((x) => x.classList.toggle("is-active", x.dataset.sideTab === name));
       sidePanes.forEach((p) => {
@@ -748,8 +766,10 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
         if (on) p.removeAttribute("hidden");
         else p.setAttribute("hidden", "");
       });
-      side?.classList.add("is-open");
-      document.body.classList.add("nc-side-open");
+      if (isMobileSide()) {
+        side?.classList.add("is-open");
+        document.body.classList.add("nc-side-open");
+      }
     }
     sideTabs.forEach((t) =>
       t.addEventListener("click", () => showSidePane(t.dataset.sideTab)),
@@ -915,52 +935,126 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
       }
     });
 
-    document.querySelector("[data-export]")?.addEventListener("click", () => {
+    document.querySelector("[data-export]")?.addEventListener("click", async () => {
+      try {
+        await flushPendingSaves();
+      } catch {
+        /* still allow export of last saved state */
+      }
       window.location.href = `/api/novels/${novelId}/export/`;
       showToast("Downloading manuscript…");
     });
 
     const ms = document.querySelector(".nc-manuscript");
     const wordsLabel = document.querySelector(".nc-ws__toolright span");
+    const saveTimers = new Map();
+    const saveGeneration = new Map();
+    const dirtyScenes = new Set();
+
+    function updateCount() {
+      if (!ms || !wordsLabel) return;
+      let n = 0;
+      ms.querySelectorAll(".nc-ms-scene").forEach((sc) => {
+        const t = (sc.innerText || "").trim();
+        if (t) n += t.split(/\s+/).filter(Boolean).length;
+      });
+      wordsLabel.textContent = `${n.toLocaleString()} words`;
+    }
+
+    async function persistScene(sc, { keepalive = false } = {}) {
+      const sceneId = sc.dataset.sceneId;
+      if (!sceneId) return;
+      const gen = (saveGeneration.get(sceneId) || 0) + 1;
+      saveGeneration.set(sceneId, gen);
+      const content = sc.innerHTML;
+      try {
+        const res = await fetch(`/api/novels/${novelId}/scenes/${sceneId}/`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+          keepalive,
+        });
+        if (saveGeneration.get(sceneId) !== gen) return;
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Autosave failed");
+        }
+        if (sc.innerHTML === content) dirtyScenes.delete(sceneId);
+      } catch (err) {
+        if (saveGeneration.get(sceneId) !== gen) return;
+        showToast(err instanceof Error ? err.message : "Autosave failed — check your connection.");
+        throw err;
+      }
+    }
+
+    async function flushPendingSaves() {
+      if (!ms) return;
+      for (const timer of saveTimers.values()) window.clearTimeout(timer);
+      saveTimers.clear();
+      const scenes = [...ms.querySelectorAll(".nc-ms-scene")].filter((sc) =>
+        dirtyScenes.has(sc.dataset.sceneId),
+      );
+      await Promise.all(scenes.map((sc) => persistScene(sc)));
+    }
+
+    function flushWithKeepalive() {
+      if (!ms) return;
+      for (const timer of saveTimers.values()) window.clearTimeout(timer);
+      saveTimers.clear();
+      ms.querySelectorAll(".nc-ms-scene").forEach((sc) => {
+        if (dirtyScenes.has(sc.dataset.sceneId)) {
+          void persistScene(sc, { keepalive: true });
+        }
+      });
+    }
+
     if (ms) {
       const scenes = ms.querySelectorAll(".nc-ms-scene");
-      const saveTimers = new Map();
-
-      function updateCount() {
-        let n = 0;
-        scenes.forEach((sc) => {
-          const t = (sc.innerText || "").trim();
-          if (t) n += t.split(/\s+/).filter(Boolean).length;
-        });
-        if (wordsLabel) wordsLabel.textContent = `${n.toLocaleString()} words`;
-      }
 
       scenes.forEach((sc) => {
         sc.addEventListener("input", () => {
           updateCount();
           const sceneId = sc.dataset.sceneId;
           if (!sceneId) return;
+          dirtyScenes.add(sceneId);
           if (saveTimers.has(sceneId)) window.clearTimeout(saveTimers.get(sceneId));
           saveTimers.set(
             sceneId,
-            window.setTimeout(async () => {
-              try {
-                await fetch(`/api/novels/${novelId}/scenes/${sceneId}/`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ content: sc.innerHTML }),
-                });
-              } catch {
-                showToast("Autosave failed — check your connection.");
-              }
+            window.setTimeout(() => {
+              saveTimers.delete(sceneId);
+              void persistScene(sc);
             }, 800),
           );
         });
       });
 
+      window.addEventListener("beforeunload", (event) => {
+        if (dirtyScenes.size > 0 || saveTimers.size > 0) {
+          event.preventDefault();
+          event.returnValue = "";
+        }
+      });
+      window.addEventListener("pagehide", () => flushWithKeepalive());
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") flushWithKeepalive();
+      });
+
       updateCount();
       if (initialMode === "write") scenes[0]?.focus();
     }
+
+    document.querySelectorAll("[data-goto-scene]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const sceneId = btn.getAttribute("data-goto-scene");
+        if (!sceneId) return;
+        setMode("write");
+        const target = document.querySelector(`[data-scene-id="${sceneId}"]`);
+        if (target instanceof HTMLElement) {
+          target.scrollIntoView({ behavior: "smooth", block: "center" });
+          target.focus();
+        }
+      });
+    });
 
     document.querySelector("[data-add-chapter]")?.addEventListener("click", async () => {
       try {
@@ -993,21 +1087,45 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
       event.preventDefault();
       const form = event.target;
       const data = new FormData(form);
+      const title = String(data.get("title") || "").trim();
+      const author = String(data.get("author") || "").trim();
       try {
         const res = await fetch(`/api/novels/${novelId}/`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title: String(data.get("title") || "").trim(),
-            author: String(data.get("author") || "").trim(),
+            title,
+            author,
             synopsis: String(data.get("synopsis") || "").trim(),
             series_name: String(data.get("series_name") || "").trim() || null,
           }),
         });
-        if (!res.ok) throw new Error("Save failed");
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || "Save failed");
+        }
+        const titleEl = document.querySelector(".nc-ws__novel-link strong");
+        const authorEl = document.querySelector(".nc-ws__novel-link strong + span");
+        if (titleEl) titleEl.textContent = title || "Untitled";
+        if (authorEl) authorEl.textContent = author;
+        document.title = `${title || "Untitled"} · Twilda`;
         showToast("Metadata saved.");
       } catch (err) {
         showToast(err instanceof Error ? err.message : "Save failed");
+      }
+    });
+
+    document.querySelector("[data-delete-novel]")?.addEventListener("click", async () => {
+      if (!confirm("Delete this novel and all its drafts? This cannot be undone.")) return;
+      try {
+        const res = await fetch(`/api/novels/${novelId}/`, { method: "DELETE" });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || "Could not delete novel");
+        }
+        window.location.href = "/novels/";
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Could not delete novel");
       }
     });
 

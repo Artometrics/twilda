@@ -763,8 +763,10 @@
   height: 100dvh;
   overflow: hidden;
 }
-body.nc-side-open {
-  overflow: hidden;
+@media (max-width: 900px) {
+  body.nc-side-open {
+    overflow: hidden;
+  }
 }
 .nc-ws__header {
   display: flex;
@@ -1236,7 +1238,26 @@ body.nc-side-open {
   padding: 14px 16px;
   border-bottom: 2px solid var(--nc-border-soft);
 }
-.nc-scene:last-child {
+.nc-scene--jump {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--nc-border-soft);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+.nc-scene--jump:hover:not(:disabled) {
+  background: var(--nc-panel);
+}
+.nc-scene--jump:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.nc-scene:last-child,
+.nc-scene--jump:last-child {
   border-bottom: none;
 }
 .nc-scene__title {

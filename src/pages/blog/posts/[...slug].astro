@@ -107,6 +107,15 @@ if (!entry && !dbError) {
     const bodyEl = document.querySelector("[data-entry-body]");
     const statusEl = document.querySelector("[data-entry-status]");
     const metaEl = document.querySelector("[data-entry-meta]");
+    const saveBtn = document.querySelector("[data-save-entry]");
+
+    let dirty = false;
+    let saving = false;
+    let saveTimer = 0;
+    let lastSavedTitle =
+      titleEl instanceof HTMLInputElement ? titleEl.value : "";
+    let lastSavedBody =
+      bodyEl instanceof HTMLTextAreaElement ? bodyEl.value : "";
 
     function setStatus(message, show = true) {
       if (!(statusEl instanceof HTMLElement)) return;
@@ -114,22 +123,50 @@ if (!entry && !dbError) {
       statusEl.hidden = !show;
     }
 
-    document.querySelector("[data-save-entry]")?.addEventListener("click", async () => {
-      if (!id || !(titleEl instanceof HTMLInputElement) || !(bodyEl instanceof HTMLTextAreaElement)) {
-        return;
+    function markDirty() {
+      dirty = true;
+      setStatus("Unsaved changes", true);
+      window.clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(() => {
+        void saveEntry({ quiet: true });
+      }, 1200);
+    }
+
+    titleEl?.addEventListener("input", markDirty);
+    bodyEl?.addEventListener("input", markDirty);
+
+    async function saveEntry({ quiet = false } = {}) {
+      if (
+        !id ||
+        !(titleEl instanceof HTMLInputElement) ||
+        !(bodyEl instanceof HTMLTextAreaElement)
+      ) {
+        return false;
       }
-      setStatus("Saving…");
+      if (saving) return false;
+      const title = titleEl.value;
+      const body = bodyEl.value;
+      if (!dirty && title === lastSavedTitle && body === lastSavedBody) {
+        if (!quiet) setStatus("Saved", true);
+        return true;
+      }
+      saving = true;
+      if (!quiet) setStatus("Saving…");
       try {
         const res = await fetch(`/api/journal/${id}/`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: titleEl.value, body: bodyEl.value }),
+          body: JSON.stringify({ title, body }),
+          keepalive: quiet,
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) {
           setStatus(data.error || "Save failed");
-          return;
+          return false;
         }
+        lastSavedTitle = title;
+        lastSavedBody = body;
+        dirty = false;
         if (metaEl instanceof HTMLElement && data.entry?.updated_at) {
           const d = new Date(data.entry.updated_at).toLocaleDateString("en-US", {
             year: "numeric",
@@ -140,18 +177,47 @@ if (!entry && !dbError) {
         }
         document.title = `${data.entry?.title || "Entry"} · Journal`;
         setStatus("Saved");
-        setTimeout(() => setStatus("", false), 2000);
+        if (!quiet) window.setTimeout(() => setStatus("", false), 2000);
+        return true;
       } catch {
         setStatus("Save failed");
+        return false;
+      } finally {
+        saving = false;
       }
+    }
+
+    saveBtn?.addEventListener("click", () => {
+      window.clearTimeout(saveTimer);
+      void saveEntry();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        window.clearTimeout(saveTimer);
+        void saveEntry();
+      }
+    });
+
+    window.addEventListener("beforeunload", (event) => {
+      if (dirty) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    });
+
+    window.addEventListener("pagehide", () => {
+      if (dirty) void saveEntry({ quiet: true });
     });
 
     document.querySelector("[data-delete-entry]")?.addEventListener("click", async () => {
       if (!id || !confirm("Delete this journal entry?")) return;
+      dirty = false;
       try {
         const res = await fetch(`/api/journal/${id}/`, { method: "DELETE" });
         if (!res.ok) {
-          const data = await res.json();
+          const data = await res.json().catch(() => ({}));
           alert(data.error || "Could not delete");
           return;
         }

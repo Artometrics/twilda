@@ -112,3 +112,23 @@
   from = "/team/*"
   to = "/"
   status = 302
+
+[[redirects]]
+  from = "/research"
+  to = "/"
+  status = 302
+
+[[redirects]]
+  from = "/research/*"
+  to = "/"
+  status = 302
+
+[[redirects]]
+  from = "/system"
+  to = "/"
+  status = 302
+
+[[redirects]]
+  from = "/system/*"
+  to = "/"
+  status = 302

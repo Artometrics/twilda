@@ -1,21 +1,14 @@
 User-agent: *
 Allow: /
-Allow: /research/
-Allow: /helpcenter/
-Allow: /changelog/
 Allow: /legal/
 
 Disallow: /account
 Disallow: /novels
-Disallow: /atlas
-Disallow: /gotha
+Disallow: /blog
 Disallow: /forms
 Disallow: /api
-Disallow: /system
 Disallow: /auth
-Disallow: /customers
-Disallow: /integrations
-Disallow: /team
+Disallow: /rss.xml
 
 # Absolute URL is preferred; relative path works for same-host crawlers.
 # Netlify production should set PUBLIC_SITE_URL so sitemap + OG stay accurate.
