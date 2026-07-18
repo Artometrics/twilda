@@ -1919,8 +1919,31 @@
   .nc-board {
     padding: 16px 12px 80px;
   }
+  .nc-board__intro-actions {
+    width: 100%;
+  }
+  .nc-board__intro-actions .nc-btn {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+    text-align: center;
+  }
+  .nc-board__intro-actions .nc-btn--primary {
+    flex: 1 1 100%;
+  }
+  .nc-modes {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nc-modes::-webkit-scrollbar {
+    display: none;
+  }
   .nc-modes button {
     padding: 7px 12px;
     font-size: 13px;
+    flex: none;
+  }
+  .nc-panel-card__top-actions .nc-btn {
+    min-width: 2.25rem;
+    justify-content: center;
   }
 }
