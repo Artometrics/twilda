@@ -456,19 +456,23 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
                   16:9 panels for AI image sessions — drop a frame, write the shot line, keep the prompt ready to copy.
                 </p>
               </div>
-              <div class="nc-board__intro-actions">
-                {
-                  !storyboardError && storyboardPanels.length > 0 && (
-                    <>
-                      <button class="nc-btn" type="button" data-copy-all-prompts>
-                        Copy all prompts
-                      </button>
-                      <button class="nc-btn" type="button" data-export-prompts>
-                        Export .txt
-                      </button>
-                    </>
-                  )
-                }
+              <div class="nc-board__intro-actions" data-board-toolbar>
+                <button
+                  class="nc-btn"
+                  type="button"
+                  data-copy-all-prompts
+                  hidden={Boolean(storyboardError) || storyboardPanels.length === 0}
+                >
+                  Copy all prompts
+                </button>
+                <button
+                  class="nc-btn"
+                  type="button"
+                  data-export-prompts
+                  hidden={Boolean(storyboardError) || storyboardPanels.length === 0}
+                >
+                  Export .txt
+                </button>
                 <button
                   class="nc-btn nc-btn--primary"
                   type="button"
@@ -499,10 +503,22 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
                       <div class="nc-panel-card__top">
                         <span class="nc-panel-card__num">Panel {index + 1}</span>
                         <div class="nc-panel-card__top-actions">
-                          <button class="nc-btn nc-btn--ghost" type="button" data-move-panel="up" aria-label="Move panel up">
+                          <button
+                            class="nc-btn nc-btn--ghost"
+                            type="button"
+                            data-move-panel="up"
+                            aria-label="Move panel up"
+                            disabled={index === 0}
+                          >
                             ↑
                           </button>
-                          <button class="nc-btn nc-btn--ghost" type="button" data-move-panel="down" aria-label="Move panel down">
+                          <button
+                            class="nc-btn nc-btn--ghost"
+                            type="button"
+                            data-move-panel="down"
+                            aria-label="Move panel down"
+                            disabled={index === storyboardPanels.length - 1}
+                          >
                             ↓
                           </button>
                           <button
@@ -544,31 +560,49 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
                           placeholder="What happens in this frame…"
                         />
                       </label>
-                      <label class="nc-panel-card__field">
-                        <span>Image prompt</span>
+                      <div class="nc-panel-card__field">
+                        <div class="nc-panel-card__field-head">
+                          <span>Image prompt</span>
+                          <button class="nc-btn nc-btn--primary" type="button" data-copy-prompt>
+                            Copy prompt
+                          </button>
+                        </div>
                         <textarea
                           class="nc-textarea"
                           rows="4"
                           data-panel-prompt
                           placeholder="Paste or write the prompt for your image model…"
                         >{panel.prompt}</textarea>
-                      </label>
-                      <div class="nc-panel-card__actions">
-                        <button class="nc-btn" type="button" data-copy-prompt>
-                          Copy prompt
-                        </button>
-                        <span class="nc-panel-card__status" data-panel-status hidden></span>
                       </div>
+                      <p class="nc-panel-card__status" data-panel-status hidden></p>
                     </article>
                   ))
               }
             </div>
 
             {
-              !storyboardError && storyboardPanels.length === 0 && (
-                <div class="nc-board__empty" data-board-empty>
+              !storyboardError && (
+                <div
+                  class="nc-board__empty"
+                  data-board-empty
+                  hidden={storyboardPanels.length > 0}
+                >
                   <p>No panels yet.</p>
                   <p>Add a panel, drop a 16:9 still, then keep the prompt next to it for your image model.</p>
+                  <button class="nc-btn nc-btn--primary" type="button" data-add-panel>
+                    + Add panel
+                  </button>
+                </div>
+              )
+            }
+
+            {
+              !storyboardError && (
+                <div
+                  class="nc-board__footer"
+                  data-board-footer
+                  hidden={storyboardPanels.length === 0}
+                >
                   <button class="nc-btn nc-btn--primary" type="button" data-add-panel>
                     + Add panel
                   </button>
@@ -1260,11 +1294,31 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
       const panelTimers = new Map();
       const dirtyPanels = new Set();
 
-      function renumberPanels() {
+      function panelCount() {
+        return boardList?.querySelectorAll("[data-panel-id]").length ?? 0;
+      }
+
+      function syncBoardChrome() {
+        const count = panelCount();
+        const hasPanels = count > 0;
+        if (boardEmpty instanceof HTMLElement) boardEmpty.hidden = hasPanels;
+        const footer = boardRoot.querySelector("[data-board-footer]");
+        if (footer instanceof HTMLElement) footer.hidden = !hasPanels;
+        boardRoot.querySelectorAll("[data-copy-all-prompts], [data-export-prompts]").forEach((btn) => {
+          if (btn instanceof HTMLElement) btn.hidden = !hasPanels;
+        });
         boardList?.querySelectorAll("[data-panel-id]").forEach((card, i) => {
           const num = card.querySelector(".nc-panel-card__num");
           if (num) num.textContent = `Panel ${i + 1}`;
+          const up = card.querySelector('[data-move-panel="up"]');
+          const down = card.querySelector('[data-move-panel="down"]');
+          if (up instanceof HTMLButtonElement) up.disabled = i === 0;
+          if (down instanceof HTMLButtonElement) down.disabled = i === count - 1;
         });
+      }
+
+      function renumberPanels() {
+        syncBoardChrome();
       }
 
       function collectPrompts() {
@@ -1434,10 +1488,7 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
               throw new Error(data.error || "Delete failed");
             }
             card.remove();
-            renumberPanels();
-            if (boardList && boardList.children.length === 0 && boardEmpty) {
-              boardEmpty.hidden = false;
-            }
+            syncBoardChrome();
             showToast("Panel deleted.");
           } catch (err) {
             showToast(err instanceof Error ? err.message : "Delete failed");

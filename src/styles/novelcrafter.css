@@ -1909,7 +1909,8 @@
   display: block;
   margin-bottom: 10px;
 }
-.nc-panel-card__field > span {
+.nc-panel-card__field > span,
+.nc-panel-card__field-head > span {
   display: block;
   margin-bottom: 6px;
   font-size: 0.65rem;
@@ -1918,21 +1919,39 @@
   text-transform: uppercase;
   color: var(--nc-text-dim);
 }
+.nc-panel-card__field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.nc-panel-card__field-head > span {
+  margin-bottom: 0;
+}
+.nc-panel-card__field-head .nc-btn {
+  flex: none;
+}
 .nc-panel-card__field .nc-input,
 .nc-panel-card__field .nc-textarea {
   width: 100%;
   font-size: 16px;
 }
-.nc-panel-card__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-top: 4px;
-}
 .nc-panel-card__status {
+  margin: 4px 0 0;
+  min-height: 1.1em;
   font-size: 0.75rem;
   color: var(--nc-text-dim);
+}
+.nc-panel-card__top-actions .nc-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.nc-board__footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 4px;
 }
 
 @media (max-width: 900px) {
