@@ -1,4 +1,5 @@
 import type { CodexEntry, Chapter, Novel } from "@/apps/novelcrafter/data";
+import { trinityPilotStoryboardSnippets } from "@/lib/novels/trinity-pilot-storyboard";
 
 /**
  * Trinity draft — PILOT
@@ -11,7 +12,7 @@ export const trinityPilotDraftMeta = {
   name: "PILOT",
   slug: "pilot",
   summary:
-    'Book I · Episode 1 — "MAFIA" (novel manuscript). Animus cold open in 1893 Sicily → vacuum thesis → Estate reveal. Sophia leads; Trinity is the student.',
+    'Book I · Episode 1 — "MAFIA" (40-min / 8×5 storyboard). Animus cold open in 1893 Sicily → vacuum thesis → Estate reveal.',
 } as const;
 
 export const trinityPilotSnippets: { title: string; content: string }[] = [
@@ -28,7 +29,8 @@ A 26-year-old from Burlingame who won the lottery builds a private time machine 
 • The Don Draper reveal is the final image — headset off, Estate visible for the first time
 • Music anchor: Ennio Morricone meeting Hans Zimmer — spare, Mediterranean, then modern underneath
 • Tone: historical drama that slowly reveals it is something else entirely
-• Runtime target: 22-minute anime pilot · 8 sequences · four-layer structure`,
+• Runtime target: 40-minute pilot · 8 sequences · 5 scenes each (≈1 min / scene)
+• Storyboard + Higgsfield prompts: see Snippets "Storyboard — Seq …"`,
   },
   {
     title: "Four-layer structure",
@@ -67,14 +69,18 @@ Pilot question Trinity takes into the present: What is the drought right now?`,
   },
   {
     title: "Episode sequence map",
-    content: `1. Carlentini — 0:00–2:45 — Layer 4 — Wheat field, olive on the ground, fixed rent
-2. The Agro-Town — 2:45–6:30 — Layer 4 — Piazza, Fasci demands, 177 organizations
-3. The Contract — 6:30–9:15 — Layer 4 — Landowner meeting; instrument handed bigger tasks
-4. The Bell Tower — 9:15–12:30 — Layer 4 — Giardinello / Lercara / Gibellina; first sim glitch
-5. The Data — 12:30–15:30 — Layer 4 — Five maps; Cutrera; Marquise; 122 years
-6. The Vacuum Thesis — 15:30–18:00 — Layer 4 — Full conversation; "I think that's why I built you"
-7. Coming Out — 18:00–20:15 — Layer 2 — Journal VO over black
-8. The Estate — 20:15–22:00 — Reveal — Headset off; Hillsborough; Tajani smash`,
+    content: `40-minute clock · 5 min per sequence · 5 scenes per sequence (≈1 min each)
+
+1. Carlentini — 0:00–5:00 — Layer 4 — Drought diagnosis; olive; title card
+2. The Agro-Town — 5:00–10:00 — Layer 4 — Piazza / Fasci / 177 organizations
+3. The Contract — 10:00–15:00 — Layer 4 — Landowners; Tajani instrument
+4. The Bell Tower — 15:00–20:00 — Layer 4 — Three towns; first sim glitch
+5. The Data — 20:00–25:00 — Layer 4 — Five maps; 122 years
+6. The Vacuum Thesis — 25:00–30:00 — Layer 4 — Vacancy is the story
+7. Coming Out — 30:00–35:00 — Layer 2 — Journal VO; methodology
+8. The Estate — 35:00–40:00 — Reveal — Headset off; Hillsborough; Tajani
+
+Per-scene tables + Higgsfield prompts: Snippets "Storyboard — Seq 1…8".`,
   },
   {
     title: "What this draft is (vs v1 / v2)",
@@ -94,6 +100,7 @@ PILOT inherits Sophia + Animus + Estate energy and grounds Book I in the Sicilia
 • Sequence 7 is journal voice: first person, present tense, over black — methodology, not answers.
 • Score/tone cue for adaptation: Morricone meeting Zimmer; historical drama that slowly reveals it is something else.`,
   },
+  ...trinityPilotStoryboardSnippets(),
 ];
 
 const trinityPilotCodex: CodexEntry[] = [
