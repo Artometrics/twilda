@@ -1,21 +1,14 @@
 ---
-// Assets
 import Logo from "@/components/assets/Logo.astro";
-// Fundations
 import Button from "@/components/fundations/elements/Button.astro";
 import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-// Icons
 import X from "@/components/fundations/icons/X.astro";
 import Menu from "@/components/fundations/icons/Menu.astro";
 
 const navigationLinks = [
-  { title: "Novels", href: "/novels/" },
-  { title: "Atlas", href: "/atlas/" },
-  { title: "GOTHA", href: "/gotha/" },
-  { title: "Research", href: "/research/" },
-  { title: "Pricing", href: "/#pricing-section" },
-  { title: "Help Center", href: "/helpcenter/" },
-  { title: "Changelog", href: "/changelog/" },
+  { title: "Library", href: "/novels/" },
+  { title: "Journal", href: "/blog/" },
+  { title: "Account", href: "/account/" },
 ];
 
 const user = Astro.locals.user;
@@ -33,9 +26,9 @@ const userEmail = user?.email ?? null;
       class="relative flex flex-col w-full md:items-center md:justify-between md:flex-row"
     >
       <div class="flex flex-row items-center justify-between">
-        <a href="/">
-          <span class="sr-only">Go to homepage</span>
-          <Logo class="text-xl font-medium font-medium uppercase text-white" />
+        <a href={userEmail ? "/novels/" : "/forms/login/"}>
+          <span class="sr-only">Go to library</span>
+          <Logo class="text-xl font-medium uppercase text-white" />
         </a>
         <Button
           iconOnly
@@ -71,8 +64,8 @@ const userEmail = user?.email ?? null;
         <div
           class="relative flex md:bg-transparent flex-col items-start justify-start w-full h-full px-8 list-none md:ml-auto gap-12 md:px-0 md:flex-row md:items-center md:justify-center md:text-left md:gap-4"
         >
-          <a href="/" class="md:hidden">
-            <span class="sr-only">Go to homepage</span>
+          <a href={userEmail ? "/novels/" : "/forms/login/"} class="md:hidden">
+            <span class="sr-only">Go to library</span>
             <Logo class="h-12 text-white" />
           </a>
 
@@ -81,7 +74,7 @@ const userEmail = user?.email ?? null;
               navigationLinks.map((link) => (
                 <a
                   href={link.href}
-                  class="text-2xl font-medium md:text-xl hover:text-white text-white"
+                  class="text-lg font-medium text-white transition hover:text-accent-200 md:text-sm"
                 >
                   {link.title}
                 </a>
@@ -89,33 +82,18 @@ const userEmail = user?.email ?? null;
             }
           </div>
 
-          <div class="flex flex-col gap-2 md:flex-row md:gap-3">
+          <div class="flex flex-col w-full gap-3 md:flex-row md:w-auto md:items-center">
             {
               userEmail ? (
-                <>
-                  <Button isLink={true} size="sm" variant="muted" href="/novels/">
-                    Open library
-                  </Button>
-                  <Button isLink={true} size="sm" variant="default" href="/account/">
-                    Account
-                  </Button>
-                </>
+                <Button isLink={true} size="sm" variant="default" href="/account/">
+                  {userEmail}
+                </Button>
               ) : (
                 <>
-                  <Button
-                    isLink={true}
-                    size="sm"
-                    variant="muted"
-                    href="/forms/login/"
-                  >
+                  <Button isLink={true} size="sm" variant="muted" href="/forms/login/">
                     Log in
                   </Button>
-                  <Button
-                    isLink={true}
-                    size="sm"
-                    variant="default"
-                    href="/forms/signup/"
-                  >
+                  <Button isLink={true} size="sm" variant="default" href="/forms/signup/">
                     Sign up
                   </Button>
                 </>

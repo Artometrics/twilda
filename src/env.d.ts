@@ -9,10 +9,6 @@ interface ImportMetaEnv {
   readonly PUBLIC_SUPABASE_URL: string;
   readonly PUBLIC_SUPABASE_ANON_KEY: string;
   readonly SUPABASE_SERVICE_ROLE_KEY?: string;
-  readonly STRIPE_SECRET_KEY?: string;
-  readonly STRIPE_WEBHOOK_SECRET?: string;
-  readonly STRIPE_PRICE_PRO?: string;
-  readonly STRIPE_PRICE_STUDIO?: string;
 }
 
 interface ImportMeta {

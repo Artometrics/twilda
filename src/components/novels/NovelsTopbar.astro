@@ -1,6 +1,6 @@
 ---
 interface Props {
-  active?: "novels" | "series" | "prompts" | "atlas" | "gotha";
+  active?: "novels" | "series" | "prompts" | "journal" | "account";
   userEmail?: string | null;
   credits?: number;
   creditsMax?: number;
@@ -16,7 +16,7 @@ const initial = userEmail?.[0]?.toUpperCase() ?? "?";
 ---
 
 <header class="nc-topbar">
-  <a class="nc-brand" href="/">
+  <a class="nc-brand" href="/novels/">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
       <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" />
       <path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5A2.5 2.5 0 0 1 4 20.5z" />
@@ -24,15 +24,13 @@ const initial = userEmail?.[0]?.toUpperCase() ?? "?";
     <span>Twilda</span>
   </a>
   <nav class="nc-topnav">
-    <a class:list={[{ "is-active": active === "novels" }]} href="/novels/">Novels</a>
+    <a class:list={[{ "is-active": active === "novels" }]} href="/novels/">Library</a>
+    <a class:list={[{ "is-active": active === "journal" }]} href="/blog/">Journal</a>
     <a class:list={[{ "is-active": active === "series" }]} href="/novels/series/">Series</a>
     <a class:list={[{ "is-active": active === "prompts" }]} href="/novels/prompts/">Prompts</a>
-    <a class:list={[{ "is-active": active === "atlas" }]} href="/atlas/">Atlas</a>
-    <a class:list={[{ "is-active": active === "gotha" }]} href="/gotha/">GOTHA</a>
   </nav>
   <div class="nc-topbar__spacer"></div>
   <div class="nc-topbar__right">
-    <a href="/helpcenter/">Help</a>
     <span
       class="nc-credits"
       aria-label={`AI credits remaining: ${credits} of ${creditsMax}`}
@@ -43,14 +41,16 @@ const initial = userEmail?.[0]?.toUpperCase() ?? "?";
     {
       userEmail ? (
         <>
-          <a href="/account/" class="nc-topbar__account">{userEmail}</a>
+          <a
+            href="/account/"
+            class:list={["nc-topbar__account", { "is-active": active === "account" }]}
+          >
+            {userEmail}
+          </a>
           <span class="nc-avatar-sm">{initial}</span>
         </>
       ) : (
-        <>
-          <a href="/forms/login/?redirect=/novels/">Log in</a>
-          <a href="/forms/signup/">Sign up</a>
-        </>
+        <a href="/forms/login/?redirect=/novels/">Log in</a>
       )
     }
   </div>

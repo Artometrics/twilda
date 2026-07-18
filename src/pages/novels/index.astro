@@ -185,15 +185,12 @@ const showWelcome =
         <div class="nc-welcome__card" data-welcome-card>
           <h2 id="welcome-title">Welcome to Twilda</h2>
           <ol>
-            <li>Open a classic starter novel below.</li>
+            <li>Open a starter novel below, or create a new one.</li>
             <li>
-              Visit <a href="/atlas/?scene=met-open-access">Atlas · Met Open Access</a> and save an artifact.
+              Use <a href="/blog/">Journal</a> for notes beside the manuscript.
             </li>
             <li>
-              Load a <a href="/gotha/">GOTHA</a> sample family.
-            </li>
-            <li>
-              Review <a href="/account/#museum-heading">My Museum</a> on your account.
+              Update your name anytime in <a href="/account/">Account</a>.
             </li>
           </ol>
           <button type="button" class="nc-btn nc-btn--primary" data-welcome-dismiss>
@@ -292,7 +289,7 @@ const showWelcome =
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Could not create novel";
         if (msg.includes("Free plan allows")) {
-          showToast(`${msg} Upgrade at /account/billing/`);
+          showToast(msg);
         } else {
           showToast(msg);
         }

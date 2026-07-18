@@ -15,17 +15,9 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    # Report-Only: MapLibre + remote museum/Wikimedia portraits need broad img/connect.
-    # Tighten to enforce after verifying Atlas/GOTHA in deploy previews.
-    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.metmuseum.org https://upload.wikimedia.org https://*.supabase.co; connect-src 'self' https://*.supabase.co https://collectionapi.metmuseum.org https://en.wikipedia.org https://www.wikidata.org https://*.openstreetmap.org https://*.tile.openstreetmap.org; worker-src 'self' blob:; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://rsms.me; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co; font-src 'self' data: https://rsms.me; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 [[headers]]
   for = "/api/*"
   [headers.values]
     Cache-Control = "no-store"
-
-[[redirects]]
-  from = "/blog/*"
-  to = "/research/"
-  status = 301
-

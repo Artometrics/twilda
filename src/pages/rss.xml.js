@@ -2,17 +2,17 @@ import rss from "@astrojs/rss";
 import { getCollection } from "astro:content";
 
 export async function GET(context) {
-  const research = await getCollection("research");
+  const posts = await getCollection("posts");
   const site = context.site ?? "http://localhost:4321";
   return rss({
-    title: "Twilda | Investigations",
-    description: "Pre-registered research and writing from Twilda",
+    title: "Twilda | Journal",
+    description: "Journal entries from Twilda",
     site,
-    items: research.map((entry) => ({
-      title: entry.data.title,
-      pubDate: entry.data.pubDate,
-      description: entry.data.description,
-      link: `/research/${entry.id}/`,
+    items: posts.map((post) => ({
+      title: post.data.title,
+      pubDate: post.data.pubDate,
+      description: post.data.description,
+      link: `/blog/posts/${post.id}/`,
     })),
     customData: `<language>en-us</language>`,
   });

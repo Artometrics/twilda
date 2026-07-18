@@ -7,9 +7,8 @@ import GoogleSignInButton from "@/components/auth/GoogleSignInButton.astro";
 
 export const prerender = false;
 
-const plan = Astro.url.searchParams.get("plan") ?? "free";
 const email = Astro.url.searchParams.get("email") ?? "";
-const redirect = plan === "free" ? "/novels/?welcome=1" : `/account/billing/?plan=${plan}`;
+const redirect = "/novels/?welcome=1";
 ---
 
 <BaseLayout hideNav={true} hideFooter={true} title="Sign up · Twilda" description="Create a Twilda account." canonicalPath="/forms/signup/" noindex={true}>
@@ -36,7 +35,6 @@ const redirect = plan === "free" ? "/novels/?welcome=1" : `/account/billing/?pla
           </div>
         </div>
         <form class="mt-4" data-signup-form>
-          <input type="hidden" name="plan" value={plan} />
           <div class="space-y-6">
             <div
               class="overflow-hidden border-2 border-accent-900 shadow divide-y-2 divide-accent-900 rounded-xl"
@@ -117,9 +115,7 @@ const redirect = plan === "free" ? "/novels/?welcome=1" : `/account/billing/?pla
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const plan = data.get("plan")?.toString() ?? "free";
-      const afterAuth =
-        plan === "free" ? "/novels/?welcome=1" : `/account/billing/?plan=${plan}`;
+      const afterAuth = "/novels/?welcome=1";
       const redirectTo = `${window.location.origin}/auth/callback/?next=${encodeURIComponent(afterAuth)}`;
       const { data: signUpData, error } = await supabase.auth.signUp({
         email,

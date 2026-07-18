@@ -5,7 +5,7 @@ import { createServerClient } from "@/lib/supabase/server";
 export const prerender = false;
 
 type DeepCheck = {
-  atlas_collections?: "ok" | "missing" | "error";
+  novels?: "ok" | "missing" | "error";
   warning?: string;
   error?: string;
 };
@@ -14,25 +14,24 @@ async function deepProbe(): Promise<DeepCheck> {
   const serviceRole = Boolean(import.meta.env.SUPABASE_SERVICE_ROLE_KEY);
   if (!serviceRole) {
     return {
-      warning: "SUPABASE_SERVICE_ROLE_KEY unset — skipped atlas_collections probe",
+      warning: "SUPABASE_SERVICE_ROLE_KEY unset — skipped novels probe",
     };
   }
 
   try {
     const admin = createServerClient({ useServiceRole: true });
-    const { error } = await admin.from("atlas_collections").select("id").limit(1);
+    const { error } = await admin.from("novels").select("id").limit(1);
     if (error) {
       const msg = error.message || "query_failed";
-      // Missing relation → migrations not applied
       if (/does not exist|schema cache|relation/i.test(msg)) {
-        return { atlas_collections: "missing", error: msg };
+        return { novels: "missing", error: msg };
       }
-      return { atlas_collections: "error", error: msg };
+      return { novels: "error", error: msg };
     }
-    return { atlas_collections: "ok" };
+    return { novels: "ok" };
   } catch (err) {
     return {
-      atlas_collections: "error",
+      novels: "error",
       error: err instanceof Error ? err.message : "unknown_error",
     };
   }
@@ -50,11 +49,10 @@ export const GET: APIRoute = async ({ url }) => {
   }
 
   const criticalOk = configured && reachable;
-  // Deep atlas_collections miss/error fails the probe; missing service role is soft warning only.
   const deepFailed =
     deep &&
     deepCheck != null &&
-    (deepCheck.atlas_collections === "missing" || deepCheck.atlas_collections === "error");
+    (deepCheck.novels === "missing" || deepCheck.novels === "error");
 
   const ok = criticalOk && !deepFailed;
   const status = ok ? 200 : 503;
@@ -66,10 +64,6 @@ export const GET: APIRoute = async ({ url }) => {
       configured,
       reachable,
       ...(supabasePing.error ? { error: supabasePing.error } : {}),
-    },
-    billing: {
-      stripe: Boolean(import.meta.env.STRIPE_SECRET_KEY),
-      webhook: Boolean(import.meta.env.STRIPE_WEBHOOK_SECRET),
     },
     ...(deepCheck ? { deep: deepCheck } : {}),
   };

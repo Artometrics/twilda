@@ -1,17 +1,12 @@
 ---
 import BigLogo from "@/components/assets/BigLogo.astro";
 import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
 import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import XBrand from "@/components/fundations/icons/XBrand.astro";
 
 const footerLinks = [
-  { label: "Novels", url: "/novels/", ariaLabel: "Go to novels" },
-  { label: "Atlas", url: "/atlas/?scene=vienna-1913", ariaLabel: "Open Atlas research map" },
-  { label: "GOTHA", url: "/gotha/", ariaLabel: "GOTHA genealogy explorer" },
-  { label: "Pricing", url: "/#pricing-section", ariaLabel: "View pricing" },
-  { label: "Research", url: "/research/", ariaLabel: "Research investigations" },
-  { label: "Help Center", url: "/helpcenter/", ariaLabel: "Help center" },
+  { label: "Library", url: "/novels/", ariaLabel: "Go to novel library" },
+  { label: "Journal", url: "/blog/", ariaLabel: "Go to journal" },
+  { label: "Account", url: "/account/", ariaLabel: "Go to account" },
   { label: "Terms", url: "/legal/terms/", ariaLabel: "Terms of service" },
   { label: "Privacy", url: "/legal/privacy/", ariaLabel: "Privacy policy" },
 ];
@@ -19,55 +14,18 @@ const footerLinks = [
 
 <footer class="overflow-hidden">
   <Wrapper variant="standard" class="pt-12 bg-accent-900 border-t">
-    <div
-      class="items-start pb-12 grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-32 lg:pb-48"
-    >
+    <div class="items-start pb-12 grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-32 lg:pb-24">
       <div class="flex flex-col max-w-xl gap-6 lg:col-span-2">
-        <div>
-          <Text
-            tag="h2"
-            variant="displayLG"
-            class="font-semibold tracking-tight text-white lg:text-5xl"
-          >
-            Write with focus. Ship your draft with confidence.
-          </Text>
-          <form
-            class="justify-between mt-4 sm:flex gap-2"
-            action="/forms/signup/"
-            method="get"
-          >
-            <label class="sr-only" for="footer-email">Email address</label>
-            <input
-              autocomplete="email"
-              class="w-full px-5 py-3 text-sm text-center placeholder-black bg-white border-2 rounded-full shadow h-14 border-accent-400 lg:text-left focus:ring-black focus:border-white shadow-accent-400 focus:shadow-none duration-300 focus:translate-y-1"
-              id="footer-email"
-              name="email"
-              placeholder="Enter your email"
-              type="email"
-            />
-            <Button type="submit" size="xl" variant="accent">
-              Get started
-            </Button>
-          </form>
-
-          <div class="flex flex-col mt-4 gap-6">
-            <p class="text-xl font-normal text-white">
-              Artometrics <span>© {new Date().getFullYear()}. Twilda. All rights reserved.</span>
-            </p>
-            <div class="flex flex-wrap gap-2">
-              <Button
-                isLink={true}
-                iconOnly
-                size="sm"
-                variant="accent"
-                href="https://x.com/twilda"
-              >
-                <XBrand slot="icon" size="sm" />
-                <span class="sr-only">Follow on X</span>
-              </Button>
-            </div>
-          </div>
-        </div>
+        <Text
+          tag="h2"
+          variant="displayLG"
+          class="font-semibold tracking-tight text-white lg:text-5xl"
+        >
+          Twilda
+        </Text>
+        <p class="text-xl font-normal text-white">
+          Artometrics <span>© {new Date().getFullYear()}. Personal novel workspace.</span>
+        </p>
       </div>
       <nav
         class="flex flex-col justify-between text-base text-white gap-y-4"
@@ -82,6 +40,8 @@ const footerLinks = [
         }
       </nav>
     </div>
-    <BigLogo class="text-white lg:-mb-6" />
+    <div class="pb-8">
+      <BigLogo class="text-white opacity-20" />
+    </div>
   </Wrapper>
 </footer>
