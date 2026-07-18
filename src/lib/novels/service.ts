@@ -10,6 +10,11 @@ import {
 } from "@/lib/novels/trinity-seed";
 import { trinityV1Seed, trinityV1Snippets, trinityV1DraftMeta } from "@/lib/novels/trinity-v1-seed";
 import {
+  trinityPilotSeed,
+  trinityPilotSnippets,
+  trinityPilotDraftMeta,
+} from "@/lib/novels/trinity-pilot-seed";
+import {
   addDraftReference,
   ensureDefaultDraft,
   getActiveDraftId,
@@ -239,7 +244,7 @@ function isTrinityNovel(title: string, coverKind: CoverKind): boolean {
   return coverKind === "trinity" || title.toLowerCase().includes("trinity");
 }
 
-/** Seed both Trinity timelines (v1 metafiction + v2 series bible) when missing. */
+/** Seed Trinity timelines (v1 + v2 + PILOT) when missing. */
 export async function ensureTrinityDrafts(
   supabase: Client,
   userId: string,
@@ -263,8 +268,10 @@ export async function ensureTrinityDrafts(
   }
 
   let changed = false;
+  let pilotNewlySeeded = false;
   let v1 = drafts.find((d) => d.slug === trinityV1DraftMeta.slug);
   let v2 = drafts.find((d) => d.slug === trinityV2DraftMeta.slug);
+  let pilot = drafts.find((d) => d.slug === trinityPilotDraftMeta.slug);
 
   if (!v1) {
     const { data: draft, error: dErr } = await supabase
@@ -310,8 +317,44 @@ export async function ensureTrinityDrafts(
     changed = true;
   }
 
-  // Prefer v2 as active; remove empty leftover Main if both timelines exist
-  await setActiveDraft(supabase, userId, novelId, v2!.id);
+  if (!pilot) {
+    const { data: draft, error: dErr } = await supabase
+      .from("novel_drafts")
+      .insert({
+        novel_id: novelId,
+        name: trinityPilotDraftMeta.name,
+        slug: trinityPilotDraftMeta.slug,
+        summary: trinityPilotDraftMeta.summary,
+        sort_order: 2,
+      })
+      .select("id, novel_id, name, slug, summary, sort_order, created_at, updated_at")
+      .single();
+    if (dErr) throw dErr;
+    pilot = draft as DbDraft;
+    await seedDraftContent(supabase, novelId, pilot.id, {
+      codex: trinityPilotSeed.codex,
+      snippets: trinityPilotSnippets,
+      chapters: trinityPilotSeed.chapters,
+    });
+    pilotNewlySeeded = true;
+    changed = true;
+  }
+
+  // Prefer PILOT when just seeded; otherwise only set a default if nothing is active
+  if (pilotNewlySeeded && pilot) {
+    await setActiveDraft(supabase, userId, novelId, pilot.id);
+  } else {
+    const activeId = await getActiveDraftId(supabase, novelId);
+    const known = [v1?.id, v2?.id, pilot?.id].filter(Boolean);
+    if (!activeId || !known.includes(activeId)) {
+      await setActiveDraft(
+        supabase,
+        userId,
+        novelId,
+        (pilot ?? v2 ?? v1)!.id,
+      );
+    }
+  }
 
   const main = drafts.find((d) => d.slug === "main");
   if (main && v1 && v2) {
@@ -329,15 +372,19 @@ export async function ensureTrinityDrafts(
     }
   }
 
-  await supabase
-    .from("novels")
-    .update({
-      synopsis: trinityV2Seed.synopsis,
-      series_name: trinityV2Seed.series ?? "Trinity",
-      author: trinityV2Seed.author || novel.author,
-    })
-    .eq("id", novelId)
-    .eq("user_id", userId);
+  // Surface Book I / Odyssey framing once PILOT exists; otherwise keep the series bible shell
+  if (changed) {
+    const shell = pilot ? trinityPilotSeed : trinityV2Seed;
+    await supabase
+      .from("novels")
+      .update({
+        synopsis: shell.synopsis,
+        series_name: shell.series ?? "Trinity",
+        author: shell.author || novel.author,
+      })
+      .eq("id", novelId)
+      .eq("user_id", userId);
+  }
 
   // Cross-reference: v2 pins the v1 timeline for browsing
   if (v1 && v2) {
@@ -347,6 +394,34 @@ export async function ensureTrinityDrafts(
         source_draft_id: v1.id,
         source_type: "draft",
         note: "Earlier metafiction timeline — consult when crossing timelines.",
+      });
+      changed = true;
+    } catch {
+      /* already referenced */
+    }
+  }
+
+  // PILOT pins source timelines + the Restud-backed episode bible
+  if (pilot && v1) {
+    try {
+      await addDraftReference(supabase, userId, novelId, {
+        draft_id: pilot.id,
+        source_draft_id: v1.id,
+        source_type: "draft",
+        note: "Metafiction cycle (Sophia / KSM) — ancestry for the Animus guide.",
+      });
+      changed = true;
+    } catch {
+      /* already referenced */
+    }
+  }
+  if (pilot && v2) {
+    try {
+      await addDraftReference(supabase, userId, novelId, {
+        draft_id: pilot.id,
+        source_draft_id: v2.id,
+        source_type: "draft",
+        note: "Series bible — later seasons; PILOT is Book I / Episode 1.",
       });
       changed = true;
     } catch {
