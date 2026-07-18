@@ -54,6 +54,22 @@ function avatarStyle(seed: string): string {
   const h2 = (h + 45) % 360;
   return `background-image:linear-gradient(135deg, hsl(${h} 68% 56%), hsl(${h2} 62% 40%));`;
 }
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function sceneToHtml(content: string | null | undefined, text: string): string {
+  const trimmed = content?.trim();
+  if (trimmed) return trimmed;
+  const parts = paragraphs(text);
+  if (parts.length === 0) return "<p><br></p>";
+  return parts.map((p) => `<p>${escapeHtml(p)}</p>`).join("");
+}
 ---
 
 <NovelcrafterLayout title={`${novel.title} · Twilda`}>
@@ -374,15 +390,8 @@ function avatarStyle(seed: string): string {
                       aria-label={sc.title ? `Write scene: ${sc.title}` : `Write scene ${si + 1} in ${ch.title}`}
                       data-scene-id={sc.id}
                       data-scene-index={`${ci}-${si}`}
-                    >
-                      {sc.content ? (
-                        <div set:html={sc.content} />
-                      ) : paragraphs(sc.text).length > 0 ? (
-                        paragraphs(sc.text).map((p) => (<p>{p}</p>))
-                      ) : (
-                        <p><br /></p>
-                      )}
-                    </div>
+                      set:html={sceneToHtml(sc.content, sc.text)}
+                    />
                   ))}
                 </>
               ))

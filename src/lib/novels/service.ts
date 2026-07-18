@@ -209,7 +209,7 @@ export async function createNovel(
   input?: Partial<{ title: string; author: string; cover_kind: CoverKind }>,
 ): Promise<string> {
   const title = input?.title ?? "Untitled Novel";
-  const coverKind = input?.cover_kind ?? "cardinal";
+  const coverKind = input?.cover_kind ?? "plain";
 
   const { data: novel, error } = await supabase
     .from("novels")

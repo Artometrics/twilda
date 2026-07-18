@@ -51,7 +51,7 @@ export interface Novel {
   chapters: Chapter[];
 }
 
-export type CoverKind = "gatsby" | "cardinal" | "trinity";
+export type CoverKind = "gatsby" | "cardinal" | "trinity" | "plain";
 
 export function wordCount(text: string): number {
   const t = text.trim();

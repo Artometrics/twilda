@@ -8,6 +8,7 @@ interface Props {
   class?: string;
 }
 const { kind, title, author, subtitle, class: className = "" } = Astro.props;
+const displayTitle = title?.trim() || "Untitled";
 ---
 
 <div class:list={["nc-cover", `nc-cover--${kind}`, className]} aria-hidden="true">
@@ -41,6 +42,14 @@ const { kind, title, author, subtitle, class: className = "" } = Astro.props;
         <h3 class="nc-cover__title">TRINITY</h3>
         <p class="nc-cover__sub">ORACLE OF SILICON VALLEY</p>
         <p class="nc-cover__author">BY {author}</p>
+      </div>
+    )
+  }
+  {
+    kind === "plain" && (
+      <div class="nc-cover__inner nc-cover__inner--plain">
+        <h3 class="nc-cover__title">{displayTitle}</h3>
+        <p class="nc-cover__author">{author}</p>
       </div>
     )
   }

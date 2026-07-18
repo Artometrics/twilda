@@ -77,7 +77,7 @@ export interface Database {
           title: string;
           author: string;
           synopsis: string;
-          cover_kind: "gatsby" | "cardinal" | "trinity";
+          cover_kind: "gatsby" | "cardinal" | "trinity" | "plain";
           series_name: string | null;
           is_template: boolean;
           active_draft_id: string | null;
@@ -91,7 +91,7 @@ export interface Database {
           title?: string;
           author?: string;
           synopsis?: string;
-          cover_kind?: "gatsby" | "cardinal" | "trinity";
+          cover_kind?: "gatsby" | "cardinal" | "trinity" | "plain";
           series_name?: string | null;
           is_template?: boolean;
           active_draft_id?: string | null;
@@ -105,7 +105,7 @@ export interface Database {
           title?: string;
           author?: string;
           synopsis?: string;
-          cover_kind?: "gatsby" | "cardinal" | "trinity";
+          cover_kind?: "gatsby" | "cardinal" | "trinity" | "plain";
           series_name?: string | null;
           is_template?: boolean;
           active_draft_id?: string | null;
