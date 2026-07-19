@@ -12,7 +12,7 @@ export const trinityPilotDraftMeta = {
   name: "PILOT",
   slug: "pilot",
   summary:
-    'Book I · Episode 1 — "MAFIA" (40-min / 8×5). Seq1 Ghibli stills + Carlentini field bible + locked Trinity/Sophia kits.',
+    'Book I · Episode 1 — "MAFIA" (40-min / 8×5). Seq1 Ghibli stills (nano_banana_pro) + Carlentini field bible + locked kits.',
 } as const;
 
 export const trinityPilotSnippets: { title: string; content: string }[] = [

@@ -15,47 +15,47 @@ export const trinityPilotHiggsfieldIds = {
   trinityElementId: "ff3d5f00-f46d-4623-8567-dd98d68e5c77",
   sophiaElementId: "a4217074-311b-4cb5-bd89-0c3689097ee7",
   /** Preferred model for Element multi-character Sicily stills */
-  imageModel: "nano_banana_2",
-  /** Completed Seq 1 stills (s1e1…s1e5), nano_banana_2 · 16:9 · 2026-07-19 */
+  imageModel: "nano_banana_pro",
+  /** Completed Seq 1 stills (s1e1…s1e5), nano_banana_pro · 16:9 · 2026-07-19 */
   seq1Stills: [
     {
       id: "s1e1",
       title: "Wrong Wind",
-      jobId: "ff34d179-6a6e-46a3-b5f3-05c5b6a218da",
-      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_001412_ff34d179-6a6e-46a3-b5f3-05c5b6a218da.png",
+      jobId: "a2b2b4f7-2687-44c5-9959-65ec0f697713",
+      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_002231_a2b2b4f7-2687-44c5-9959-65ec0f697713.png",
     },
     {
       id: "s1e2",
       title: "Prognosis",
-      jobId: "ccdf6570-904e-436a-aa9d-9740aa9307b5",
-      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_001412_ccdf6570-904e-436a-aa9d-9740aa9307b5.png",
+      jobId: "4f1510cf-e985-4227-831a-a7a749c788f2",
+      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_002230_4f1510cf-e985-4227-831a-a7a749c788f2.png",
     },
     {
       id: "s1e3",
       title: "Fixed Rent",
-      jobId: "53b9de72-86c0-4d4f-ace3-107be0bd9c81",
-      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_001413_53b9de72-86c0-4d4f-ace3-107be0bd9c81.png",
+      jobId: "ddf50696-1da1-464e-8350-bd92f5db0be1",
+      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_002232_ddf50696-1da1-464e-8350-bd92f5db0be1.png",
     },
     {
       id: "s1e4",
       title: "The Olive",
-      jobId: "6c472306-2cab-4368-90f2-1b8f2118b51f",
-      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_001412_6c472306-2cab-4368-90f2-1b8f2118b51f.png",
+      jobId: "302e4779-d61d-497b-8ce0-ef9bf8f4c7b1",
+      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_002230_302e4779-d61d-497b-8ce0-ef9bf8f4c7b1.png",
     },
     {
       id: "s1e5",
       title: "Title Card",
-      jobId: "afda0b15-4869-4712-a70c-93576baf0c2e",
-      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_001413_afda0b15-4869-4712-a70c-93576baf0c2e.png",
+      jobId: "c9b16356-4129-4637-8129-a05e6f01f4ca",
+      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_002231_c9b16356-4129-4637-8129-a05e6f01f4ca.png",
     },
   ],
   /** Job ids only, order s1e1…s1e5 */
   seq1JobIds: [
-    "ff34d179-6a6e-46a3-b5f3-05c5b6a218da",
-    "ccdf6570-904e-436a-aa9d-9740aa9307b5",
-    "53b9de72-86c0-4d4f-ace3-107be0bd9c81",
-    "6c472306-2cab-4368-90f2-1b8f2118b51f",
-    "afda0b15-4869-4712-a70c-93576baf0c2e",
+    "a2b2b4f7-2687-44c5-9959-65ec0f697713",
+    "4f1510cf-e985-4227-831a-a7a749c788f2",
+    "ddf50696-1da1-464e-8350-bd92f5db0be1",
+    "302e4779-d61d-497b-8ce0-ef9bf8f4c7b1",
+    "c9b16356-4129-4637-8129-a05e6f01f4ca",
   ],
 };
 
