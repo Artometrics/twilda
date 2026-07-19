@@ -42,7 +42,147 @@ export type MangaPageSeed = {
   panels: MangaPanelSeed[];
 };
 
+/** Locked Seq 1 manga panel generations (nano_banana_2 · 3:4 · 2026-07-19) */
+export const trinitySeq1MangaJobs: Record<string, { jobId: string; url: string }> = {
+  "s1e1:1": {
+    "jobId": "2ee2ccbe-f2ed-461c-963a-e5d09368d6ff",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004820_2ee2ccbe-f2ed-461c-963a-e5d09368d6ff.png"
+  },
+  "s1e1:2": {
+    "jobId": "54971963-cb16-4b00-8213-0827c1b4237d",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004820_54971963-cb16-4b00-8213-0827c1b4237d.png"
+  },
+  "s1e1:3": {
+    "jobId": "fed1a410-7271-4379-984d-782901476e81",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004821_fed1a410-7271-4379-984d-782901476e81.png"
+  },
+  "s1e1:4": {
+    "jobId": "7ba76155-2ff2-498a-a089-b67c428bb44f",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004821_7ba76155-2ff2-498a-a089-b67c428bb44f.png"
+  },
+  "s1e1:5": {
+    "jobId": "c3f2ae12-39ba-4de5-9d71-95088f0346fc",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004821_c3f2ae12-39ba-4de5-9d71-95088f0346fc.png"
+  },
+  "s1e1:6": {
+    "jobId": "3b32215d-9662-4f1c-9039-622f6c684ed6",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004820_3b32215d-9662-4f1c-9039-622f6c684ed6.png"
+  },
+  "s1e2:1": {
+    "jobId": "498fac8e-ad56-4e5e-8bed-336c26e72801",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004926_498fac8e-ad56-4e5e-8bed-336c26e72801.png"
+  },
+  "s1e2:2": {
+    "jobId": "48072390-2c0e-4b26-b15d-31583679573a",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004927_48072390-2c0e-4b26-b15d-31583679573a.png"
+  },
+  "s1e2:3": {
+    "jobId": "b4ad61de-8e31-423b-97d7-0cffffeb21bd",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004926_b4ad61de-8e31-423b-97d7-0cffffeb21bd.png"
+  },
+  "s1e2:4": {
+    "jobId": "97c6fe4e-f025-4ef7-b77d-5ac8e66dfca5",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004927_97c6fe4e-f025-4ef7-b77d-5ac8e66dfca5.png"
+  },
+  "s1e2:5": {
+    "jobId": "bcb3fe78-354e-4167-8518-fe7618ba34b3",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004926_bcb3fe78-354e-4167-8518-fe7618ba34b3.png"
+  },
+  "s1e2:6": {
+    "jobId": "5a7988c6-42b1-443a-8bfa-f3eb0082255f",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_004927_5a7988c6-42b1-443a-8bfa-f3eb0082255f.png"
+  },
+  "s1e3:1": {
+    "jobId": "4494b65b-d66d-4ade-ae09-2339dd838981",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005011_4494b65b-d66d-4ade-ae09-2339dd838981.png"
+  },
+  "s1e3:2": {
+    "jobId": "38a72701-62a3-4697-aa1e-b10f45997b93",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005012_38a72701-62a3-4697-aa1e-b10f45997b93.png"
+  },
+  "s1e3:3": {
+    "jobId": "c36444b7-2764-4c35-9797-fd506b0f318c",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005010_c36444b7-2764-4c35-9797-fd506b0f318c.png"
+  },
+  "s1e3:4": {
+    "jobId": "236fc71d-d09c-4b7f-9b2f-f9b1b55cbd4d",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005011_236fc71d-d09c-4b7f-9b2f-f9b1b55cbd4d.png"
+  },
+  "s1e3:5": {
+    "jobId": "8dd69b30-1911-4971-96f1-f3f31808561e",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005011_8dd69b30-1911-4971-96f1-f3f31808561e.png"
+  },
+  "s1e3:6": {
+    "jobId": "a6e40053-6c28-4f0e-b394-091273d3125b",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005012_a6e40053-6c28-4f0e-b394-091273d3125b.png"
+  },
+  "s1e4:1": {
+    "jobId": "5f7c49e8-7489-4a00-8069-59cde0ebbbaa",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005057_5f7c49e8-7489-4a00-8069-59cde0ebbbaa.png"
+  },
+  "s1e4:2": {
+    "jobId": "d47b5530-1323-4542-9fd3-a0110bd9545b",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005056_d47b5530-1323-4542-9fd3-a0110bd9545b.png"
+  },
+  "s1e4:3": {
+    "jobId": "be03c5d1-2916-44e8-8eb5-973939611706",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005057_be03c5d1-2916-44e8-8eb5-973939611706.png"
+  },
+  "s1e4:4": {
+    "jobId": "f013f00f-3610-426d-80c4-6f1a67dc2f8f",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005056_f013f00f-3610-426d-80c4-6f1a67dc2f8f.png"
+  },
+  "s1e4:5": {
+    "jobId": "0f1e0f75-cd5e-4bc9-9660-150fec7b2865",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005058_0f1e0f75-cd5e-4bc9-9660-150fec7b2865.png"
+  },
+  "s1e4:6": {
+    "jobId": "0c42d6bd-b865-4dc7-b3e4-6a20d7456149",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005058_0c42d6bd-b865-4dc7-b3e4-6a20d7456149.png"
+  },
+  "s1e5:1": {
+    "jobId": "9a112076-61d4-4932-ab14-ef21ed124279",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005152_9a112076-61d4-4932-ab14-ef21ed124279.png"
+  },
+  "s1e5:2": {
+    "jobId": "be936791-ae41-4441-90db-3b0a0e39f0c9",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005154_be936791-ae41-4441-90db-3b0a0e39f0c9.png"
+  },
+  "s1e5:3": {
+    "jobId": "3287b691-5004-4cf5-b83b-b21862c67765",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005152_3287b691-5004-4cf5-b83b-b21862c67765.png"
+  },
+  "s1e5:4": {
+    "jobId": "17f388f8-a167-4381-9f26-ecf7d8aea50c",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005154_17f388f8-a167-4381-9f26-ecf7d8aea50c.png"
+  },
+  "s1e5:5": {
+    "jobId": "cb329758-086a-4f09-8dd9-8690e07e20ff",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005153_cb329758-086a-4f09-8dd9-8690e07e20ff.png"
+  },
+  "s1e5:6": {
+    "jobId": "ff3eea6a-d039-4afd-af92-41c5c44ae689",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_005153_ff3eea6a-d039-4afd-af92-41c5c44ae689.png"
+  }
+};
+
 export const mangaDefaultModel = "nano_banana_2";
+
+function applySeq1MangaJobs(pages: MangaPageSeed[]): MangaPageSeed[] {
+  return pages.map((page) => ({
+    ...page,
+    panels: page.panels.map((panel) => {
+      const hit = trinitySeq1MangaJobs[`${page.scene_key}:${panel.slot}`];
+      if (!hit) return panel;
+      return {
+        ...panel,
+        higgsfield_job_id: hit.jobId,
+        source_url: hit.url,
+      };
+    }),
+  }));
+}
+
 
 /** Prefix STYLE_GHIBLI when the base prompt lacks the Ghibli lock. */
 export function buildMangaPanelPrompt(base: string): string {
@@ -430,4 +570,4 @@ const shellPages: MangaPageSeed[] = trinityPilotScenes
   .map(shellPage);
 
 /** All 40 manga pages (Seq 1 scripted + Seq 2–8 shells). */
-export const trinityPilotMangaPages: MangaPageSeed[] = [...seq1Pages, ...shellPages];
+export const trinityPilotMangaPages: MangaPageSeed[] = [...applySeq1MangaJobs(seq1Pages), ...shellPages];

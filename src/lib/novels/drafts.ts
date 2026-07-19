@@ -249,6 +249,8 @@ export async function seedDraftContent(
       aliases: e.aliases ?? [],
       summary: e.summary,
       description: e.description,
+      appearance_lock: e.appearance_lock ?? "",
+      element_id: e.element_id ?? "",
       mentions: e.mentions ?? 0,
     }));
     const { error } = await supabase.from("codex_entries").insert(rows);

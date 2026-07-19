@@ -36,6 +36,7 @@ The scripts are **idempotent** (safe to re-run).
 | `007_onboarding.sql` | `profiles.onboarding_completed` for welcome modal persistence |
 | `008_journal_entries.sql` | Private journal entries for `/blog` (RLS per user) |
 | `009_storyboard_panels.sql` | Storyboard panels + private Storage bucket `storyboard` |
+| `010_manga_pages.sql` | Manga Studio pages/panels + `manga` bucket + codex character-sheet fields |
 
 ## Atlas: TypeScript seeds vs DB tables
 

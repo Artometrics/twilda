@@ -30,6 +30,9 @@ Create project **`twilda`** under org **Artometrics**.
    - `007_onboarding.sql` — `profiles.onboarding_completed` for welcome modal
    - `008_journal_entries.sql` — private journal entries (`/blog`)
    - `009_storyboard_panels.sql` — Board mode panels + private `storyboard` storage bucket
+   - `010_manga_pages.sql` — Manga Studio pages/panels + `manga` storage bucket + codex character-sheet fields
+
+See also [`docs/MANGA_STUDIO.md`](MANGA_STUDIO.md) for the plan→produce→publish manga workflow.
 
 Older Atlas/GOTHA migrations (`004`–`006`) are unused by the current app and can be skipped for a fresh solo setup.
 

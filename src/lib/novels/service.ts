@@ -14,6 +14,7 @@ import {
   trinityPilotSnippets,
   trinityPilotDraftMeta,
 } from "@/lib/novels/trinity-pilot-seed";
+import { ensureMangaSeeded, isMangaSetupError, seedMangaFromPilot } from "@/lib/novels/manga";
 import {
   addDraftReference,
   ensureDefaultDraft,
@@ -73,6 +74,8 @@ function mapCodexRow(row: Database["public"]["Tables"]["codex_entries"]["Row"]):
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     summary: row.summary,
     description: row.description,
+    appearance_lock: row.appearance_lock || undefined,
+    element_id: row.element_id || undefined,
     aliases: Array.isArray(row.aliases) ? (row.aliases as string[]) : undefined,
     mentions: row.mentions,
   };
@@ -335,12 +338,23 @@ export async function ensureTrinityDrafts(
       snippets: trinityPilotSnippets,
       chapters: trinityPilotSeed.chapters,
     });
+    try {
+      await seedMangaFromPilot(supabase, userId, novelId, pilot.id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!isMangaSetupError(message)) throw error;
+    }
     changed = true;
   } else if (pilot.summary !== trinityPilotDraftMeta.summary) {
     // Refresh template manuscript when seed summary bumps (e.g. screenplay → novel)
     await supabase.from("chapters").delete().eq("draft_id", pilot.id);
     await supabase.from("codex_entries").delete().eq("draft_id", pilot.id);
     await supabase.from("snippets").delete().eq("draft_id", pilot.id);
+    try {
+      await supabase.from("manga_pages").delete().eq("draft_id", pilot.id);
+    } catch {
+      /* manga migration may not be applied yet */
+    }
     await supabase
       .from("novel_drafts")
       .update({
@@ -353,8 +367,22 @@ export async function ensureTrinityDrafts(
       snippets: trinityPilotSnippets,
       chapters: trinityPilotSeed.chapters,
     });
+    try {
+      await seedMangaFromPilot(supabase, userId, novelId, pilot.id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!isMangaSetupError(message)) throw error;
+    }
     pilot = { ...pilot, name: trinityPilotDraftMeta.name, summary: trinityPilotDraftMeta.summary };
     changed = true;
+  } else {
+    // Ensure manga pages exist even when manuscript already matches
+    try {
+      await ensureMangaSeeded(supabase, userId, novelId, pilot.id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!isMangaSetupError(message)) throw error;
+    }
   }
 
   // Prefer PILOT as active (Book I); fall back to v2

@@ -1,5 +1,10 @@
 import type { CodexEntry, Chapter, Novel } from "@/apps/novelcrafter/data";
-import { trinityPilotStoryboardSnippets } from "@/lib/novels/trinity-pilot-storyboard";
+import {
+  SOPHIA_APPEARANCE_LOCK,
+  TRINITY_APPEARANCE_LOCK,
+  trinityPilotHiggsfieldIds,
+  trinityPilotStoryboardSnippets,
+} from "@/lib/novels/trinity-pilot-storyboard";
 
 /**
  * Trinity draft — PILOT
@@ -12,7 +17,7 @@ export const trinityPilotDraftMeta = {
   name: "PILOT",
   slug: "pilot",
   summary:
-    'Book I · Episode 1 — "MAFIA" (40-min / 8×5). Seq1 Ghibli stills (nano_banana_2 default) + Carlentini bible + locked kits.',
+    'Book I · Episode 1 — "MAFIA". Manga Studio (40 pages × 6 panels) + Seq1 scripts + nano_banana_2 + character sheets.',
 } as const;
 
 export const trinityPilotSnippets: { title: string; content: string }[] = [
@@ -110,15 +115,19 @@ const trinityPilotCodex: CodexEntry[] = [
     name: "Trinity",
     initials: "TR",
     color: "from-stone-800 to-zinc-950",
-    tags: ["protagonist", "animus", "hillsborough", "student", "pilot"],
+    tags: ["protagonist", "animus", "hillsborough", "student", "pilot", "manga"],
     aliases: ["The student"],
+    appearance_lock: TRINITY_APPEARANCE_LOCK,
+    element_id: trinityPilotHiggsfieldIds.trinityElementId,
     summary:
       "26-year-old from Burlingame who won the lottery, built the Animus in secret, and walks history with Sophia looking for the shape of collapse.",
-    description: `In Episode 1 he is the student — Sophia runs him. Dressed in the simulation as a day laborer: rough linen, worn boots, dark hair. In the present: black hair, dark eyes, all black clothes.
+    description: `In Episode 1 he is the student — Sophia runs him. Dressed in the simulation as a day laborer: off-white linen, dark trousers, worn boots, CLEAN-SHAVEN, dark messy fringe. In the present: black hair, dark eyes, all black clothes.
 
 Built the Animus alone, with resources that required no approval. Lives in a French Renaissance Revival chateau in Hillsborough (5.36 acres) that from the street reads as old money doing nothing in particular. Nobody knows.
 
-Episode close: "I think we've been in one [a vacuum] for a while. I think most people don't have the data to see it yet. I think that's why I built you."`,
+Episode close: "I think we've been in one [a vacuum] for a while. I think most people don't have the data to see it yet. I think that's why I built you."
+
+Higgsfield Element: ${trinityPilotHiggsfieldIds.trinityElementId}`,
   },
   {
     id: "sophia-pilot",
@@ -126,15 +135,19 @@ Episode close: "I think we've been in one [a vacuum] for a while. I think most p
     name: "Sophia",
     initials: "SO",
     color: "from-amber-700 to-stone-900",
-    tags: ["ai", "guide", "animus", "layer-4", "pilot"],
+    tags: ["ai", "guide", "animus", "layer-4", "pilot", "manga"],
     aliases: ["The guide"],
+    appearance_lock: SOPHIA_APPEARANCE_LOCK,
+    element_id: trinityPilotHiggsfieldIds.sophiaElementId,
     summary:
       "AI companion who leads Trinity through Animus sessions; speaks first, translates, and never performs the history — she teaches it.",
-    description: `In 1893 Sicily she wears practical dark wool — period dress that absorbs heat and doesn't complain. Italian-accented English, quiet. She always speaks first.
+    description: `In 1893 Sicily she wears a dark wool/cotton peasant WORK dress — high neck, long sleeves, apron/shawl; blonde hair UP in a chignon. Italian-accented English, quiet. She always speaks first.
 
 She is guide in Sequences 1–5, then sits beside him for the vacuum thesis (Sequence 6). After extraction she speaks from the Estate speakers — everywhere and nowhere.
 
-Closest she comes to vulnerability in the pilot: "That's either very smart or very frightening."`,
+Closest she comes to vulnerability in the pilot: "That's either very smart or very frightening."
+
+Higgsfield Element: ${trinityPilotHiggsfieldIds.sophiaElementId}`,
   },
   {
     id: "the-animus",

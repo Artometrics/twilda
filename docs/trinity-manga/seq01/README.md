@@ -17,3 +17,4 @@ Five pages · 6 panels each · fully scripted in `trinity-pilot-manga.ts`.
 - Research links on selected panels (Il Giornale di Sicilia / Carlentini / fixed rent)
 - Default model: `nano_banana_2`
 - Elements: see `character-trinity.md` / `character-sophia.md`
+- Generated panels (30): job ids + CDN urls in `panel-jobs.json` and `trinitySeq1MangaJobs` in `trinity-pilot-manga.ts`

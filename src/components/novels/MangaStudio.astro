@@ -1,0 +1,315 @@
+---
+import type { MangaPage } from "@/lib/novels/manga";
+import { isMangaSetupError } from "@/lib/novels/manga";
+import { mangaDefaultModel } from "@/lib/novels/trinity-pilot-manga";
+
+interface Props {
+  novelId: string;
+  draftId: string | null;
+  pages: MangaPage[];
+  error: string | null;
+  view: "studio" | "read";
+  selectedSceneKey: string | null;
+}
+
+const { novelId, draftId, pages, error, view, selectedSceneKey } = Astro.props;
+
+const sequences = Array.from(new Set(pages.map((p) => p.sequence))).sort((a, b) => a - b);
+const selected =
+  pages.find((p) => p.scene_key === selectedSceneKey) ??
+  pages.find((p) => p.sequence === 1) ??
+  pages[0] ??
+  null;
+
+function pageStatus(page: MangaPage): string {
+  const filled = page.panels.filter((p) => p.image_url || p.source_url).length;
+  if (page.page_image_url) return "composited";
+  if (filled === 6) return "generated";
+  if (page.panels.some((p) => p.prompt.trim())) return "prompted";
+  return "script";
+}
+
+const draftQ = draftId ? `draft=${draftId}` : "";
+---
+
+<div
+  class="nc-manga"
+  data-manga
+  data-novel-id={novelId}
+  data-draft-id={draftId ?? ""}
+  data-view={view}
+  data-model={mangaDefaultModel}
+>
+  <div class="nc-manga__intro">
+    <div>
+      <h2>Manga Studio</h2>
+      <p>
+        One scene = one page = six panels (2×3). Default model: <code>{mangaDefaultModel}</code>.
+        Board stays cinematic 16:9; this is the publication grid.
+      </p>
+    </div>
+    <div class="nc-manga__intro-actions">
+      {
+        draftId && (
+          <a class="nc-btn" href={`/novels/${novelId}/?${draftQ}&mode=manga&view=read`}>
+            Reader
+          </a>
+        )
+      }
+      {
+        draftId && view === "read" && (
+          <a class="nc-btn" href={`/novels/${novelId}/?${draftQ}&mode=manga`}>
+            Studio
+          </a>
+        )
+      }
+      <button class="nc-btn" type="button" data-manga-copy-prompts disabled={!selected}>
+        Copy page prompts
+      </button>
+      <a
+        class="nc-btn"
+        href={`/api/novels/${novelId}/manga/export/?${draftQ}&format=zip&sequence=1`}
+        data-manga-export
+      >
+        Export Seq 1 ZIP
+      </a>
+      <a
+        class="nc-btn"
+        href={`/api/novels/${novelId}/manga/export/?${draftQ}&format=cbz&sequence=1`}
+      >
+        CBZ
+      </a>
+      <a
+        class="nc-btn"
+        href={`/api/novels/${novelId}/manga/export/?${draftQ}&format=pdf&sequence=1`}
+      >
+        PDF
+      </a>
+      <button class="nc-btn nc-btn--primary" type="button" data-manga-reseed>
+        Reseed pages
+      </button>
+    </div>
+  </div>
+
+  {
+    error && (
+      <div class="nc-board__alert" role="alert">
+        {isMangaSetupError(error)
+          ? "Manga Studio needs Supabase migration 010_manga_pages.sql — run it in the SQL Editor, then refresh."
+          : `Could not load manga: ${error}`}
+      </div>
+    )
+  }
+
+  {
+    !error && view === "read" && (
+      <div class="nc-manga-reader" data-manga-reader>
+        {
+          pages.filter((p) => p.sequence === 1).length === 0 ? (
+            <p class="nc-manga__empty">No pages yet. Reseed or open Studio.</p>
+          ) : (
+            pages
+              .filter((p) => p.sequence === 1)
+              .map((page, i) => (
+                <figure class="nc-manga-reader__page" data-reader-page={i}>
+                  {page.page_image_url ? (
+                    <img src={page.page_image_url} alt={`${page.title} page`} />
+                  ) : (
+                    <div class="nc-manga-grid nc-manga-grid--read">
+                      {page.panels.map((panel) => (
+                        <div class="nc-manga-cell">
+                          {panel.image_url || panel.source_url ? (
+                            <img
+                              src={panel.image_url || panel.source_url || ""}
+                              alt={panel.caption}
+                            />
+                          ) : (
+                            <span class="nc-manga-cell__empty">{panel.slot}. {panel.caption}</span>
+                          )}
+                          {(panel.dialogue || panel.caption) && (
+                            <figcaption>
+                              {panel.dialogue || panel.caption}
+                            </figcaption>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <figcaption class="nc-manga-reader__label">
+                    {page.scene_key} · {page.title}
+                  </figcaption>
+                </figure>
+              ))
+          )
+        }
+        <p class="nc-manga-reader__hint">Scroll or use ← → to turn Seq 1 pages.</p>
+      </div>
+    )
+  }
+
+  {
+    !error && view === "studio" && (
+      <div class="nc-manga-studio">
+        <aside class="nc-manga-nav">
+          {
+            sequences.map((seq) => (
+              <div class="nc-manga-nav__seq">
+                <h3>Sequence {seq}</h3>
+                <ul>
+                  {pages
+                    .filter((p) => p.sequence === seq)
+                    .map((page) => (
+                      <li>
+                        <a
+                          class:list={[
+                            "nc-manga-nav__link",
+                            { "is-active": selected?.id === page.id },
+                          ]}
+                          href={`/novels/${novelId}/?${draftQ}&mode=manga&page=${page.scene_key}`}
+                        >
+                          <span class="nc-manga-nav__key">{page.scene_key}</span>
+                          <span class="nc-manga-nav__title">{page.title}</span>
+                          <span class={`nc-manga-chip nc-manga-chip--${pageStatus(page)}`}>
+                            {pageStatus(page)}
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ))
+          }
+        </aside>
+
+        {
+          selected ? (
+            <div class="nc-manga-editor" data-manga-page-id={selected.id}>
+              <header class="nc-manga-editor__head">
+                <div>
+                  <p class="nc-manga-editor__key">
+                    {selected.scene_key} · Seq {selected.sequence} · Page {selected.page_number}
+                  </p>
+                  <h3>{selected.title}</h3>
+                  <p class="nc-manga-editor__summary">{selected.summary}</p>
+                </div>
+                <div class="nc-manga-editor__actions">
+                  <button class="nc-btn nc-btn--primary" type="button" data-manga-composite>
+                    Composite page
+                  </button>
+                </div>
+              </header>
+
+              <label class="nc-manga-editor__notes">
+                <span>Page notes</span>
+                <textarea class="nc-textarea" rows="2" data-manga-page-notes>
+                  {selected.script_notes}
+                </textarea>
+              </label>
+
+              <details class="nc-manga-research">
+                <summary>Research</summary>
+                <ul>
+                  {selected.panels.flatMap((panel) => {
+                    const links = Array.isArray(panel.research_links)
+                      ? (panel.research_links as { label?: string; url?: string }[])
+                      : [];
+                    return links.map((link, i) => (
+                      <li>
+                        Panel {panel.slot}:{" "}
+                        {link.url ? (
+                          <a href={link.url} target="_blank" rel="noreferrer">
+                            {link.label || link.url}
+                          </a>
+                        ) : (
+                          link.label || "Note"
+                        )}
+                        <span class="nc-manga-research__i">{i + 1}</span>
+                      </li>
+                    ));
+                  })}
+                  {selected.panels.every(
+                    (p) => !Array.isArray(p.research_links) || p.research_links.length === 0,
+                  ) && <li class="nc-manga__muted">No research links on this page.</li>}
+                </ul>
+              </details>
+
+              <div class="nc-manga-grid" data-manga-grid>
+                {selected.panels.map((panel) => (
+                  <article class="nc-manga-cell" data-manga-panel-id={panel.id} data-slot={panel.slot}>
+                    <div class="nc-manga-cell__top">
+                      <span>
+                        {panel.slot}. {panel.caption || "Panel"}
+                      </span>
+                      <button class="nc-btn nc-btn--ghost" type="button" data-manga-copy-one>
+                        Copy
+                      </button>
+                    </div>
+                    <label class="nc-manga-cell__frame">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        data-manga-image
+                        hidden
+                      />
+                      {panel.image_url || panel.source_url ? (
+                        <img
+                          src={panel.image_url || panel.source_url || ""}
+                          alt=""
+                          data-manga-preview
+                        />
+                      ) : (
+                        <span class="nc-manga-cell__empty" data-manga-empty>
+                          Upload / import
+                        </span>
+                      )}
+                    </label>
+                    <label>
+                      <span>Caption</span>
+                      <input class="nc-input" type="text" data-manga-caption value={panel.caption} />
+                    </label>
+                    <label>
+                      <span>Dialogue</span>
+                      <input
+                        class="nc-input"
+                        type="text"
+                        data-manga-dialogue
+                        value={panel.dialogue}
+                      />
+                    </label>
+                    <label>
+                      <span>SFX</span>
+                      <input class="nc-input" type="text" data-manga-sfx value={panel.sfx} />
+                    </label>
+                    <label>
+                      <span>Notes</span>
+                      <input class="nc-input" type="text" data-manga-notes value={panel.notes} />
+                    </label>
+                    <label>
+                      <span>Prompt</span>
+                      <textarea class="nc-textarea" rows="3" data-manga-prompt>
+                        {panel.prompt}
+                      </textarea>
+                    </label>
+                    <label>
+                      <span>Source URL (Higgsfield)</span>
+                      <input
+                        class="nc-input"
+                        type="url"
+                        data-manga-source
+                        value={panel.source_url ?? ""}
+                        placeholder="https://…"
+                      />
+                    </label>
+                    <p class="nc-panel-card__status" data-manga-status hidden></p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p class="nc-manga__empty">No manga pages. Click Reseed pages (requires migration 010).</p>
+          )
+        }
+      </div>
+    )
+  }
+</div>

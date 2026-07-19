@@ -17,6 +17,12 @@ export interface CodexEntry {
   tags: string[];
   summary: string;
   description: string;
+  /** Character sheet: period / Animus appearance lock */
+  appearance_lock?: string;
+  /** Higgsfield Element id for image gen */
+  element_id?: string;
+  /** Signed or public ref image URL (runtime) */
+  ref_image_url?: string | null;
   aliases?: string[];
   mentions?: number;
 }

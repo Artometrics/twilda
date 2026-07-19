@@ -22,6 +22,12 @@ import {
   listStoryboardPanels,
   type StoryboardPanel,
 } from "@/lib/novels/storyboard";
+import {
+  ensureMangaSeeded,
+  listMangaPages,
+  type MangaPage,
+} from "@/lib/novels/manga";
+import MangaStudio from "@/components/novels/MangaStudio.astro";
 import { requireAuth, dbErrorMessage } from "@/lib/auth/guards";
 
 const auth = requireAuth(Astro);
@@ -61,6 +67,19 @@ try {
   );
 } catch (error) {
   storyboardError = dbErrorMessage(error);
+}
+
+let mangaPages: MangaPage[] = [];
+let mangaError: string | null = null;
+const mangaView = Astro.url.searchParams.get("view") === "read" ? "read" : "studio";
+const mangaPageKey = Astro.url.searchParams.get("page");
+if (activeDraft?.id) {
+  try {
+    await ensureMangaSeeded(supabase, user.id, id!, activeDraft.id);
+    mangaPages = await listMangaPages(supabase, user.id, id!, activeDraft.id);
+  } catch (error) {
+    mangaError = dbErrorMessage(error);
+  }
 }
 
 const entriesByType = (t: string): CodexEntry[] =>
@@ -170,6 +189,18 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
         >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="10" rx="1.5"/><path d="M7 19h10M9 15v4M15 15v4"/></svg>
           Board
+        </button>
+        <button
+          data-mode-btn="manga"
+          type="button"
+          role="tab"
+          id="mode-tab-manga"
+          aria-selected="false"
+          aria-controls="mode-panel-manga"
+          tabindex="-1"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+          Manga
         </button>
         <button
           data-mode-btn="settings"
@@ -612,6 +643,25 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
           </div>
         </section>
 
+        <!-- MANGA STUDIO -->
+        <section
+          class="nc-mode-panel"
+          data-mode="manga"
+          role="tabpanel"
+          id="mode-panel-manga"
+          aria-labelledby="mode-tab-manga"
+          hidden
+        >
+          <MangaStudio
+            novelId={novel.id}
+            draftId={activeDraft?.id ?? null}
+            pages={mangaPages}
+            error={mangaError}
+            view={mangaView}
+            selectedSceneKey={mangaPageKey}
+          />
+        </section>
+
         <!-- SETTINGS -->
         <section
           class="nc-mode-panel"
@@ -693,6 +743,24 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
             )}
             <p class="nc-detail__label">DESCRIPTION</p>
             <div class="nc-detail__field">{e.description}</div>
+            {
+              e.appearance_lock && (
+                <>
+                  <p class="nc-detail__label">APPEARANCE LOCK</p>
+                  <div class="nc-detail__field">{e.appearance_lock}</div>
+                </>
+              )
+            }
+            {
+              e.element_id && (
+                <>
+                  <p class="nc-detail__label">HIGGSFIELD ELEMENT</p>
+                  <div class="nc-detail__field">
+                    <code>{e.element_id}</code>
+                  </div>
+                </>
+              )
+            }
           </div>
           {
             typeof e.mentions === "number" && (
@@ -950,7 +1018,7 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
 
     const params = new URLSearchParams(window.location.search);
     const initialMode = params.get("mode");
-    if (initialMode && ["plan", "write", "board", "settings"].includes(initialMode)) {
+    if (initialMode && ["plan", "write", "board", "manga", "settings"].includes(initialMode)) {
       setMode(initialMode);
     }
 
@@ -1605,6 +1673,197 @@ function sceneToHtml(content: string | null | undefined, text: string): string {
           });
         }
       });
+    }
+
+    // Manga Studio
+    const mangaRoot = document.querySelector("[data-manga]");
+    if (mangaRoot) {
+      const draftId = mangaRoot.getAttribute("data-draft-id") || activeDraftId;
+      const dirtyManga = new Set();
+      const saveTimers = new Map();
+
+      function mangaStatus(cell, msg, isError) {
+        const el = cell.querySelector("[data-manga-status]");
+        if (!el) return;
+        el.hidden = !msg;
+        el.textContent = msg || "";
+        el.classList.toggle("is-error", Boolean(isError));
+      }
+
+      async function patchMangaPanel(panelId, body) {
+        const res = await fetch(`/api/novels/${novelId}/manga/panels/${panelId}/`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Save failed");
+        return data.panel;
+      }
+
+      function scheduleMangaSave(cell) {
+        const panelId = cell.getAttribute("data-manga-panel-id");
+        if (!panelId) return;
+        dirtyManga.add(panelId);
+        const prev = saveTimers.get(panelId);
+        if (prev) clearTimeout(prev);
+        saveTimers.set(
+          panelId,
+          setTimeout(async () => {
+            try {
+              await patchMangaPanel(panelId, {
+                caption: cell.querySelector("[data-manga-caption]")?.value || "",
+                dialogue: cell.querySelector("[data-manga-dialogue]")?.value || "",
+                sfx: cell.querySelector("[data-manga-sfx]")?.value || "",
+                notes: cell.querySelector("[data-manga-notes]")?.value || "",
+                prompt: cell.querySelector("[data-manga-prompt]")?.value || "",
+                source_url: cell.querySelector("[data-manga-source]")?.value || null,
+              });
+              dirtyManga.delete(panelId);
+              mangaStatus(cell, "Saved");
+              setTimeout(() => mangaStatus(cell, ""), 1200);
+            } catch (err) {
+              mangaStatus(cell, err instanceof Error ? err.message : "Save failed", true);
+            }
+          }, 500),
+        );
+      }
+
+      mangaRoot.querySelectorAll("[data-manga-panel-id]").forEach((cell) => {
+        ["data-manga-caption", "data-manga-dialogue", "data-manga-sfx", "data-manga-notes", "data-manga-prompt", "data-manga-source"].forEach(
+          (attr) => {
+            cell.querySelector(`[${attr}]`)?.addEventListener("input", () => scheduleMangaSave(cell));
+          },
+        );
+        cell.querySelector("[data-manga-copy-one]")?.addEventListener("click", async () => {
+          const prompt = cell.querySelector("[data-manga-prompt]")?.value || "";
+          try {
+            await navigator.clipboard.writeText(prompt);
+            showToast("Prompt copied.");
+          } catch {
+            showToast("Could not copy prompt");
+          }
+        });
+        const fileInput = cell.querySelector("[data-manga-image]");
+        cell.querySelector(".nc-manga-cell__frame")?.addEventListener("click", () => fileInput?.click());
+        fileInput?.addEventListener("change", async () => {
+          const file = fileInput.files?.[0];
+          const panelId = cell.getAttribute("data-manga-panel-id");
+          if (!file || !panelId) return;
+          const form = new FormData();
+          form.append("image", file);
+          mangaStatus(cell, "Uploading…");
+          try {
+            const res = await fetch(`/api/novels/${novelId}/manga/panels/${panelId}/`, {
+              method: "PATCH",
+              body: form,
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || "Upload failed");
+            const url = data.panel?.image_url;
+            let img = cell.querySelector("[data-manga-preview]");
+            const empty = cell.querySelector("[data-manga-empty]");
+            if (url) {
+              if (!img) {
+                img = document.createElement("img");
+                img.setAttribute("data-manga-preview", "");
+                img.alt = "";
+                cell.querySelector(".nc-manga-cell__frame")?.prepend(img);
+              }
+              img.src = url;
+              if (empty) empty.hidden = true;
+            }
+            mangaStatus(cell, "Uploaded");
+          } catch (err) {
+            mangaStatus(cell, err instanceof Error ? err.message : "Upload failed", true);
+          }
+        });
+      });
+
+      mangaRoot.querySelector("[data-manga-copy-prompts]")?.addEventListener("click", async () => {
+        const prompts = [...mangaRoot.querySelectorAll("[data-manga-prompt]")]
+          .map((el, i) => `Panel ${i + 1}\n${el.value}`)
+          .join("\n\n");
+        try {
+          await navigator.clipboard.writeText(prompts);
+          showToast("Page prompts copied.");
+        } catch {
+          showToast("Could not copy prompts");
+        }
+      });
+
+      mangaRoot.querySelector("[data-manga-composite]")?.addEventListener("click", async () => {
+        const pageId = mangaRoot.querySelector(".nc-manga-editor")?.getAttribute("data-manga-page-id");
+        if (!pageId) return;
+        try {
+          showToast("Compositing…");
+          const res = await fetch(`/api/novels/${novelId}/manga/pages/${pageId}/`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ composite: true }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || "Composite failed");
+          showToast("Page composited.");
+          window.location.reload();
+        } catch (err) {
+          showToast(err instanceof Error ? err.message : "Composite failed");
+        }
+      });
+
+      mangaRoot.querySelector("[data-manga-reseed]")?.addEventListener("click", async () => {
+        if (!draftId) return;
+        if (!confirm("Reseed all manga pages from the PILOT template? Panel images in DB will be cleared.")) return;
+        try {
+          const res = await fetch(`/api/novels/${novelId}/manga/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ draft_id: draftId, reseed: true }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || "Reseed failed");
+          showToast("Manga pages reseeded.");
+          window.location.reload();
+        } catch (err) {
+          showToast(err instanceof Error ? err.message : "Reseed failed");
+        }
+      });
+
+      const pageNotes = mangaRoot.querySelector("[data-manga-page-notes]");
+      let pageNotesTimer;
+      pageNotes?.addEventListener("input", () => {
+        const pageId = mangaRoot.querySelector(".nc-manga-editor")?.getAttribute("data-manga-page-id");
+        if (!pageId) return;
+        clearTimeout(pageNotesTimer);
+        pageNotesTimer = setTimeout(async () => {
+          try {
+            await fetch(`/api/novels/${novelId}/manga/pages/${pageId}/`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ script_notes: pageNotes.value }),
+            });
+          } catch {
+            /* ignore */
+          }
+        }, 600);
+      });
+
+      // Reader keyboard
+      if (mangaRoot.getAttribute("data-view") === "read") {
+        const readerPages = [...mangaRoot.querySelectorAll("[data-reader-page]")];
+        let idx = 0;
+        function showReader(i) {
+          idx = Math.max(0, Math.min(readerPages.length - 1, i));
+          readerPages.forEach((el, n) => {
+            el.hidden = n !== idx;
+          });
+        }
+        if (readerPages.length) showReader(0);
+        window.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowRight" || e.key === "PageDown") showReader(idx + 1);
+          if (e.key === "ArrowLeft" || e.key === "PageUp") showReader(idx - 1);
+        });
+      }
     }
 
     document.querySelector("[data-settings-form]")?.addEventListener("submit", async (event) => {
