@@ -13,7 +13,6 @@ import { useAuth } from "@/context/AuthContext";
 import { getSupabase } from "@/lib/supabase/client";
 import {
   createNovel,
-  ensureStarterNovels,
   formatUpdated,
   listNovels,
   type DbNovelSummary,
@@ -31,6 +30,8 @@ export default function LibraryScreen() {
   const load = useCallback(async () => {
     if (!user) return;
     const supabase = getSupabase();
+    // Lazy-load starter manuscripts so auth routes stay light.
+    const { ensureStarterNovels } = await import("@/lib/novels/starters");
     await ensureStarterNovels(supabase, user.id);
     const rows = await listNovels(supabase, user.id);
     setNovels(rows);

@@ -50,7 +50,7 @@ export default function AccountScreen() {
 
   async function onSignOut() {
     await signOut();
-    router.replace("/(auth)/login");
+    router.replace("/login");
   }
 
   return (

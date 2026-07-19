@@ -9,7 +9,7 @@ import { getSiteUrl } from "@/lib/supabase/env";
 WebBrowser.maybeCompleteAuthSession();
 
 function oauthRedirectTo(nextPath: string): string {
-  const next = isSafeInternalPath(nextPath) ? nextPath : "/(tabs)/novels";
+  const next = isSafeInternalPath(nextPath) ? nextPath : "/novels";
   if (Platform.OS === "web") {
     return `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(next)}`;
   }
@@ -21,7 +21,7 @@ function oauthRedirectTo(nextPath: string): string {
 }
 
 /** Start Google OAuth via Supabase (opens system browser / web redirect). */
-export async function signInWithGoogle(redirectPath = "/(tabs)/novels"): Promise<void> {
+export async function signInWithGoogle(redirectPath = "/novels"): Promise<void> {
   const supabase = getSupabase();
   const redirectTo = oauthRedirectTo(redirectPath);
 

@@ -17,7 +17,7 @@ export default function SignupScreen() {
     try {
       await signUp(email.trim(), password);
       Alert.alert("Check your email", "Confirm your address if required, then sign in.");
-      router.replace("/(auth)/login");
+      router.replace("/login");
     } catch (e) {
       Alert.alert("Sign up failed", e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -46,7 +46,7 @@ export default function SignupScreen() {
               onChangeText={setPassword}
             />
             <Button label="Create account" onPress={onSubmit} loading={loading} />
-            <Link href="/(auth)/login" style={styles.link}>
+            <Link href="/login" style={styles.link}>
               Already have an account?
             </Link>
           </View>

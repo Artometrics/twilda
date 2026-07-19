@@ -1,53 +1,71 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { Platform } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Database } from "./database.types";
 
-const ExpoSecureStore =
-  Platform.OS === "web"
-    ? null
-    : // eslint-disable-next-line @typescript-eslint/no-require-imports
-      (require("expo-secure-store") as typeof import("expo-secure-store"));
+const isBrowser = typeof window !== "undefined";
 
-/**
- * Storage adapter: SecureStore on native, AsyncStorage on web.
- * Large session payloads fall back to AsyncStorage when SecureStore size limits apply.
- */
-const ExpoStorage = {
-  async getItem(key: string) {
-    if (Platform.OS === "web") {
-      return AsyncStorage.getItem(key);
-    }
-    try {
-      return (await ExpoSecureStore!.getItemAsync(key)) ?? (await AsyncStorage.getItem(key));
-    } catch {
-      return AsyncStorage.getItem(key);
-    }
-  },
-  async setItem(key: string, value: string) {
-    if (Platform.OS === "web") {
-      await AsyncStorage.setItem(key, value);
-      return;
-    }
-    try {
-      await ExpoSecureStore!.setItemAsync(key, value);
-    } catch {
-      await AsyncStorage.setItem(key, value);
-    }
-  },
-  async removeItem(key: string) {
-    if (Platform.OS === "web") {
-      await AsyncStorage.removeItem(key);
-      return;
-    }
-    try {
-      await ExpoSecureStore!.deleteItemAsync(key);
-    } catch {
-      /* ignore */
-    }
-    await AsyncStorage.removeItem(key);
-  },
+type StorageAdapter = {
+  getItem: (key: string) => Promise<string | null>;
+  setItem: (key: string, value: string) => Promise<void>;
+  removeItem: (key: string) => Promise<void>;
 };
+
+function createMemoryStorage(): StorageAdapter {
+  const map = new Map<string, string>();
+  return {
+    async getItem(key) {
+      return map.get(key) ?? null;
+    },
+    async setItem(key, value) {
+      map.set(key, value);
+    },
+    async removeItem(key) {
+      map.delete(key);
+    },
+  };
+}
+
+function createAppStorage(): StorageAdapter {
+  if (!isBrowser) return createMemoryStorage();
+
+  // Lazy-require so Node SSR / static export never touches native modules.
+  const AsyncStorage =
+    require("@react-native-async-storage/async-storage").default as typeof import("@react-native-async-storage/async-storage").default;
+
+  if (Platform.OS === "web") {
+    return {
+      getItem: (key) => AsyncStorage.getItem(key),
+      setItem: (key, value) => AsyncStorage.setItem(key, value),
+      removeItem: (key) => AsyncStorage.removeItem(key),
+    };
+  }
+
+  const SecureStore = require("expo-secure-store") as typeof import("expo-secure-store");
+  return {
+    async getItem(key) {
+      try {
+        return (await SecureStore.getItemAsync(key)) ?? (await AsyncStorage.getItem(key));
+      } catch {
+        return AsyncStorage.getItem(key);
+      }
+    },
+    async setItem(key, value) {
+      try {
+        await SecureStore.setItemAsync(key, value);
+      } catch {
+        await AsyncStorage.setItem(key, value);
+      }
+    },
+    async removeItem(key) {
+      try {
+        await SecureStore.deleteItemAsync(key);
+      } catch {
+        /* ignore */
+      }
+      await AsyncStorage.removeItem(key);
+    },
+  };
+}
 
 function requireEnv(name: "EXPO_PUBLIC_SUPABASE_URL" | "EXPO_PUBLIC_SUPABASE_ANON_KEY"): string {
   const value = process.env[name];
@@ -65,14 +83,18 @@ let client: SupabaseClient<Database> | null = null;
 export function getSupabase(): SupabaseClient<Database> {
   if (client) return client;
 
-  client = createClient<Database>(requireEnv("EXPO_PUBLIC_SUPABASE_URL"), requireEnv("EXPO_PUBLIC_SUPABASE_ANON_KEY"), {
-    auth: {
-      storage: ExpoStorage,
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: Platform.OS === "web",
+  client = createClient<Database>(
+    requireEnv("EXPO_PUBLIC_SUPABASE_URL"),
+    requireEnv("EXPO_PUBLIC_SUPABASE_ANON_KEY"),
+    {
+      auth: {
+        storage: createAppStorage(),
+        autoRefreshToken: isBrowser,
+        persistSession: isBrowser,
+        detectSessionInUrl: isBrowser && Platform.OS === "web",
+      },
     },
-  });
+  );
 
   return client;
 }

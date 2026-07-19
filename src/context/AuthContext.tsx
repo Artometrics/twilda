@@ -30,11 +30,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = getSupabase();
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!mounted) return;
+        setSession(data.session);
+      })
+      .catch(() => {
+        /* unreachable project / offline */
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, next) => {
       setSession(next);

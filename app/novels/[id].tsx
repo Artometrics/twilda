@@ -203,7 +203,7 @@ export default function NovelWorkspace() {
         style: "destructive",
         onPress: async () => {
           await deleteNovel(getSupabase(), user.id, id);
-          router.replace("/(tabs)/novels");
+          router.replace("/novels");
         },
       },
     ]);

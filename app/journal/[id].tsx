@@ -66,7 +66,7 @@ export default function JournalEntryScreen() {
         style: "destructive",
         onPress: async () => {
           await deleteJournalEntry(getSupabase(), user.id, id);
-          router.replace("/(tabs)/journal");
+          router.replace("/journal");
         },
       },
     ]);

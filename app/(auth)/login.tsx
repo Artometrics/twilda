@@ -17,7 +17,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email.trim(), password);
-      router.replace("/(tabs)/novels");
+      router.replace("/novels");
     } catch (e) {
       Alert.alert("Sign in failed", e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -29,7 +29,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      router.replace("/(tabs)/novels");
+      router.replace("/novels");
     } catch (e) {
       Alert.alert("Google sign-in failed", e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -68,10 +68,10 @@ export default function LoginScreen() {
               />
               <Button label="Sign in" onPress={onSubmit} loading={loading} />
               <Button label="Continue with Google" onPress={onGoogle} variant="secondary" disabled={loading} />
-              <Link href="/(auth)/signup" style={styles.link}>
+              <Link href="/signup" style={styles.link}>
                 Create an account
               </Link>
-              <Link href="/(auth)/forgot" style={styles.linkMuted}>
+              <Link href="/forgot" style={styles.linkMuted}>
                 Forgot password?
               </Link>
             </View>

@@ -15,7 +15,7 @@ export default function ForgotScreen() {
     setLoading(true);
     try {
       const { error } = await getSupabase().auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${getSiteUrl()}/(auth)/login`,
+        redirectTo: `${getSiteUrl()}/login`,
       });
       if (error) throw error;
       Alert.alert("Email sent", "Check your inbox for a reset link.");
@@ -40,7 +40,7 @@ export default function ForgotScreen() {
             onChangeText={setEmail}
           />
           <Button label="Send reset link" onPress={onSubmit} loading={loading} />
-          <Link href="/(auth)/login" style={styles.link}>
+          <Link href="/login" style={styles.link}>
             Back to sign in
           </Link>
         </View>

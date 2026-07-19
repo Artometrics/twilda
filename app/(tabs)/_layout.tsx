@@ -1,5 +1,5 @@
 import { Redirect, Tabs } from "expo-router";
-import { Text } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { colors, typography } from "@/constants/theme";
 
@@ -19,7 +19,14 @@ function TabLabel({ label, focused }: { label: string; focused: boolean }) {
 
 export default function TabsLayout() {
   const { user, loading } = useAuth();
-  if (!loading && !user) return <Redirect href="/(auth)/login" />;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper }}>
+        <ActivityIndicator color={colors.accentDark} />
+      </View>
+    );
+  }
+  if (!user) return <Redirect href="/login" />;
 
   return (
     <Tabs

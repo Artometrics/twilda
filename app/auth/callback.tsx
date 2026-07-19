@@ -51,9 +51,7 @@ export default function AuthCallback() {
   }
 
   const next =
-    typeof params.next === "string" && isSafeInternalPath(params.next)
-      ? params.next
-      : "/(tabs)/novels";
+    typeof params.next === "string" && isSafeInternalPath(params.next) ? params.next : "/novels";
 
-  return <Redirect href={next as "/(tabs)/novels"} />;
+  return <Redirect href={next as "/novels"} />;
 }

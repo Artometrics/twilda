@@ -45,5 +45,5 @@
 ## Cursor Cloud specific instructions
 
 - Setup: `npm install`, copy `.env.example` → `.env`, run `npm run dev` or `npm run web`.
-- **No lint/typecheck script is configured.** Use `npm run build` (web export) as the correctness check.
+- Correctness checks: `npm run typecheck` and `npm run build` (web export).
 - See **`docs/SETUP.md`**.

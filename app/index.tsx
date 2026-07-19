@@ -15,8 +15,8 @@ export default function Index() {
   }
 
   if (!configured || !user) {
-    return <Redirect href="/(auth)/login" />;
+    return <Redirect href="/login" />;
   }
 
-  return <Redirect href="/(tabs)/novels" />;
+  return <Redirect href="/novels" />;
 }
