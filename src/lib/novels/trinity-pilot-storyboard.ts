@@ -2,18 +2,96 @@
  * Trinity PILOT — 40-minute episode beat sheet
  * 8 sequences × 5 scenes (≈1 minute each)
  *
- * Visual lock for Higgsfield image prompts (append to every Sicily scene):
- * STYLE_SICILY / STYLE_DATA / STYLE_PRESENT below.
+ * Visual lock for Higgsfield image prompts:
+ * STYLE_SICILY / STYLE_DATA / STYLE_PRESENT + character kits below.
+ *
+ * Higgsfield Elements (fill after create):
+ * - trinityElementId — character Element for Trinity / KSM face
+ * - sophiaElementId — character Element for Sophia
  */
 
+/** Higgsfield Element ids — embed as <<<id>>> in generate_image prompts. */
+export const trinityPilotHiggsfieldIds = {
+  trinityElementId: "ff3d5f00-f46d-4623-8567-dd98d68e5c77",
+  sophiaElementId: "a4217074-311b-4cb5-bd89-0c3689097ee7",
+  /** Preferred model for Element multi-character Sicily stills */
+  imageModel: "nano_banana_2",
+  /** Completed Seq 1 stills (s1e1…s1e5), nano_banana_2 · 16:9 · 2026-07-19 */
+  seq1Stills: [
+    {
+      id: "s1e1",
+      title: "Wrong Wind",
+      jobId: "ff34d179-6a6e-46a3-b5f3-05c5b6a218da",
+      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_001412_ff34d179-6a6e-46a3-b5f3-05c5b6a218da.png",
+    },
+    {
+      id: "s1e2",
+      title: "Prognosis",
+      jobId: "ccdf6570-904e-436a-aa9d-9740aa9307b5",
+      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_001412_ccdf6570-904e-436a-aa9d-9740aa9307b5.png",
+    },
+    {
+      id: "s1e3",
+      title: "Fixed Rent",
+      jobId: "53b9de72-86c0-4d4f-ace3-107be0bd9c81",
+      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_001413_53b9de72-86c0-4d4f-ace3-107be0bd9c81.png",
+    },
+    {
+      id: "s1e4",
+      title: "The Olive",
+      jobId: "6c472306-2cab-4368-90f2-1b8f2118b51f",
+      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_001412_6c472306-2cab-4368-90f2-1b8f2118b51f.png",
+    },
+    {
+      id: "s1e5",
+      title: "Title Card",
+      jobId: "afda0b15-4869-4712-a70c-93576baf0c2e",
+      url: "https://d8j0ntlcm91z4.cloudfront.net/user_3BIVMnF599YIGIKEIfI50AerLZR/hf_20260719_001413_afda0b15-4869-4712-a70c-93576baf0c2e.png",
+    },
+  ],
+  /** Job ids only, order s1e1…s1e5 */
+  seq1JobIds: [
+    "ff34d179-6a6e-46a3-b5f3-05c5b6a218da",
+    "ccdf6570-904e-436a-aa9d-9740aa9307b5",
+    "53b9de72-86c0-4d4f-ace3-107be0bd9c81",
+    "6c472306-2cab-4368-90f2-1b8f2118b51f",
+    "afda0b15-4869-4712-a70c-93576baf0c2e",
+  ],
+};
+
+const T = () => `<<<${trinityPilotHiggsfieldIds.trinityElementId}>>>`;
+const S = () => `<<<${trinityPilotHiggsfieldIds.sophiaElementId}>>>`;
+
+export const STYLE_GHIBLI =
+  "fully colored semi-Studio Ghibli anime still, clean linework, painterly backgrounds, saturated natural light, expressive grounded faces, high production feature-anime finish, NOT sepia, NOT monochrome";
+
 export const STYLE_SICILY =
-  "Cinematic prestige anime still, 16:9 landscape, 1893 Sicily, bone-white drought wheat, bleached limestone, silver olive leaves, hard March Mediterranean light, grounded historical drama, spare Morricone atmosphere, no text, no logos, no modern objects";
+  `${STYLE_GHIBLI}, 16:9 landscape, Carlentini Sicily spring 1893 drought, bone-white dead wheat under hard March Mediterranean light, bleached limestone, silver-still olive leaves, sparse pasture, terraced fields dropping toward distant sea, flat-roofed white agro-town on the ridge, beauty that is wrong, no text, no logos, no modern objects`;
 
 export const STYLE_DATA =
-  "Cinematic prestige anime still, 16:9, frozen 1893 Sicilian piazza desaturated under translucent data overlays, rainfall and choropleth maps glowing faintly, scientific museum lighting, no text labels readable, no logos";
+  `${STYLE_GHIBLI}, 16:9, frozen 1893 Sicilian piazza under translucent data overlays, rainfall and choropleth maps glowing faintly, scientific museum lighting, no readable text labels, no logos`;
 
 export const STYLE_PRESENT =
-  "Cinematic prestige anime still, 16:9, contemporary Northern California night, French Renaissance Revival estate interior and terrace, cool server-room blues meeting warm wood, quiet billionaire solitude, no text, no logos";
+  `${STYLE_GHIBLI}, 16:9, contemporary Northern California night, French Renaissance Revival estate interior and terrace, cool server-room blues meeting warm wood, quiet billionaire solitude, no text, no logos`;
+
+/** Carlentini field bible — land, light, costume (Weak States + period sources). */
+export const CARLENTINI_FIELD_BIBLE = `
+PLACE: Carlentini, eastern Sicily — agro-town on a ridge; peasants clustered for latifondo cereal work; terraced wheat/olive/citrus toward the sea.
+MOMENT: March–spring 1893 after bad 1892; wheat ~half yield; olives fall dried; pasture rare; day laborers unemployed.
+QUOTE (Il Giornale di Sicilia, Oct 1893): olives fall dried and drenched; lemon and orange suffering; misery immense.
+CONTRACTS: fixed one-year rent; day hire vanishes when estate needs no hands.
+LIGHT: hard clear Mediterranean March sun on August-colored crops — wrongness is the point.
+COSTUME DO: workwear (linen, dark wool, apron, shawl, optional coppola/fazzoletto).
+COSTUME DON'T: embroidered festa, Saturno/cassock, mid-century fedoras, modern props.
+`.trim();
+
+export const TRINITY_APPEARANCE_LOCK = `
+TRINITY (Animus): KSM / photo likeness — oval face, dark heavy-lidded eyes, thick straight brows, soft jaw, near-black messy fringe; CLEAN-SHAVEN; 1893 bracciante kit — off-white linen shirt, optional dark waistcoat, loose dark trousers, worn boots, optional soft dark coppola; student energy.
+`.trim();
+
+export const SOPHIA_APPEARANCE_LOCK = `
+SOPHIA (Animus): long blonde hair UP (center part, braid/chignon at nape), large pale eyes, red lips, black under-eye streak language, slightly otherworldly; 1890s Sicilian peasant WORK dress — dark wool/cotton, modest high neck, long sleeves, ankle length, apron and/or dark shawl, optional fazzoletto; speaks first; guide.
+`.trim();
 
 export type PilotSceneBeat = {
   id: string;
@@ -52,7 +130,7 @@ export const trinityPilotStoryboard: PilotSequenceBeats[] = [
         title: "Wrong Wind",
         summary:
           "Black → wind through dry wheat → bone-white March hillside builds like a memory. No title yet.",
-        higgsfieldPrompt: `${STYLE_SICILY}. Extreme wide establishing shot of terraced Sicilian hillside in severe drought, March light but August-dead wheat the color of bone, olive trees with still silver leaves, flat-roofed white agro-town on the ridge, empty path, ominous quiet beauty, no people yet`,
+        higgsfieldPrompt: `${STYLE_SICILY}. Extreme wide establishing shot of Carlentini terraced hillside in severe 1893 drought, March light but August-dead wheat the color of bone, olive trees with still silver leaves, flat-roofed white agro-town on the ridge, empty dusty path, ominous quiet beauty, NO people`,
       },
       {
         id: "s1e2",
@@ -62,7 +140,7 @@ export const trinityPilotStoryboard: PilotSequenceBeats[] = [
         title: "Prognosis",
         summary:
           "Sophia at the field edge in dark wool; Trinity arrives as day laborer. She speaks first.",
-        higgsfieldPrompt: `${STYLE_SICILY}. Medium-wide: a woman in practical 1890s Sicilian dark wool stands at the edge of a dying wheat field looking at crops like a doctor reading a closed chart; a young man in rough linen day-laborer clothes approaches up a dusty path; both face the field, not each other`,
+        higgsfieldPrompt: `${STYLE_SICILY}. Medium-wide: ${S()} as Sophia in dark 1890s Sicilian peasant work dress, blonde hair pinned UP in a chignon, stands at the edge of dying wheat looking at crops like a doctor; ${T()} as Trinity clean-shaven young man in off-white linen day-laborer shirt and dark trousers approaches up a dusty path; both face the field, not each other; she leads`,
       },
       {
         id: "s1e3",
@@ -72,7 +150,7 @@ export const trinityPilotStoryboard: PilotSequenceBeats[] = [
         title: "Fixed Rent",
         summary:
           "Sophia explains temporary-that-wasn't and one-year fixed rent: pay even if you starve.",
-        higgsfieldPrompt: `${STYLE_SICILY}. Two figures walking carefully between dry papery wheat rows, camera low with stalks filling both sides of frame; woman gesturing slightly at the crop; man listening, looking at wheat not at her; intimate teaching walk`,
+        higgsfieldPrompt: `${STYLE_SICILY}. Low camera between dry papery wheat rows filling both sides of frame; ${S()} Sophia in dark work dress hair UP walks ahead gesturing at the crop; ${T()} Trinity clean-shaven in linen laborer clothes follows listening, looking at wheat not at her; intimate teaching walk`,
       },
       {
         id: "s1e4",
@@ -82,7 +160,7 @@ export const trinityPilotStoryboard: PilotSequenceBeats[] = [
         title: "The Olive",
         summary:
           "Day laborers have it worse. She lifts a shriveled olive; quotes the October newspaper after seven silent months.",
-        higgsfieldPrompt: `${STYLE_SICILY}. Extreme close-up: a woman's weathered hand holding a single dried shriveled olive still on its stem above dusty ground between wheat stalks; soft shallow depth of field; evidence more than fruit`,
+        higgsfieldPrompt: `${STYLE_SICILY}. Close-up: ${S()} Sophia's hand holding a single dried shriveled olive still on its stem above dusty ground between wheat stalks; her dark wool sleeve and apron edge visible; soft shallow depth of field; evidence more than fruit; face softly out of focus in background optional`,
       },
       {
         id: "s1e5",
@@ -92,7 +170,7 @@ export const trinityPilotStoryboard: PilotSequenceBeats[] = [
         title: "Title Card",
         summary:
           "Hold on the olive → smash to white serif on black: TRINITY: AN AMERICAN ODYSSEY / Episode One — MAFIA.",
-        higgsfieldPrompt: `Minimal title card design still, 16:9, pure black background, elegant white serif typography centered reading TRINITY: AN AMERICAN ODYSSEY above a thin line and Episode One — MAFIA, spare prestige television energy, no ornaments, no logos other than the title text`,
+        higgsfieldPrompt: `Minimal prestige title card, 16:9, pure black background, elegant white serif typography centered: TRINITY: AN AMERICAN ODYSSEY above a thin line and Episode One — MAFIA, spare cinematic anime opening energy, no ornaments, no logos other than the title text, no characters`,
       },
     ],
   },
@@ -551,6 +629,25 @@ export function formatPilotStoryboardMarkdown(): string {
 export function trinityPilotStoryboardSnippets(): { title: string; content: string }[] {
   return [
     {
+      title: "Bible — Carlentini field",
+      content: CARLENTINI_FIELD_BIBLE,
+    },
+    {
+      title: "Bible — Trinity appearance",
+      content: TRINITY_APPEARANCE_LOCK,
+    },
+    {
+      title: "Bible — Sophia appearance",
+      content: SOPHIA_APPEARANCE_LOCK,
+    },
+    {
+      title: "Bible — Visual style",
+      content: `${STYLE_GHIBLI}
+
+Sicily palette: bone-white drought wheat, bleached limestone, silver olives, hard March light.
+Stanford/clergy Ghibli refs = STYLE ONLY — not Sicily costume.`,
+    },
+    {
       title: "Storyboard — 40-min overview",
       content: `40-minute pilot · 8 sequences · 5 scenes each (≈1 minute / scene).
 
@@ -563,7 +660,17 @@ ${trinityPilotStoryboard
   )
   .join("\n")}
 
-Next: generate Higgsfield stills per scene id (s1e1…s8e5), then lock board panels.`,
+Seq 1 stills generated (see trinityPilotHiggsfieldIds.seq1Stills). Next: s2e1…s8e5, then lock board panels.`,
+    },
+    {
+      title: "Higgsfield — Seq 1 stills",
+      content: [
+        `Model: ${trinityPilotHiggsfieldIds.imageModel} · 16:9 · Elements Trinity/Sophia`,
+        "",
+        ...trinityPilotHiggsfieldIds.seq1Stills.map(
+          (s) => `${s.id} ${s.title}\njob: ${s.jobId}\n${s.url}`,
+        ),
+      ].join("\n\n"),
     },
     ...trinityPilotStoryboard.map((seq) => ({
       title: `Storyboard — Seq ${seq.sequence} ${seq.title}`,

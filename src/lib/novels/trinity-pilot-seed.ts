@@ -12,7 +12,7 @@ export const trinityPilotDraftMeta = {
   name: "PILOT",
   slug: "pilot",
   summary:
-    'Book I · Episode 1 — "MAFIA" (40-min / 8×5 storyboard). Animus cold open in 1893 Sicily → vacuum thesis → Estate reveal.',
+    'Book I · Episode 1 — "MAFIA" (40-min / 8×5). Seq1 Ghibli stills + Carlentini field bible + locked Trinity/Sophia kits.',
 } as const;
 
 export const trinityPilotSnippets: { title: string; content: string }[] = [
@@ -269,13 +269,13 @@ const trinityPilotChapters: Chapter[] = [
         title: "Bone-White Wheat",
         text: `There is no title. No music. Only black — and then a sound that should not mean what it means.
 
-Wind moving through dry wheat. The kind of sound that belongs to August, when the fields have already given everything and are waiting to be cut. But the light that follows the sound is wrong for August. It is the thin, hard light of March on a Sicilian hillside, and the wheat is the color of bone.
+Wind moving through dry wheat. The kind of sound that belongs to August, when the fields have already given everything and are waiting to be cut. But the light that follows the sound is wrong for August. It is the thin, hard light of March on a Carlentini hillside, and the wheat is the color of bone.
 
-The image arrives the way a memory does: color first, then shape. Terraced fields drop toward a sea that does not care about rent. Olive trees hold their silver leaves still, as if motion itself has been rationed. On the ridge above, a village of flat-roofed white buildings sits packed tight — an agro-town built so labor could be called from a single piazza at dawn.
+The image arrives the way a memory does: color first, then shape. Terraced fields drop toward a sea that does not care about rent. Olive trees hold their silver leaves still, as if motion itself has been rationed. Pasture is sparse between the rows — spring that looks like late harvest. On the ridge above, a village of flat-roofed white buildings sits packed tight — an agro-town built so latifondo labor could be called from a single piazza at dawn.
 
 It is beautiful. It is also a diagnosis.
 
-A woman stands at the edge of a field in dark wool that does not apologize for heat. She looks at the crop the way a doctor looks at a patient whose chart has already closed. A man comes up the path in rough linen and worn boots, dark hair catching the dust. He stops beside her. They look at the wheat together.
+A woman stands at the edge of the field in a dark wool work dress, apron dulled with dust, blonde hair pinned up at the nape so the heat cannot use it against her. She looks at the crop the way a doctor looks at a patient whose chart has already closed. A clean-shaven young man comes up the path in an off-white linen shirt and loose dark trousers — day-laborer kit, boots already chalked with limestone. Hired that morning, if morning had work to give. Dark fringe catches the dust. He stops beside her. They look at the wheat together.
 
 She speaks first. She always speaks first.`,
       },
@@ -287,17 +287,17 @@ A beat of wind. Stalks whisper like paper.
 
 "This is the third month with no rain. The yield this year will be half. Maybe less."
 
-Trinity keeps his eyes on the field. "And the contracts?"
+Trinity keeps his eyes on the field. Student posture. "And the contracts?"
 
 "Fixed rent. One year. He pays the same whether the field produces or not. If it doesn't produce, he doesn't eat — but he still pays. That's the arrangement now. That's what they changed."
 
-She steps into the rows. He follows. The wheat brushes his arms — dry, papery, wrong. Down low, between the stalks, the world narrows to bone and dust.
+She steps into the rows ahead of him. He follows. The wheat brushes his linen sleeves — dry, papery, wrong. Down low, between the stalks, the world narrows to bone and dust.
 
 "The day laborers have it worse," she says. "At least the contract farmer has a contract. The day laborer gets hired in the morning if the estate needs hands. This year the estate doesn't need hands. The crop is half the size. The work is half the work."
 
-She crouches and lifts a fallen olive — shriveled, still attached to its stem, as if the tree refused to finish the gesture of letting go.
+She crouches — dark sleeve, apron edge — and lifts a fallen olive: shriveled, still attached to its stem, as if the tree refused to finish the gesture of letting go.
 
-"You know what the newspaper wrote about this town in October?"
+"You know what Il Giornale di Sicilia wrote about Carlentini in October?"
 
 "Tell me."
 
