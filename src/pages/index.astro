@@ -1,9 +1,0 @@
----
-export const prerender = false;
-
-const user = Astro.locals.user;
-if (user) {
-  return Astro.redirect("/novels/");
-}
-return Astro.redirect("/forms/login/?redirect=/novels/");
----

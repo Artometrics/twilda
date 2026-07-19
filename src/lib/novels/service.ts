@@ -380,6 +380,11 @@ export async function updateNovelMetadata(
   if (error) throw error;
 }
 
+export async function deleteNovel(supabase: Client, userId: string, novelId: string) {
+  const { error } = await supabase.from("novels").delete().eq("id", novelId).eq("user_id", userId);
+  if (error) throw error;
+}
+
 export async function updateSceneContent(
   supabase: Client,
   userId: string,

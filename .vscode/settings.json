@@ -1,3 +1,7 @@
 {
-    "window.title": "${activeEditorShort}${separator}${rootName} ${separator} [Branch: main]${separator}[Branch: main]"
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit",
+    "source.sortMembers": "explicit"
+  }
 }
