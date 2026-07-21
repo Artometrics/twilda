@@ -30,7 +30,7 @@ jobs:
       - name: Build
         env:
           # Build-time placeholders — no real secrets in CI
-          PUBLIC_SITE_URL: http://localhost:4321
-          PUBLIC_SUPABASE_URL: https://example.supabase.co
-          PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder
+          EXPO_PUBLIC_SITE_URL: http://localhost:8081
+          EXPO_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder
         run: npm run build
