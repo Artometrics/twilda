@@ -67,14 +67,21 @@ function createAppStorage(): StorageAdapter {
   };
 }
 
-function requireEnv(name: "EXPO_PUBLIC_SUPABASE_URL" | "EXPO_PUBLIC_SUPABASE_ANON_KEY"): string {
-  const value = process.env[name];
-  if (!value) {
+function requireSupabaseEnv(): { url: string; anonKey: string } {
+  // Metro only inlines *static* EXPO_PUBLIC_* reads — do not use process.env[name].
+  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url) {
     throw new Error(
-      `Missing ${name}. Copy .env.example to .env and fill in your Supabase project keys.`,
+      "Missing EXPO_PUBLIC_SUPABASE_URL. Copy .env.example to .env and fill in your Supabase project keys.",
     );
   }
-  return value;
+  if (!anonKey) {
+    throw new Error(
+      "Missing EXPO_PUBLIC_SUPABASE_ANON_KEY. Copy .env.example to .env and fill in your Supabase project keys.",
+    );
+  }
+  return { url, anonKey };
 }
 
 let client: SupabaseClient<Database> | null = null;
@@ -83,18 +90,15 @@ let client: SupabaseClient<Database> | null = null;
 export function getSupabase(): SupabaseClient<Database> {
   if (client) return client;
 
-  client = createClient<Database>(
-    requireEnv("EXPO_PUBLIC_SUPABASE_URL"),
-    requireEnv("EXPO_PUBLIC_SUPABASE_ANON_KEY"),
-    {
-      auth: {
-        storage: createAppStorage(),
-        autoRefreshToken: isBrowser,
-        persistSession: isBrowser,
-        detectSessionInUrl: isBrowser && Platform.OS === "web",
-      },
+  const { url, anonKey } = requireSupabaseEnv();
+  client = createClient<Database>(url, anonKey, {
+    auth: {
+      storage: createAppStorage(),
+      autoRefreshToken: isBrowser,
+      persistSession: isBrowser,
+      detectSessionInUrl: isBrowser && Platform.OS === "web",
     },
-  );
+  });
 
   return client;
 }
