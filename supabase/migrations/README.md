@@ -34,7 +34,7 @@ The scripts are **idempotent** (safe to re-run).
 | `005_atlas_museum.sql` | Museum collections (`atlas_collections`), enrich cache, `gotha_persons.atlas_seed_id` |
 | `006_security_hardening.sql` | Harden `gotha_ancestors` to `auth.uid()`, revoke anon execute |
 | `007_onboarding.sql` | `profiles.onboarding_completed` for welcome modal persistence |
-| `008_journal_entries.sql` | Private journal entries for `/blog` (RLS per user) |
+| `008_journal_entries.sql` | Private journal entries for Journal (`/(tabs)/journal`) (RLS per user) |
 | `009_storyboard_panels.sql` | Storyboard panels + private Storage bucket `storyboard` |
 
 ## Atlas: TypeScript seeds vs DB tables

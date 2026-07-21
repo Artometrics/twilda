@@ -28,6 +28,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       journal_entries: {
         Row: {
@@ -54,6 +55,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       storyboard_panels: {
         Row: {
@@ -92,6 +94,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       subscriptions: {
         Row: {
@@ -133,6 +136,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       novels: {
         Row: {
@@ -177,6 +181,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       novel_drafts: {
         Row: {
@@ -209,6 +214,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       draft_references: {
         Row: {
@@ -241,6 +247,7 @@ export interface Database {
           note?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       chapters: {
         Row: {
@@ -270,6 +277,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       scenes: {
         Row: {
@@ -299,6 +307,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       codex_entries: {
         Row: {
@@ -346,6 +355,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       snippets: {
         Row: {
@@ -375,6 +385,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       chat_threads: {
         Row: {
@@ -401,6 +412,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       chat_messages: {
         Row: {
@@ -424,6 +436,7 @@ export interface Database {
           content?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       atlas_collections: {
         Row: {
@@ -468,6 +481,7 @@ export interface Database {
           notes?: string | null;
           created_at?: string | null;
         };
+        Relationships: [];
       };
       atlas_enrich_cache: {
         Row: {
@@ -485,6 +499,7 @@ export interface Database {
           payload?: Json;
           fetched_at?: string | null;
         };
+        Relationships: [];
       };
       gotha_persons: {
         Row: {
@@ -547,10 +562,12 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }

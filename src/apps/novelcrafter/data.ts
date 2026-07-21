@@ -77,26 +77,13 @@ export function codexCount(novel: Novel, type: CodexType): number {
   return novel.codex.filter((e) => e.type === type).length;
 }
 
-// --- Gatsby manuscript (raw chapter text imported at build time) ---
-const gatsbyFiles = import.meta.glob<string>("./content/gatsby/*.txt", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
+// --- Gatsby manuscript (generated from content/gatsby/*.txt) ---
+import { gatsbyChapters as gatsbyChapterData } from "./gatsby-chapters";
 
-const gatsbyChapters: Chapter[] = Object.keys(gatsbyFiles)
-  .sort((a, b) => {
-    const na = Number(a.match(/ch(\d+)/)?.[1] ?? 0);
-    const nb = Number(b.match(/ch(\d+)/)?.[1] ?? 0);
-    return na - nb;
-  })
-  .map((key, i) => {
-    const roman = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
-    return {
-      title: `Chapter ${roman[i] ?? i + 1}`,
-      scenes: [{ title: "Scene 1", text: gatsbyFiles[key] as string }],
-    };
-  });
+const gatsbyChapters: Chapter[] = gatsbyChapterData.map((ch) => ({
+  title: ch.title,
+  scenes: ch.scenes.map((sc) => ({ title: sc.title, text: sc.text })),
+}));
 
 const gatsbyCodex: CodexEntry[] = [
   // Characters
