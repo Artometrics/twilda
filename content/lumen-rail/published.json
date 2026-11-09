@@ -1,0 +1,101 @@
+{
+  "id": "lumen-rail",
+  "kind": "article",
+  "title": "Lumen Rail",
+  "slug": "lumen-rail",
+  "dek": "A fictional municipal operator, written so a franchise template can be reordered section by section.",
+  "kicker": "Franchise",
+  "byline": "Desk sample · Field Desk",
+  "updatedAt": "2026-11-09T16:00:00.000Z",
+  "sections": [
+    {
+      "id": "h-concession",
+      "type": "heading",
+      "level": 2,
+      "text": "The concession"
+    },
+    {
+      "id": "p-concession",
+      "type": "paragraph",
+      "text": "Lumen Rail is not a transit agency you can ride. It is the sample franchise in this repository: a city-owned concession that runs a light line along a river the demo never names on a map you could navigate.\n\nThe night timetable is a public document. In the story, it is posted at every platform and filed at the yard office. In the CMS, it is a paragraph an editor can move."
+    },
+    {
+      "id": "facts-concession",
+      "type": "headline-facts",
+      "kicker": "The sheet",
+      "headline": "What the concession records",
+      "dek": "Structured facts stay in fields so a writer is not asked to invent a layout.",
+      "facts": [
+        { "id": "f-opened", "label": "Story year", "value": "1978" },
+        { "id": "f-gauge", "label": "Gauge", "value": "1,435 mm" },
+        { "id": "f-stations", "label": "Stations", "value": "24" },
+        { "id": "f-span", "label": "Night span", "value": "18 minutes" },
+        { "id": "f-owner", "label": "Owner in the story", "value": "The city" }
+      ]
+    },
+    {
+      "id": "p-office",
+      "type": "paragraph",
+      "text": "The office that holds the concession is a room above the carbarn. The sample describes it with a window toward the river and a cabinet of paper timetables. None of those details are drawn from a published Artometrics story. They exist so the template has something true to its own fiction."
+    },
+    {
+      "id": "q-public",
+      "type": "pull-quote",
+      "quote": "If the sheet is public, the yard does not get to be a rumor.",
+      "attribution": "Sample concession, clause 4"
+    },
+    {
+      "id": "fig-yard",
+      "type": "figure",
+      "image": "/media/plate-yard.svg",
+      "imageAlt": "Geometric plate of tracks, ties, and a pale shed",
+      "caption": "Plate for the yard. Original geometry for the demo, not a photograph of a railway."
+    },
+    {
+      "id": "h-yard",
+      "type": "heading",
+      "level": 2,
+      "text": "How the yard runs"
+    },
+    {
+      "id": "list-yard",
+      "type": "list",
+      "ordered": true,
+      "items": [
+        "Cars come off the river span and wait under the shed.",
+        "The night sheet is copied before the last southbound leaves.",
+        "A fault on the span holds the following car at the previous station.",
+        "The cabinet copy and the platform copy are meant to match."
+      ]
+    },
+    {
+      "id": "p-yard",
+      "type": "paragraph",
+      "text": "A writer using this template can lift the list above the heading, or drop the figure under the quote. The order in the file is the order on the page. Publishing copies that order into the static build. Saving does not."
+    },
+    {
+      "id": "h-riders",
+      "type": "heading",
+      "level": 3,
+      "text": "What riders meet"
+    },
+    {
+      "id": "p-riders",
+      "type": "paragraph",
+      "text": "Platforms in the story are concrete, lit, and short on ornament. Riders meet a clock, a posted sheet, and the river at their back. The demo stops there. It does not invent a fare table or a real city charter."
+    },
+    {
+      "id": "fig-night",
+      "type": "figure",
+      "image": "/media/plate-night.svg",
+      "imageAlt": "Geometric night plate with a pale moon and three signal posts",
+      "caption": "The night span, drawn as a plate rather than a photo."
+    },
+    {
+      "id": "note-published",
+      "type": "callout",
+      "title": "What this page is",
+      "text": "A published sample. The editor's draft of this article carries one extra note that this static page does not. Saving that note keeps it a draft. Publishing it would put it here on the next build."
+    }
+  ]
+}

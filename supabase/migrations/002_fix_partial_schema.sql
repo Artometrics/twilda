@@ -1,8 +1,0 @@
--- Twilda schema recovery script
--- ---------------------------------
--- This project now uses a single idempotent migration:
---   001_initial_schema.sql
---
--- If you previously ran a broken/partial schema, open 001_initial_schema.sql,
--- copy the entire file, paste into Supabase SQL Editor, and Run.
--- It is safe to re-run on an existing database.

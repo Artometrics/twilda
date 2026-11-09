@@ -1,46 +1,11 @@
-# dependencies
 node_modules/
-
-# Expo
-.expo/
 dist/
-.firebase/
-web-build/
-expo-env.d.ts
-
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-/ios
-/android
-
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# macOS / editor
+.astro/
 .DS_Store
-*.pem
+*.tsbuildinfo
+*.log
 
-# environment
+# Local secrets, if someone adds tooling later. This CMS does not require an env file.
 .env
 .env.*
 !.env.example
-.env*.local
-
-# typescript
-*.tsbuildinfo
-
-# research
-research/**/.venv/
-research/**/__pycache__/
-artometrics-study/
