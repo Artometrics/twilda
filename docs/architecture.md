@@ -65,4 +65,4 @@ See [content-model.md](content-model.md).
 
 ## Hosting
 
-`dist/` is ordinary static output. Hosting it is a later, manual choice. This repo has no deploy script, no Netlify config, and no Firebase project file. See [../examples/hosting/README.md](../examples/hosting/README.md).
+`dist/` is ordinary static output. `firebase.json` points Firebase Hosting at that folder and sets the response headers. This repo has no deploy script and no Netlify config. See [../examples/hosting/README.md](../examples/hosting/README.md).

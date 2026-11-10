@@ -18,7 +18,7 @@ This repository previously held a different product, an Expo novel workspace. Th
 - Not a hosted CMS, and not a paid plan. Nothing here asks you to create an account.
 - Not a freeform page builder. Sections are prepared types, not a canvas.
 - Not part of the production site. The editor never runs inside `astro build`, and the build does not enable SSR to carry it.
-- Not wired to twilda.com, Netlify, Firebase, or the Artometrics site. There is no deploy script. See [examples/hosting/README.md](examples/hosting/README.md).
+- Not wired to twilda.com, Netlify, or the Artometrics site. There is no deploy script. Firebase Hosting serves `dist/` with the headers in `firebase.json`. See [examples/hosting/README.md](examples/hosting/README.md).
 - Not the previous Expo app. Do not look for Supabase, React Native, or the novel workspace on this branch.
 
 ## Demo
@@ -83,6 +83,6 @@ GitHub Actions runs those four commands on pull requests and on this branch. The
 
 - Homepage document id is `home`, served at `/`.
 - Articles are served at `/articles/<slug>` from published documents whose `kind` is `article`.
-- The desk binds to `127.0.0.1`. It is a local writer for the content directory, not a public service.
+- The desk binds to `127.0.0.1` (`server.host` in `editor/vite.config.ts`, including `npm run dev:editor`). It is a local writer for the content directory, not a public service.
 - Image fields accept only `/media/<name>.svg`. Links accept only site-relative paths.
 - Package name is `twilda`, `private: true`, license `Apache-2.0`. It is not published to npm by this branch.

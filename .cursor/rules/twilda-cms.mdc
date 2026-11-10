@@ -11,4 +11,4 @@ alwaysApply: true
 - Keep `output: "static"`. Do not add an SSR adapter so the editor can ride along.
 - Draft (`draft.json`) and publish (`published.json`) stay separate.
 - Extend prepared section types in `src/schema/sections.ts` instead of adding a freeform canvas.
-- Do not add deploy scripts or hosting configs aimed at existing Artometrics or Twilda projects.
+- Do not add a deploy script. Firebase Hosting headers for `dist/` belong in `firebase.json` (site `twilda-510519`). Do not aim hosting configs at other Artometrics or Twilda projects, and do not put secrets in `.firebaserc`.

@@ -2,7 +2,7 @@
 
 Twilda CMS is a git-native static CMS for Astro. The public site is `src/` and builds with `astro build` (`output: "static"`). Content is JSON in `content/<id>/draft.json` and `published.json`. The visual editor is `editor/` and runs only in Vite dev. Do not import the editor from `src/`, do not add an Astro adapter, and do not add a deploy script.
 
-The previous Expo novel workspace lived in this repo through commit `106b96f`. It is history. See `HISTORY.md`. Do not restore Expo, Supabase, Netlify, or Firebase project ids.
+The previous Expo novel workspace lived in this repo through commit `106b96f`. It is history. See `HISTORY.md`. Do not restore Expo, Supabase, or Netlify. Do not add a deploy script. Firebase Hosting for the static `dist/` is `firebase.json` and `.firebaserc` (project `twilda-510519`); do not put secrets in those files.
 
 ## Commands
 
