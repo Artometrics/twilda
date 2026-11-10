@@ -55,7 +55,7 @@ for (const [name, command] of Object.entries(pkg.scripts)) {
   }
 }
 
-for (const file of ["firebase.json", ".firebaserc", "netlify.toml"]) {
+for (const file of ["netlify.toml"]) {
   if (existsSync(file)) failures.push(`${file} should not be in the tree`);
 }
 

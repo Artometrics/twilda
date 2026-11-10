@@ -14,10 +14,53 @@ function walk(dir: string, acc: string[] = []): string[] {
 }
 
 describe("repository boundaries", () => {
-  it("does not keep the old hosting or secret templates", () => {
-    for (const file of ["firebase.json", ".firebaserc", "netlify.toml", ".env", ".env.example", "app.json"]) {
+  it("does not keep secret templates or a Netlify config", () => {
+    for (const file of ["netlify.toml", ".env", ".env.example", "app.json"]) {
       assert.equal(existsSync(file), false, file);
     }
+  });
+
+  it("pins the editor dev server to loopback", () => {
+    const config = readFileSync("editor/vite.config.ts", "utf8");
+    assert.match(config, /host:\s*"127\.0\.0\.1"/);
+  });
+
+  it("records Firebase Hosting headers for the static dist", () => {
+    const hosting = JSON.parse(readFileSync("firebase.json", "utf8")) as {
+      hosting: {
+        site: string;
+        public: string;
+        ignore: string[];
+        cleanUrls: boolean;
+        trailingSlash: boolean;
+        headers: { source: string; headers: { key: string; value: string }[] }[];
+      };
+    };
+    assert.equal(hosting.hosting.site, "twilda-510519");
+    assert.equal(hosting.hosting.public, "dist");
+    assert.deepEqual(hosting.hosting.ignore, ["firebase.json", "**/node_modules/**"]);
+    assert.equal(hosting.hosting.cleanUrls, true);
+    assert.equal(hosting.hosting.trailingSlash, false);
+    const bySource = new Map(hosting.hosting.headers.map((entry) => [entry.source, entry.headers]));
+    const common = new Map(bySource.get("**")?.map((header) => [header.key, header.value]));
+    assert.equal(common.get("Cache-Control"), "public, max-age=0, must-revalidate");
+    assert.equal(common.get("X-Content-Type-Options"), "nosniff");
+    assert.equal(common.get("X-Frame-Options"), "DENY");
+    assert.equal(common.get("Referrer-Policy"), "strict-origin-when-cross-origin");
+    assert.equal(
+      common.get("Permissions-Policy"),
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+    );
+    assert.equal(
+      common.get("Content-Security-Policy"),
+      "default-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; img-src 'self'; font-src 'self'; style-src 'self'; script-src 'none'; upgrade-insecure-requests",
+    );
+    const hashed = new Map(bySource.get("/_astro/**")?.map((header) => [header.key, header.value]));
+    assert.equal(hashed.get("Cache-Control"), "public, max-age=31536000, immutable");
+
+    const rc = JSON.parse(readFileSync(".firebaserc", "utf8")) as { projects: { default: string } };
+    assert.deepEqual(Object.keys(rc), ["projects"]);
+    assert.deepEqual(rc.projects, { default: "twilda-510519" });
   });
 
   it("has no deploy script", () => {
