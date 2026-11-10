@@ -1,0 +1,36 @@
+{
+  "name": "@twilda/editor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Phone-first visual desk for Twilda CMS. A static Vite app. It is not part of the Astro site build.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5174 --strictPort",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5174 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/state/*.test.ts src/media/*.test.ts src/backend/*.test.ts",
+    "test:e2e": "playwright test",
+    "icons": "node scripts/icons.mjs"
+  },
+  "dependencies": {
+    "@fontsource/newsreader": "^5.2.8",
+    "@fontsource/public-sans": "^5.2.5",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.0.4",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1"
+  }
+}
