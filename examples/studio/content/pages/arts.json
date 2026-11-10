@@ -1,0 +1,47 @@
+{
+  "id": "arts",
+  "kind": "page",
+  "title": "Arts",
+  "slug": "arts",
+  "dek": "Category page for the demo. Three public Arts titles.",
+  "kicker": "Topic",
+  "status": "published",
+  "updatedAt": "2026-11-10T00:00:00.000Z",
+  "sections": [
+    {
+      "id": "arts-grid",
+      "type": "story-grid",
+      "kicker": "Arts",
+      "heading": "In this category",
+      "stories": [
+        {
+          "id": "a-franchise",
+          "kicker": "Franchise",
+          "title": "Franchise: Merchandise Owns the Ledger",
+          "dek": "140 franchises on the October 2026 Wikipedia ledger sum to $1.45T lifetime revenue. Merchandise is 55.8%.",
+          "href": "/articles/franchise",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        },
+        {
+          "id": "a-pixar",
+          "kicker": "Pixar",
+          "title": "Pixar: Pixar's Critic Scores Broke Only Twice—Cars 2 and Lightyear",
+          "dek": "Pixar's median Rotten Tomatoes score is 96%, but Cars 2 hit 40% and Lightyear stalled the streak—data from 24 rated theatrical features.",
+          "href": "/articles/pixar",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        },
+        {
+          "id": "a-anime",
+          "kicker": "Anime",
+          "title": "Anime: Source Sets the Audience Floor",
+          "dek": "On the October 2026 MyAnimeList ledger, light-novel TV adaptations still draw 27.5 times the median audience of originals.",
+          "href": "/articles/anime",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        }
+      ]
+    }
+  ]
+}

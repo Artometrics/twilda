@@ -1,0 +1,25 @@
+---
+import { loadContentTree, renderDocument } from "../../../../packages/astro/src/index";
+import { readFileSync } from "node:fs";
+
+const root = __TWILDA_CONTENT__;
+const home = loadContentTree(root).pages.find((page) => page.slug === "home");
+if (!home) throw new Error("Published home page is missing.");
+const csv = readFileSync(`${__TWILDA_CONTENT__}/data/franchise-revenue-mix.csv`, "utf8");
+const html = renderDocument(home, { dataFiles: { "content/data/franchise-revenue-mix.csv": csv } });
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{home.title}</title>
+    <meta name="description" content={home.dek} />
+  </head>
+  <body set:html={html} />
+</html>
+
+<style is:global>
+  body { margin: 0; background: #f6f1e7; color: #1a1714; font: 17px/1.5 "Segoe UI", sans-serif; }
+  img { max-width: 100%; }
+</style>

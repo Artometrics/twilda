@@ -18,9 +18,12 @@
     "dev:site": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1 --port 4321",
     "dev:editor": "vite --config editor/vite.config.ts",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "build:demo": "node scripts/build-demo.mjs",
+    "demo": "vite --config apps/demo-editor/vite.config.ts --host 127.0.0.1 --port 4173",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview --host 127.0.0.1 --port 4321",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "tsx --test tests/*.test.ts packages/core/test/*.test.ts packages/astro/test/*.test.ts packages/backend-fs/test/*.test.ts packages/backend-github/test/*.test.ts",
+    "test:e2e": "playwright test",
     "check:static": "node scripts/check-static.mjs"
   },
   "dependencies": {
@@ -30,6 +33,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@types/node": "^22.19.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",

@@ -1,0 +1,41 @@
+{
+  "id": "pixar",
+  "kind": "article",
+  "title": "Pixar: Pixar's Critic Scores Broke Only Twice—Cars 2 and Lightyear",
+  "slug": "pixar",
+  "dek": "Pixar's median Rotten Tomatoes score is 96%, but Cars 2 hit 40% and Lightyear stalled the streak—data from 24 rated theatrical features.",
+  "kicker": "Pixar",
+  "byline": "Kyle McAuliffe",
+  "status": "published",
+  "updatedAt": "2026-06-15T00:00:00.000Z",
+  "blocks": [
+    {
+      "id": "findings",
+      "type": "key-findings",
+      "title": "Published figures",
+      "items": [
+        "96% median Rotten Tomatoes score",
+        "40% for Cars 2",
+        "+17 minutes median runtime from the early era to 2017–present",
+        "0 PG-13 ratings in the theatrical set"
+      ]
+    },
+    {
+      "id": "p-lede",
+      "type": "paragraph",
+      "text": "Public page summary, not the full Pixar article. The live report joins TidyTuesday Pixar films data with reception scores. Charts on that page are Plotly and are not embedded here."
+    },
+    {
+      "id": "sources",
+      "type": "sources",
+      "title": "Sources",
+      "items": [
+        {
+          "id": "s-tt",
+          "label": "TidyTuesday: Pixar Films (2025-03-11).",
+          "href": "https://github.com/rfordatascience/tidytuesday"
+        }
+      ]
+    }
+  ]
+}

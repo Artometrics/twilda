@@ -1,0 +1,29 @@
+{
+  "id": "sports",
+  "kind": "page",
+  "title": "Sports",
+  "slug": "sports",
+  "dek": "Category page for the demo. One public Sports title.",
+  "kicker": "Topic",
+  "status": "published",
+  "updatedAt": "2026-11-10T00:00:00.000Z",
+  "sections": [
+    {
+      "id": "sports-grid",
+      "type": "story-grid",
+      "kicker": "Sports",
+      "heading": "In this category",
+      "stories": [
+        {
+          "id": "a-dodgers",
+          "kicker": "Dodgers",
+          "title": "Dodgers: 111 Wins Still Wasn't Enough",
+          "dek": "Twelve straight playoff trips, eight championships, and 32 years between rings reveal how payroll and depth buy access—but not closure.",
+          "href": "/articles/dodgers",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        }
+      ]
+    }
+  ]
+}

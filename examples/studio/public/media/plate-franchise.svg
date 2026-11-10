@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-label="Geometric demo plate">
+  <rect width="800" height="480" fill="#e7e0d2"/>
+  <rect x="48" y="48" width="320" height="384" fill="#1a1714"/>
+  <circle cx="560" cy="180" r="120" fill="#8f1d1d"/>
+  <rect x="460" y="300" width="280" height="24" fill="#1a1714"/>
+</svg>

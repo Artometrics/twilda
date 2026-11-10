@@ -17,9 +17,16 @@
   },
   "include": [
     "astro.config.ts",
+    "playwright.config.ts",
+    "scripts/export-sample.ts",
     "src/**/*.ts",
     "editor/**/*.ts",
     "editor/**/*.tsx",
+    "packages/**/*.ts",
+    "packages/**/*.tsx",
+    "apps/**/*.ts",
+    "apps/**/*.tsx",
+    "examples/studio/astro.config.ts",
     "tests/**/*.ts"
   ]
 }
