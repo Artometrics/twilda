@@ -1,0 +1,28 @@
+---
+import { loadContentTree, renderDocument } from "../../../../../packages/astro/src/index";
+
+export function getStaticPaths() {
+  return loadContentTree(__TWILDA_CONTENT__)
+    .pages.filter((page) => page.slug !== "home")
+    .map((page) => ({ params: { slug: page.slug } }));
+}
+
+const doc = loadContentTree(__TWILDA_CONTENT__).pages.find((page) => page.slug === Astro.params.slug);
+if (!doc) throw new Error(`Missing topic ${Astro.params.slug}`);
+const html = renderDocument(doc);
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{doc.title}</title>
+    <meta name="description" content={doc.dek} />
+  </head>
+  <body set:html={html} />
+</html>
+
+<style is:global>
+  body { margin: 0; background: #f6f1e7; color: #1a1714; font: 17px/1.5 "Segoe UI", sans-serif; }
+  img { max-width: 100%; }
+</style>

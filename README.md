@@ -76,8 +76,14 @@ GitHub Actions runs those four commands on pull requests and on this branch. The
 | `src/` | Astro site: pages, section HTML, schema, content store. |
 | `editor/` | Vite + React desk. Dev only. |
 | `public/media/` | Demo plates (original SVG). |
-| `docs/architecture.md` | Editor → git → static site. |
-| `docs/content-model.md` | Section types. |
+| `docs/architecture.md` | Static contract, phone editor, drafts, and open questions. |
+| `docs/content-model.md` | Localhost desk section types. |
+| `docs/franchise-slice.md` | Franchise article mapped onto blocks. |
+| `docs/demo-hosting.md` | Build and host the phone demo separately. |
+
+## Phone demo
+
+`npm run build:demo` writes `demo-dist/`. That folder is the browser editor plus a static preview of published sample articles. It is not `dist/`, and it is not deployed by this repo. `npm run demo` serves the editor at http://127.0.0.1:4173. The localhost desk from `npm run dev` is unchanged and stays on 127.0.0.1:5173.
 
 ## Defaults
 

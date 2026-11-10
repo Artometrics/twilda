@@ -1,0 +1,30 @@
+{
+  "id": "simpsons",
+  "kind": "article",
+  "title": "Marcia Wallace, 175 Guest Appearances",
+  "slug": "simpsons",
+  "dek": "Homepage card on artometrics.com. The article page was not fetched for this fixture.",
+  "kicker": "Simpsons",
+  "byline": "Artometrics",
+  "status": "published",
+  "updatedAt": "2026-06-15T00:00:00.000Z",
+  "blocks": [
+    {
+      "id": "p-card",
+      "type": "paragraph",
+      "text": "The homepage card read Simpsons / Marcia Wallace, 175 Guest Appearances when fetched on 2026-11-10. Sitemap lastmod for /simpsons was 2026-06-15. Body, byline, and charts were not copied."
+    },
+    {
+      "id": "sources",
+      "type": "sources",
+      "title": "Sources",
+      "items": [
+        {
+          "id": "s-home",
+          "label": "Artometrics homepage card.",
+          "href": "https://artometrics.com/"
+        }
+      ]
+    }
+  ]
+}

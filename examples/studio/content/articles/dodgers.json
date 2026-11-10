@@ -1,0 +1,41 @@
+{
+  "id": "dodgers",
+  "kind": "article",
+  "title": "Dodgers: 111 Wins Still Wasn't Enough",
+  "slug": "dodgers",
+  "dek": "Twelve straight playoff trips, eight championships, and 32 years between rings reveal how payroll and depth buy access—but not closure.",
+  "kicker": "Dodgers",
+  "byline": "Artometrics",
+  "status": "published",
+  "updatedAt": "2026-07-01T00:00:00.000Z",
+  "blocks": [
+    {
+      "id": "findings",
+      "type": "key-findings",
+      "title": "Published figures",
+      "items": [
+        "111 regular-season wins in 2022",
+        "12 straight postseason appearances from 2013 through 2024",
+        "8 World Series championships",
+        "32 years between the 1988 and 2020 titles"
+      ]
+    },
+    {
+      "id": "p-lede",
+      "type": "paragraph",
+      "text": "Figures and the dek are from the public Dodgers page fetched 2026-11-10. updatedAt is the sitemap lastmod (2026-07-01), not a byline date. The article body was not copied. A byline was not in that extract."
+    },
+    {
+      "id": "sources",
+      "type": "sources",
+      "title": "Sources",
+      "items": [
+        {
+          "id": "s-page",
+          "label": "Artometrics public article: Dodgers.",
+          "href": "https://artometrics.com/dodgers"
+        }
+      ]
+    }
+  ]
+}

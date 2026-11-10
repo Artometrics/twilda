@@ -36,6 +36,7 @@ if (!html.includes("Field Desk")) failures.push("homepage title is missing from 
 
 const forbidden = [
   "DRAFT-ONLY SENTINEL",
+  "twilda-demo-editor",
   "twilda-surface",
   "/api/documents",
   "Save draft",

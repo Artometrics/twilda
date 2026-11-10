@@ -1,0 +1,151 @@
+{
+  "id": "home",
+  "kind": "page",
+  "title": "Artometrics",
+  "slug": "home",
+  "dek": "Sample homepage for the Twilda demo. Section order is editable. This is not the live site.",
+  "kicker": "Desk",
+  "status": "published",
+  "updatedAt": "2026-11-10T00:00:00.000Z",
+  "sections": [
+    {
+      "id": "lead-carousel",
+      "type": "carousel",
+      "label": "Five stories",
+      "slides": [
+        {
+          "id": "s-franchise",
+          "kicker": "Franchise",
+          "title": "Franchise: Merchandise Owns the Ledger",
+          "dek": "140 franchises on the October 2026 Wikipedia ledger sum to $1.45T lifetime revenue. Merchandise is 55.8%.",
+          "href": "/articles/franchise",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        },
+        {
+          "id": "s-pixar",
+          "kicker": "Pixar",
+          "title": "Pixar: Pixar's Critic Scores Broke Only Twice—Cars 2 and Lightyear",
+          "dek": "Pixar's median Rotten Tomatoes score is 96%, but Cars 2 hit 40% and Lightyear stalled the streak—data from 24 rated theatrical features.",
+          "href": "/articles/pixar",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        },
+        {
+          "id": "s-anime",
+          "kicker": "Anime",
+          "title": "Anime: Source Sets the Audience Floor",
+          "dek": "On the October 2026 MyAnimeList ledger, light-novel TV adaptations still draw 27.5 times the median audience of originals.",
+          "href": "/articles/anime",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        },
+        {
+          "id": "s-dodgers",
+          "kicker": "Dodgers",
+          "title": "Dodgers: 111 Wins Still Wasn't Enough",
+          "dek": "Twelve straight playoff trips, eight championships, and 32 years between rings reveal how payroll and depth buy access—but not closure.",
+          "href": "/articles/dodgers",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        },
+        {
+          "id": "s-simpsons",
+          "kicker": "Simpsons",
+          "title": "Marcia Wallace, 175 Guest Appearances",
+          "dek": "Homepage card on artometrics.com. The article page was not fetched for this fixture.",
+          "href": "/articles/simpsons",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        }
+      ]
+    },
+    {
+      "id": "square-grid",
+      "type": "story-grid",
+      "kicker": "Arts and sports",
+      "heading": "Square story grid",
+      "stories": [
+        {
+          "id": "g-franchise",
+          "kicker": "Franchise",
+          "title": "Franchise: Merchandise Owns the Ledger",
+          "dek": "140 franchises on the October 2026 Wikipedia ledger sum to $1.45T lifetime revenue. Merchandise is 55.8%.",
+          "href": "/articles/franchise",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        },
+        {
+          "id": "g-pixar",
+          "kicker": "Pixar",
+          "title": "Pixar: Pixar's Critic Scores Broke Only Twice—Cars 2 and Lightyear",
+          "dek": "Pixar's median Rotten Tomatoes score is 96%, but Cars 2 hit 40% and Lightyear stalled the streak—data from 24 rated theatrical features.",
+          "href": "/articles/pixar",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        },
+        {
+          "id": "g-anime",
+          "kicker": "Anime",
+          "title": "Anime: Source Sets the Audience Floor",
+          "dek": "On the October 2026 MyAnimeList ledger, light-novel TV adaptations still draw 27.5 times the median audience of originals.",
+          "href": "/articles/anime",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        },
+        {
+          "id": "g-dodgers",
+          "kicker": "Dodgers",
+          "title": "Dodgers: 111 Wins Still Wasn't Enough",
+          "dek": "Twelve straight playoff trips, eight championships, and 32 years between rings reveal how payroll and depth buy access—but not closure.",
+          "href": "/articles/dodgers",
+          "image": "/media/plate-franchise.svg",
+          "imageAlt": "Original geometric demo plate. Not the Artometrics banner."
+        }
+      ]
+    },
+    {
+      "id": "shelf",
+      "type": "menu-shelf",
+      "heading": "Menu",
+      "items": [
+        {
+          "id": "m-arts",
+          "label": "Arts",
+          "href": "/topics/arts",
+          "dek": "Franchise, Pixar, Anime"
+        },
+        {
+          "id": "m-sports",
+          "label": "Sports",
+          "href": "/topics/sports",
+          "dek": "Dodgers"
+        },
+        {
+          "id": "m-science",
+          "label": "Science",
+          "href": "https://artometrics.com/topics/science",
+          "dek": "Public topic. Not built in this demo."
+        },
+        {
+          "id": "m-culture",
+          "label": "Culture",
+          "href": "https://artometrics.com/topics/culture",
+          "dek": "Public topic. Not built in this demo."
+        },
+        {
+          "id": "m-humanities",
+          "label": "Humanities",
+          "href": "https://artometrics.com/topics/humanities",
+          "dek": "Public topic. Not built in this demo."
+        },
+        {
+          "id": "m-civics",
+          "label": "Civics",
+          "href": "https://artometrics.com/topics/civics",
+          "dek": "Public topic. Not built in this demo."
+        }
+      ]
+    }
+  ]
+}

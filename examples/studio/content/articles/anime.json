@@ -1,0 +1,38 @@
+{
+  "id": "anime",
+  "kind": "article",
+  "title": "Anime: Source Sets the Audience Floor",
+  "slug": "anime",
+  "dek": "On the October 2026 MyAnimeList ledger, light-novel TV adaptations still draw 27.5 times the median audience of originals.",
+  "kicker": "Anime",
+  "byline": "Artometrics",
+  "status": "published",
+  "updatedAt": "2026-03-31T00:00:00.000Z",
+  "blocks": [
+    {
+      "id": "findings",
+      "type": "key-findings",
+      "title": "Published figures",
+      "items": [
+        "27.5× median members, light-novel TV versus original TV"
+      ]
+    },
+    {
+      "id": "p-lede",
+      "type": "paragraph",
+      "text": "Title, dek, and the 27.5× figure are from the public page fetched 2026-11-10. A byline was not in that extract, so this fixture uses Artometrics. The article body was not copied."
+    },
+    {
+      "id": "sources",
+      "type": "sources",
+      "title": "Sources",
+      "items": [
+        {
+          "id": "s-page",
+          "label": "Artometrics public article: Anime.",
+          "href": "https://artometrics.com/anime"
+        }
+      ]
+    }
+  ]
+}

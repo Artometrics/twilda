@@ -1,6 +1,8 @@
 # Content model
 
-Documents are JSON. Zod schemas in `src/schema/sections.ts` are the contract the editor, the tests, and the static build share.
+This file describes the localhost desk (`editor/`, `src/schema/sections.ts`, `content/*/draft.json`). The phone editor uses a different contract: JSON articles and pages in `packages/core/src/schema.ts`. See [architecture.md](architecture.md).
+
+Documents for the desk are JSON. Zod schemas in `src/schema/sections.ts` are the contract the desk, the tests, and the static Field Desk build share.
 
 ```ts
 interface ContentDocument {

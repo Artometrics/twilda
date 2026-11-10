@@ -15,7 +15,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -38,3 +38,12 @@ jobs:
 
       - name: Confirm the editor and drafts stayed out of dist
         run: npm run check:static
+
+      - name: Demo editor and sample preview
+        run: npm run build:demo
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Phone browser tests
+        run: npm run test:e2e

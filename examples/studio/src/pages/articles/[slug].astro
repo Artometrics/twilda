@@ -1,0 +1,28 @@
+---
+import { loadContentTree, renderDocument } from "../../../../../packages/astro/src/index";
+import { readFileSync } from "node:fs";
+
+export function getStaticPaths() {
+  return loadContentTree(__TWILDA_CONTENT__).articles.map((article) => ({ params: { slug: article.slug } }));
+}
+
+const doc = loadContentTree(__TWILDA_CONTENT__).articles.find((article) => article.slug === Astro.params.slug);
+if (!doc) throw new Error(`Missing article ${Astro.params.slug}`);
+const csv = readFileSync(`${__TWILDA_CONTENT__}/data/franchise-revenue-mix.csv`, "utf8");
+const html = renderDocument(doc, { dataFiles: { "content/data/franchise-revenue-mix.csv": csv } });
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{doc.title}</title>
+    <meta name="description" content={doc.dek} />
+  </head>
+  <body set:html={html} />
+</html>
+
+<style is:global>
+  body { margin: 0; background: #f6f1e7; color: #1a1714; font: 17px/1.5 "Segoe UI", sans-serif; }
+  img { max-width: 100%; }
+</style>

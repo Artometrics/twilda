@@ -1,0 +1,9 @@
+{
+  "name": "Twilda demo",
+  "short_name": "Twilda",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f1e7",
+  "theme_color": "#f6f1e7",
+  "description": "Browser demo of the Twilda editor. Not the production site."
+}
