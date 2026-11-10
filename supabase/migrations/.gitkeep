@@ -1,3 +1,0 @@
--- Future schema migrations live here.
--- Prefer the Supabase SQL editor or `supabase migration new` after linking a project.
--- Enable RLS on every table before shipping the anon key to production.

@@ -1,0 +1,14 @@
+---
+description: Twilda CMS conventions for this repository.
+alwaysApply: true
+---
+
+# Twilda CMS
+
+- This repo is the git-native Astro CMS, not the retired Expo novel workspace. See `HISTORY.md`.
+- Public pages live in `src/pages` and render published JSON from `content/`.
+- The editor lives in `editor/` and must not be imported by the Astro site or emitted by `astro build`.
+- Keep `output: "static"`. Do not add an SSR adapter so the editor can ride along.
+- Draft (`draft.json`) and publish (`published.json`) stay separate.
+- Extend prepared section types in `src/schema/sections.ts` instead of adding a freeform canvas.
+- Do not add deploy scripts or hosting configs aimed at existing Artometrics or Twilda projects.

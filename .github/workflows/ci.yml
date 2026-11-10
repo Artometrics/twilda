@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -27,10 +27,14 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Build
-        env:
-          # Build-time placeholders — no real secrets in CI
-          EXPO_PUBLIC_SITE_URL: http://localhost:8081
-          EXPO_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          EXPO_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Static build
         run: npm run build
+
+      - name: Confirm the editor and drafts stayed out of dist
+        run: npm run check:static

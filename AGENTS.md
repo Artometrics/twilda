@@ -1,49 +1,21 @@
-# AGENTS.md — Twilda (`@artometrics/twilda`)
+# AGENTS.md — Twilda CMS
 
-**Twilda** (Artometrics) is a personal novel workspace for **iOS, Android, and web** via **Expo**: **Library** (Plan / Write / Board / Codex), **Journal**, and **Account** — with Supabase Auth (email + Google).
+Twilda CMS is a git-native static CMS for Astro. The public site is `src/` and builds with `astro build` (`output: "static"`). Content is JSON in `content/<id>/draft.json` and `published.json`. The visual editor is `editor/` and runs only in Vite dev. Do not import the editor from `src/`, do not add an Astro adapter, and do not add a deploy script.
 
-**Publisher / support:** See README. Production web: Netlify site `twilda` (static Expo export). Domain from `EXPO_PUBLIC_SITE_URL`.
+The previous Expo novel workspace lived in this repo through commit `106b96f`. It is history. See `HISTORY.md`. Do not restore Expo, Supabase, Netlify, or Firebase project ids.
 
-## Tech stack
+## Commands
 
-- **Expo** `~57` + **Expo Router** (`app/`)
-- **React Native** + **react-native-web**
-- **Supabase:** `@supabase/supabase-js` — client in `src/lib/supabase/client.ts` (SecureStore / AsyncStorage)
-- **Fonts:** Literata + DM Sans (`@expo-google-fonts/*`)
-- **Host (web):** Netlify publishes `dist/` from `npm run build` (`netlify.toml`)
-- **Aliases:** `@/*` → `src/*` then project root (`tsconfig.json`)
+- `npm install`
+- `npm run dev` — editor on port 5173, published site on port 4321
+- `npm run typecheck`
+- `npm test`
+- `npm run build` then `npm run check:static`
 
-## Folder map
+## Product rules
 
-| Area | Path | Role |
-|------|------|------|
-| Routes | `app/` | Expo Router screens (auth, tabs, novel, journal) |
-| Lib | `src/lib/` | Auth, novels, journal, Supabase |
-| Domain | `src/apps/novelcrafter/` | Types, starter manuscript data |
-| UI | `src/components/` | Shared RN UI |
-| Theme | `src/constants/theme.ts` | Color / type tokens |
-| Setup docs | `docs/SETUP.md` | Env + Supabase checklist |
-| Supabase SQL | `supabase/migrations/` | Schema migrations |
-
-## Product routes
-
-| Area | Path |
-|------|------|
-| Home | `/` → library or login |
-| Library | `/(tabs)/novels` |
-| Workspace | `/novels/[id]` (Plan / Write / Board / Codex / Settings) |
-| Journal | `/(tabs)/journal`, `/journal/[id]` |
-| Account | `/(tabs)/account` |
-| Auth | `/(auth)/login`, signup, forgot; `/auth/callback` |
-
-## Guardrails
-
-- Prefer **minimal diffs**; reuse `src/lib` services + RLS instead of reintroducing a custom API layer.
-- Call Supabase from the client with the anon key; never ship `SUPABASE_SERVICE_ROLE_KEY` in the app.
-- Protected UX is route-guarded via `AuthProvider` + tab/auth layouts.
-
-## Cursor Cloud specific instructions
-
-- Setup: `npm install`, copy `.env.example` → `.env`, run `npm run dev` or `npm run web`.
-- Correctness checks: `npm run typecheck` and `npm run build` (web export).
-- See **`docs/SETUP.md`**.
+- Saving a draft and publishing are separate.
+- Sections are prepared types from `src/schema/sections.ts`. Add, remove, and reorder. Do not turn the desk into a freeform canvas.
+- The static build reads published files only.
+- Demo content stays fictional. Do not scrape a live magazine into `content/`.
+- No secrets in the tree. No `.env` required.

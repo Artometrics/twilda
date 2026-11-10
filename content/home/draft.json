@@ -1,0 +1,146 @@
+{
+  "id": "home",
+  "kind": "page",
+  "title": "Field Desk",
+  "slug": "home",
+  "dek": "A sample issue assembled from prepared sections. Field Desk is demo content for Twilda CMS, not a live magazine.",
+  "kicker": "Demo issue 01",
+  "byline": "",
+  "updatedAt": "2026-11-09T16:00:00.000Z",
+  "sections": [
+    {
+      "id": "issue-carousel",
+      "type": "carousel",
+      "label": "In this issue",
+      "slides": [
+        {
+          "id": "slide-rail",
+          "kicker": "Franchise",
+          "title": "Lumen Rail keeps the night timetable public",
+          "dek": "A fictional municipal operator, set as a template a writer can reorder.",
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-signal.svg",
+          "imageAlt": "Geometric plate of a three-lamp signal beside a rule line"
+        },
+        {
+          "id": "slide-yard",
+          "kicker": "Yard",
+          "title": "The shed faces the river, not the street",
+          "dek": "How the sample franchise describes a yard without pretending it is a real transit agency.",
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-yard.svg",
+          "imageAlt": "Geometric plate of parallel tracks and a small shed"
+        },
+        {
+          "id": "slide-map",
+          "kicker": "Route",
+          "title": "Twenty-four stations, one concession",
+          "dek": "The fact table lives beside the headline, not in a sidebar someone has to invent.",
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-map.svg",
+          "imageAlt": "Geometric plate of a route line crossing a paper field"
+        }
+      ]
+    },
+    {
+      "id": "issue-grid",
+      "type": "story-grid",
+      "kicker": "The desk",
+      "lead": {
+        "kicker": "Lead",
+        "title": "A franchise page is a stack, not a canvas",
+        "dek": "Carousel, grid, feature, facts, and tiles are prepared. The writer reorders them. The static build prints whatever was published.",
+        "href": "/articles/lumen-rail",
+        "image": "/media/plate-carriage.svg",
+        "imageAlt": "Geometric plate of four carriage windows",
+        "byline": "Sample · Field Desk"
+      },
+      "stories": [
+        {
+          "id": "short-concession",
+          "kicker": "Form",
+          "title": "The concession fits on one article",
+          "dek": "Headings, paragraphs, a quote, a figure, a list, and a note.",
+          "href": "/articles/lumen-rail"
+        },
+        {
+          "id": "short-facts",
+          "kicker": "Facts",
+          "title": "Numbers sit in a table, not in the prose",
+          "dek": "Gauge, stations, and the night span are fields.",
+          "href": "/articles/lumen-rail"
+        },
+        {
+          "id": "short-tiles",
+          "kicker": "Doors",
+          "title": "Tiles are section doors",
+          "dek": "They link into the issue. They are not free-floating widgets.",
+          "href": "/articles/lumen-rail"
+        }
+      ]
+    },
+    {
+      "id": "issue-feature",
+      "type": "magazine-feature",
+      "kicker": "Feature",
+      "title": "Franchise: Lumen Rail",
+      "dek": "Written as a desk template. The city, the concession, and the night span are fiction for this demo.",
+      "byline": "Desk sample",
+      "href": "/articles/lumen-rail",
+      "image": "/media/plate-night.svg",
+      "imageAlt": "Geometric night plate with a moon and signal posts"
+    },
+    {
+      "id": "issue-facts",
+      "type": "headline-facts",
+      "kicker": "At a glance",
+      "headline": "What the sample concession claims",
+      "dek": "These figures belong to the demo issue. They are not scraped from a live magazine.",
+      "facts": [
+        { "id": "fact-year", "label": "Opened in the story", "value": "1978" },
+        { "id": "fact-gauge", "label": "Gauge", "value": "1,435 mm" },
+        { "id": "fact-stations", "label": "Stations", "value": "24" },
+        { "id": "fact-span", "label": "Night span", "value": "18 min" }
+      ]
+    },
+    {
+      "id": "issue-tiles",
+      "type": "category-tiles",
+      "heading": "Doors into the issue",
+      "tiles": [
+        {
+          "id": "tile-franchise",
+          "title": "Franchise",
+          "dek": "The concession, told in blocks.",
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-archive.svg",
+          "imageAlt": "Geometric plate of four stacked archive bands"
+        },
+        {
+          "id": "tile-yard",
+          "title": "Yard",
+          "dek": "Where the cars wait.",
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-yard.svg",
+          "imageAlt": "Geometric plate of a yard and shed"
+        },
+        {
+          "id": "tile-timetable",
+          "title": "Timetable",
+          "dek": "The night sheet is public.",
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-map.svg",
+          "imageAlt": "Geometric plate of a route"
+        },
+        {
+          "id": "tile-riders",
+          "title": "Riders",
+          "dek": "What the platform holds.",
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-river.svg",
+          "imageAlt": "Geometric plate of a river band and blocks"
+        }
+      ]
+    }
+  ]
+}

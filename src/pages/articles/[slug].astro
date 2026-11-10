@@ -1,0 +1,29 @@
+---
+import Base from "../../layouts/Base.astro";
+import { listPublished, readPublished } from "../../content/store";
+import { renderDocument } from "../../render/document";
+
+export function getStaticPaths() {
+  return listPublished()
+    .filter((doc) => doc.kind === "article")
+    .map((doc) => ({
+      params: { slug: doc.slug },
+      props: { id: doc.id },
+    }));
+}
+
+interface Props {
+  id: string;
+}
+
+const { id } = Astro.props;
+const doc = readPublished(id);
+if (!doc) {
+  throw new Error(`Published article "${id}" disappeared during the build.`);
+}
+const html = renderDocument(doc);
+---
+
+<Base title={`${doc.title} · Field Desk`} description={doc.dek}>
+  <Fragment set:html={html} />
+</Base>
