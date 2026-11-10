@@ -16,6 +16,8 @@ export default defineConfig({
   cacheDir: fileURLToPath(new URL("../node_modules/.vite-twilda-editor", import.meta.url)),
   plugins: [react(), twildaApi()],
   server: {
+    // Loopback only, so `npm run dev:editor` cannot bind a public interface.
+    host: "127.0.0.1",
     port: 5173,
     strictPort: true,
     fs: {

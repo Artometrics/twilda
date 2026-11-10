@@ -112,7 +112,11 @@ Recommendation: use the browser demo to edit on a phone with no account. Use a f
 | Preview host | The demo renders preview in the page | A separate CI preview per branch is not built. Unverified. |
 | Production site | Already static | Must stay a different deploy from the editor. |
 
-No paid plan is required. Firebase Hosting has a no-cost Spark tier; current quotas were not rechecked for this note. Do not attach this repo to `twilda-510519` or `artometrics-510519`.
+No paid plan is required. Firebase Hosting has a no-cost Spark tier; current quotas were not rechecked for this note.
+
+Production `dist/` is already described by `firebase.json` for site `twilda-510519`, with `script-src 'none'`. That file is not a deploy script. The phone demo must not be uploaded to that site: `demo-dist/` contains the editor's JavaScript, and the production CSP would blank it. Do not point hosting at `artometrics-510519`. See [demo-hosting.md](demo-hosting.md) and [../examples/hosting/README.md](../examples/hosting/README.md).
+
+The localhost desk still saves `draft.json` and publishes a separate `published.json`. Field Desk's extra callout is only in the draft. See [content-model.md](content-model.md).
 
 ## Open questions and risks
 
@@ -120,7 +124,7 @@ Unverified items are marked.
 
 1. The Franchise article is being rewritten. Figures in the fixture were copied from the public page on 2026-11-10 and may already be wrong. Unverified against the Quarto source, which this repo does not contain.
 2. Bylines for Anime, Dodgers, and Simpsons were not in the text extracted from those public pages. The fixture says Artometrics. Simpsons uses the homepage card only. Unverified.
-3. No CSP header file exists in this repo. Whether the live Twilda host sends `script-src 'none'` was not rechecked from here. The demo editor is a scripted page and must not be deployed onto that production target.
+3. `firebase.json` sets `script-src 'none'` for `dist/`. Whether the live host is actually serving that file was not rechecked from here. The demo editor needs scripts and must stay off that target.
 4. GitHub device flow and contents writes are tested with a fake `fetch` only. Real GitHub behavior is unverified. There is no client id in the repo.
 5. A branch preview build in CI is not implemented. The phone preview is a client-side render.
 6. IndexedDB quota on a phone was not measured. Uploads are rejected over 1.5 MB. A full store throws `persist-failed`.
