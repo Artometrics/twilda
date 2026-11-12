@@ -75,7 +75,7 @@ GitHub Actions runs those four commands on pull requests and on this branch. The
 | `content/` | Git content. Draft and published JSON. |
 | `src/` | Astro site: pages, section HTML, schema, content store. |
 | `editor/` | Vite + React desk. Dev only. |
-| `packages/editor/` | The phone-first desk: new, edit, save, preview, export to Astro MDX or Markdown. Own `package.json`. |
+| `packages/editor/` | The phone-first desk: new, edit, save, preview, export to Astro MDX or Markdown. Own `package.json`. Hosted on site `twilda-desk-510519`. `/desk` on the magazine site redirects there. |
 | `drafts/artometrics/` | Three DRAFT sample articles (real public facts, cited, `[VERIFY]` notes) that the phone desk seeds on first visit. Not in `content/`. |
 | `public/media/` | Demo plates (original SVG). |
 | `docs/architecture.md` | Static contract, phone editor, drafts, and open questions. |

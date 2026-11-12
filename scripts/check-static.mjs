@@ -33,6 +33,15 @@ if (!html.includes("The night timetable is a public document.")) {
   failures.push("published article sentence is missing from dist");
 }
 if (!html.includes("Field Desk")) failures.push("homepage title is missing from dist");
+if (!existsSync(path.join(dist, "robots.txt")) || !readFileSync(path.join(dist, "robots.txt"), "utf8").includes("Disallow: /")) {
+  failures.push("dist/robots.txt must disallow all crawlers");
+}
+for (const file of htmlFiles) {
+  const page = readFileSync(file, "utf8");
+  if (!page.includes('name="robots"') || !page.includes("noindex")) {
+    failures.push(`missing noindex meta: ${path.relative(dist, file)}`);
+  }
+}
 
 const forbidden = [
   "DRAFT-ONLY SENTINEL",
