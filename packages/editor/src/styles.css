@@ -352,7 +352,7 @@ a { color: var(--ink); }
 
 .storage-note p { margin: 0 0 12px; color: var(--muted); }
 
-.pad { margin-left: 16px; margin-right: 16px; }
+.pad, .hint.pad, .pane-export h3.pad { margin-left: 16px; margin-right: 16px; }
 
 .sheet-form { margin-top: 12px; }
 

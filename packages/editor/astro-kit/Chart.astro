@@ -1,0 +1,35 @@
+---
+interface Props {
+  title: string;
+  src?: string;
+  alt?: string;
+  caption?: string;
+}
+const { title, src, alt, caption } = Astro.props;
+const isImage = src ? /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(src) : false;
+---
+
+<figure class="twilda-chart">
+  {isImage ? <img src={src} alt={alt ?? ""} loading="lazy" /> : null}
+  <figcaption>
+    <strong>{title}.</strong>
+    {alt && !isImage ? <> {alt}</> : null}
+    {caption ? <> {caption}</> : null}
+    {src && !isImage ? <> <a href={src} rel="noopener">Open the chart</a></> : null}
+  </figcaption>
+</figure>
+
+<style>
+  .twilda-chart {
+    margin: 1.5rem 0;
+  }
+  .twilda-chart img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .twilda-chart figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.9em;
+  }
+</style>

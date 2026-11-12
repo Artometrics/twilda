@@ -245,7 +245,7 @@ export function App({
   const showExport = Boolean(draft) && state.view === "export";
   const showEditor = Boolean(draft) && !showMedia && !showExport && (desktop || state.view === "edit");
   const showPreview = Boolean(draft) && !showExport && (desktop || state.view === "preview");
-  const showActions = Boolean(draft) && (desktop || state.view !== "list");
+  const showActions = Boolean(draft) && (desktop || state.view === "edit" || state.view === "preview");
 
   return (
     <div className={desktop ? "app desktop" : "app"}>

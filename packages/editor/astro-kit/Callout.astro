@@ -1,0 +1,22 @@
+---
+interface Props {
+  title?: string;
+}
+const { title } = Astro.props;
+---
+
+<aside class="twilda-callout">
+  {title && <strong>{title}</strong>}
+  <slot />
+</aside>
+
+<style>
+  .twilda-callout {
+    margin: 1.5rem 0;
+    padding: 0.5rem 0 0.5rem 1rem;
+    border-left: 3px solid currentColor;
+  }
+  .twilda-callout :global(p:last-child) {
+    margin-bottom: 0;
+  }
+</style>

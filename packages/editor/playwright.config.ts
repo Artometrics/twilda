@@ -1,5 +1,9 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
+/**
+ * Two projects: WebKit with the iPhone 14 profile at 390x844 (the engine and
+ * touch model of iPhone Safari), and Chromium at 1440x900 for the desk layout.
+ */
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
@@ -15,17 +19,24 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: "http://127.0.0.1:5174",
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
   projects: [
     {
-      name: "phone",
-      use: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true },
+      name: "iphone",
+      use: {
+        ...devices["iPhone 14"],
+        viewport: { width: 390, height: 844 },
+      },
     },
     {
-      name: "desk",
-      use: { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 },
+      name: "desktop",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1440, height: 900 },
+        deviceScaleFactor: 1,
+      },
     },
   ],
 });

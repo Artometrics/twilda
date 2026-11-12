@@ -17,5 +17,5 @@ The previous Expo novel workspace lived in this repo through commit `106b96f`. I
 - Saving a draft and publishing are separate.
 - Sections are prepared types from `src/schema/sections.ts`. Add, remove, and reorder. Do not turn the desk into a freeform canvas.
 - The static build reads published files only.
-- Demo content stays fictional. Do not scrape a live magazine into `content/`.
+- Demo content stays fictional. Do not scrape a live magazine into `content/`. `drafts/artometrics/` is separate: real-fact DRAFT articles in our own words, each cited, with `[VERIFY]` notes for anything unconfirmed. It feeds the phone desk and is not read by the static build.
 - No secrets in the tree. No `.env` required.

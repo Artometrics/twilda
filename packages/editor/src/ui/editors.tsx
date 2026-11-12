@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   BLOCK_CATALOG,
   SECTION_CATALOG,
@@ -204,13 +204,18 @@ function AddChooser<T extends string>({
   options: readonly { type: T; label: string; hint: string }[];
   onPick: (type: T) => void;
 }) {
+  const ref = useRef<HTMLDetailsElement>(null);
   return (
-    <details className="adder">
+    <details className="adder" ref={ref}>
       <summary data-testid={testId}>{title}</summary>
       <ul className="chooser">
         {options.map((option) => (
           <li key={option.type}>
-            <button type="button" data-testid={`choose-${option.type}`} onClick={() => onPick(option.type)}>
+            <button type="button" data-testid={`choose-${option.type}`} onClick={() => {
+                onPick(option.type);
+                if (ref.current) ref.current.open = false;
+              }}
+            >
               <strong>{option.label}</strong>
               <span>{option.hint}</span>
             </button>

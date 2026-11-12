@@ -75,11 +75,14 @@ GitHub Actions runs those four commands on pull requests and on this branch. The
 | `content/` | Git content. Draft and published JSON. |
 | `src/` | Astro site: pages, section HTML, schema, content store. |
 | `editor/` | Vite + React desk. Dev only. |
+| `packages/editor/` | The phone-first desk: new, edit, save, preview, export to Astro MDX or Markdown. Own `package.json`. |
+| `drafts/artometrics/` | Three DRAFT sample articles (real public facts, cited, `[VERIFY]` notes) that the phone desk seeds on first visit. Not in `content/`. |
 | `public/media/` | Demo plates (original SVG). |
 | `docs/architecture.md` | Static contract, phone editor, drafts, and open questions. |
 | `docs/content-model.md` | Localhost desk section types. |
 | `docs/franchise-slice.md` | Franchise article mapped onto blocks. |
 | `docs/demo-hosting.md` | Build and host the phone demo separately. |
+| `docs/phone-drafting-audit.md` | Drafting from a phone: audit, what changed, export format. |
 
 ## Phone demo
 

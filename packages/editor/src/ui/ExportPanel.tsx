@@ -171,8 +171,8 @@ export function ExportPanel({
 
           {exported.images.length > 0 ? (
             <p className="hint pad">
-              {exported.images.length} uploaded image{exported.images.length === 1 ? "" : "s"} go in the bundle under
-              images/. A single {flavor === "mdx" ? ".mdx" : ".md"} file refers to them as ./images/…
+              {exported.images.length === 1 ? "1 uploaded image goes" : `${exported.images.length} uploaded images go`} in
+              the bundle under images/. A single {flavor === "mdx" ? ".mdx" : ".md"} file refers to them as ./images/…
             </p>
           ) : null}
 

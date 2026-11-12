@@ -1,0 +1,43 @@
+---
+interface Props {
+  title?: string;
+  items: { label: string; detail: string }[];
+}
+const { title = "Key findings", items } = Astro.props;
+---
+
+<section class="twilda-findings">
+  <h3>{title}</h3>
+  <dl>
+    {
+      items.map((item) => (
+        <div>
+          <dt>{item.label}</dt>
+          <dd>{item.detail}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</section>
+
+<style>
+  .twilda-findings {
+    margin: 1.5rem 0;
+  }
+  .twilda-findings dl {
+    margin: 0;
+  }
+  .twilda-findings div {
+    display: grid;
+    grid-template-columns: minmax(6rem, 10rem) 1fr;
+    gap: 0.5rem 1rem;
+    padding: 0.4rem 0;
+    border-top: 1px solid currentColor;
+  }
+  .twilda-findings dt {
+    font-weight: 600;
+  }
+  .twilda-findings dd {
+    margin: 0;
+  }
+</style>
