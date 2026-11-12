@@ -26,23 +26,29 @@ describe("repository boundaries", () => {
   });
 
   it("records Firebase Hosting headers for the static dist", () => {
-    const hosting = JSON.parse(readFileSync("firebase.json", "utf8")) as {
-      hosting: {
-        site: string;
-        public: string;
-        ignore: string[];
-        cleanUrls: boolean;
-        trailingSlash: boolean;
-        headers: { source: string; headers: { key: string; value: string }[] }[];
-      };
+    type HostingSite = {
+      site: string;
+      public: string;
+      ignore: string[];
+      cleanUrls: boolean;
+      trailingSlash: boolean;
+      redirects?: { source: string; destination: string; type: number }[];
+      headers: { source: string; headers: { key: string; value: string }[] }[];
     };
-    assert.equal(hosting.hosting.site, "twilda-510519");
-    assert.equal(hosting.hosting.public, "dist");
-    assert.deepEqual(hosting.hosting.ignore, ["firebase.json", "**/node_modules/**"]);
-    assert.equal(hosting.hosting.cleanUrls, true);
-    assert.equal(hosting.hosting.trailingSlash, false);
-    const bySource = new Map(hosting.hosting.headers.map((entry) => [entry.source, entry.headers]));
+    const config = JSON.parse(readFileSync("firebase.json", "utf8")) as { hosting: HostingSite[] };
+    assert.equal(Array.isArray(config.hosting), true);
+    const magazine = config.hosting.find((site) => site.site === "twilda-510519");
+    const desk = config.hosting.find((site) => site.site === "twilda-desk-510519");
+    assert.ok(magazine, "magazine hosting site is missing");
+    assert.ok(desk, "desk hosting site is missing");
+    assert.equal(magazine.public, "dist");
+    assert.deepEqual(magazine.ignore, ["firebase.json", "**/node_modules/**"]);
+    assert.equal(magazine.cleanUrls, true);
+    assert.equal(magazine.trailingSlash, false);
+    assert.ok(magazine.redirects?.some((row) => row.source === "/desk" && row.destination === "https://twilda-desk-510519.web.app/"));
+    const bySource = new Map(magazine.headers.map((entry) => [entry.source, entry.headers]));
     const common = new Map(bySource.get("**")?.map((header) => [header.key, header.value]));
+    assert.equal(common.get("X-Robots-Tag"), "noindex, nofollow, noarchive");
     assert.equal(common.get("Cache-Control"), "public, max-age=0, must-revalidate");
     assert.equal(common.get("X-Content-Type-Options"), "nosniff");
     assert.equal(common.get("X-Frame-Options"), "DENY");
@@ -57,6 +63,14 @@ describe("repository boundaries", () => {
     );
     const hashed = new Map(bySource.get("/_astro/**")?.map((header) => [header.key, header.value]));
     assert.equal(hashed.get("Cache-Control"), "public, max-age=31536000, immutable");
+
+    assert.equal(desk.public, "packages/editor/dist");
+    const deskHeaders = new Map(
+      desk.headers.find((entry) => entry.source === "**")?.headers.map((header) => [header.key, header.value]),
+    );
+    assert.equal(deskHeaders.get("X-Robots-Tag"), "noindex, nofollow, noarchive");
+    assert.match(deskHeaders.get("Content-Security-Policy") ?? "", /script-src 'self'/);
+    assert.match(deskHeaders.get("Content-Security-Policy") ?? "", /script-src(?! 'none')/);
 
     const rc = JSON.parse(readFileSync(".firebaserc", "utf8")) as { projects: { default: string } };
     assert.deepEqual(Object.keys(rc), ["projects"]);
