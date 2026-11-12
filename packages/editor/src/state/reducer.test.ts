@@ -172,4 +172,46 @@ describe("editor reducer", () => {
       fingerprint({ ...article, updatedAt: "2020-01-01T00:00:00.000Z" }),
     );
   });
+
+  it("keeps in-progress typing when an autosave lands", () => {
+    const start = opened(article);
+    const typed = editorReducer(start, { type: "edit-meta", patch: { title: "Lumen Rail, again" } });
+    const snapshot = { ...typed.draft!, updatedAt: "2026-11-12T12:00:00.000Z" };
+    const more = editorReducer(typed, { type: "edit-meta", patch: { title: "Lumen Rail, again and again" } });
+    const after = editorReducer(more, { type: "autosaved", saved: snapshot, documents: [] });
+    assert.equal(after.draft?.title, "Lumen Rail, again and again");
+    assert.equal(after.saved?.title, "Lumen Rail, again");
+    assert.notEqual(fingerprint(after.draft!), fingerprint(after.saved!));
+  });
+
+  it("an autosave of the latest text leaves the draft clean", () => {
+    const typed = editorReducer(opened(article), { type: "edit-meta", patch: { title: "Done" } });
+    const after = editorReducer(typed, {
+      type: "autosaved",
+      saved: { ...typed.draft!, updatedAt: "2026-11-12T12:00:00.000Z" },
+      documents: [],
+    });
+    assert.equal(fingerprint(after.draft!), fingerprint(after.saved!));
+  });
+
+  it("ignores an autosave for a document that is no longer open", () => {
+    const state = opened(article);
+    const after = editorReducer(state, { type: "autosaved", saved: { ...page }, documents: [] });
+    assert.equal(after, state);
+  });
+
+  it("created opens the new draft with nothing published, and deleted returns to the list", () => {
+    const created = editorReducer(initialState, { type: "created", draft: article, documents: [], notice: "Created." });
+    assert.equal(created.activeId, "lumen-rail");
+    assert.equal(created.published, null);
+    assert.equal(created.view, "edit");
+    const deleted = editorReducer(created, { type: "deleted", id: "lumen-rail", documents: [] });
+    assert.equal(deleted.draft, null);
+    assert.equal(deleted.view, "list");
+  });
+
+  it("asks before deleting", () => {
+    const state = editorReducer(opened(article), { type: "ask-confirm", confirm: "delete" });
+    assert.equal(state.confirm, "delete");
+  });
 });

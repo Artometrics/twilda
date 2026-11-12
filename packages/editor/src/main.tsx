@@ -4,15 +4,29 @@ import "@fontsource/newsreader/400.css";
 import "@fontsource/newsreader/500.css";
 import "@fontsource/public-sans/400.css";
 import "@fontsource/public-sans/600.css";
+import { seedOnFirstVisit } from "./backend/artometrics";
 import { MemoryBackend } from "./backend/memory";
+import { PersistentBackend, openBestStore, type KeyValueStore } from "./backend/persistent";
 import { seedFieldDesk } from "./backend/seed";
 import { buildFaultPath } from "./backend/paths";
 import { App } from "./ui/App";
 import "./styles.css";
 
 async function start(): Promise<void> {
-  const backend = new MemoryBackend();
-  await seedFieldDesk(backend);
+  // `?sample=field-desk` is the old fictional demo on a throwaway in-memory store.
+  const fieldDesk = new URLSearchParams(window.location.search).get("sample") === "field-desk";
+  let backend: MemoryBackend;
+  let storageKind: KeyValueStore["kind"] = "memory";
+  if (fieldDesk) {
+    backend = new MemoryBackend();
+    await seedFieldDesk(backend);
+  } else {
+    const store = await openBestStore();
+    storageKind = store.kind;
+    backend = await PersistentBackend.open(store);
+    await seedOnFirstVisit(backend);
+    void navigator.storage?.persist?.().catch(() => undefined);
+  }
 
   if (import.meta.env.DEV) {
     window.__TWILDA__ = {
@@ -33,7 +47,7 @@ async function start(): Promise<void> {
 
   createRoot(root).render(
     <StrictMode>
-      <App backend={backend} />
+      <App backend={backend} storageKind={storageKind} />
     </StrictMode>,
   );
 

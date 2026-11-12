@@ -11,9 +11,9 @@ import {
 } from "../model";
 import { moveById } from "./move";
 
-export type FailurePhase = "load" | "save" | "build" | "publish" | "revert" | "upload";
+export type FailurePhase = "load" | "save" | "build" | "publish" | "revert" | "upload" | "import";
 
-export type DeskView = "list" | "edit" | "preview" | "media";
+export type DeskView = "list" | "edit" | "preview" | "media" | "export";
 
 export interface EditorState {
   phase: "ready" | "busy";
@@ -26,7 +26,7 @@ export interface EditorState {
   view: DeskView;
   error: { phase: FailurePhase; message: string } | null;
   notice: string | null;
-  confirm: "publish" | "revert" | null;
+  confirm: "publish" | "revert" | "delete" | null;
   media: MediaAsset[];
   previewUrl: string | null;
 }
@@ -34,6 +34,11 @@ export interface EditorState {
 export type Action =
   | { type: "hydrated"; documents: DocSummary[]; media: MediaAsset[] }
   | { type: "opened"; draft: Doc; published: Doc | null; previewUrl: string | null }
+  | { type: "created"; draft: Doc; documents: DocSummary[]; notice: string }
+  | { type: "deleted"; id: string; documents: DocSummary[] }
+  | { type: "documents"; documents: DocSummary[]; notice: string }
+  | { type: "autosaved"; saved: Doc; documents: DocSummary[] }
+  | { type: "notice"; message: string }
   | { type: "view"; view: DeskView }
   | { type: "edit-meta"; patch: MetaPatch }
   | { type: "update-block"; block: Block }
@@ -44,7 +49,7 @@ export type Action =
   | { type: "add-section"; section: PageSection }
   | { type: "remove-section"; id: string }
   | { type: "move-section"; id: string; to: number }
-  | { type: "ask-confirm"; confirm: "publish" | "revert" }
+  | { type: "ask-confirm"; confirm: "publish" | "revert" | "delete" }
   | { type: "dismiss-confirm" }
   | { type: "busy"; label: string }
   | { type: "saved"; draft: Doc; documents: DocSummary[] }
@@ -97,6 +102,57 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
         view: "edit",
         notice: `Opened ${action.draft.title}.`,
       };
+    case "created":
+      return {
+        ...state,
+        phase: "ready",
+        busyLabel: null,
+        error: null,
+        confirm: null,
+        activeId: action.draft.id,
+        draft: action.draft,
+        saved: action.draft,
+        published: null,
+        previewUrl: null,
+        documents: action.documents,
+        view: "edit",
+        notice: action.notice,
+      };
+    case "deleted":
+      return {
+        ...state,
+        phase: "ready",
+        busyLabel: null,
+        error: null,
+        confirm: null,
+        activeId: null,
+        draft: null,
+        saved: null,
+        published: null,
+        previewUrl: null,
+        documents: action.documents,
+        view: "list",
+        notice: "Document deleted from this device.",
+      };
+    case "documents":
+      return {
+        ...state,
+        phase: "ready",
+        busyLabel: null,
+        error: null,
+        documents: action.documents,
+        notice: action.notice,
+      };
+    case "autosaved":
+      if (state.activeId !== action.saved.id) return state;
+      return {
+        ...state,
+        saved: action.saved,
+        documents: action.documents,
+        notice: "Draft saved on this device. The published file is unchanged.",
+      };
+    case "notice":
+      return { ...state, notice: action.message };
     case "view":
       return { ...state, view: action.view };
     case "edit-meta":
@@ -244,4 +300,5 @@ export const FAILURE_LABEL: Record<FailurePhase, string> = {
   publish: "Publish failed",
   revert: "Revert failed",
   upload: "Upload failed",
+  import: "Import failed",
 };

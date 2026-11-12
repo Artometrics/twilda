@@ -54,6 +54,7 @@ const lumenDraft: ArticleDoc = {
       title: "Night span, by hour",
       caption: "A chart embed. The bars are a stand-in until a data file is attached.",
       src: "",
+      alt: "",
     },
     {
       id: "fig-yard",

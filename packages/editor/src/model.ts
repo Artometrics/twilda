@@ -8,13 +8,13 @@ export const BLOCK_CATALOG = [
   { type: "heading", label: "Heading", hint: "A section title." },
   { type: "paragraph", label: "Paragraph", hint: "Body copy." },
   { type: "key-findings", label: "Key findings", hint: "Labeled findings, kept in fields." },
-  { type: "chart", label: "Chart", hint: "A chart embed and its caption." },
+  { type: "chart", label: "Chart", hint: "A chart embed (URL), alt text, and a caption." },
   { type: "callout", label: "Callout", hint: "A desk note set off from the body." },
-  { type: "sources", label: "Sources", hint: "Where the piece draws from." },
+  { type: "sources", label: "Sources", hint: "Citations: a label and a link for each." },
   { type: "image", label: "Image", hint: "A plate, alt text, and a caption." },
   { type: "video", label: "Video", hint: "A video file or embed path." },
   { type: "audio", label: "Audio", hint: "An audio file and a caption." },
-  { type: "download", label: "Download", hint: "A file a reader can take." },
+  { type: "download", label: "Download", hint: "A file or dataset a reader can take." },
 ] as const;
 
 export const SECTION_CATALOG = [
@@ -44,13 +44,13 @@ export type Block =
   | { id: string; type: "heading"; level: 2 | 3; text: string }
   | { id: string; type: "paragraph"; text: string }
   | { id: string; type: "key-findings"; title: string; findings: Finding[] }
-  | { id: string; type: "chart"; title: string; caption: string; src: string }
+  | { id: string; type: "chart"; title: string; caption: string; src: string; alt: string }
   | { id: string; type: "callout"; title: string; text: string }
   | { id: string; type: "sources"; items: SourceItem[] }
   | { id: string; type: "image"; src: string; alt: string; caption: string }
   | { id: string; type: "video"; src: string; caption: string }
   | { id: string; type: "audio"; src: string; caption: string }
-  | { id: string; type: "download"; label: string; href: string };
+  | { id: string; type: "download"; label: string; href: string; description?: string };
 
 export interface PageSection {
   id: string;
@@ -91,6 +91,8 @@ export interface DocSummary {
   dek: string;
   status: DocStatus;
   hasPublished: boolean;
+  /** Open [VERIFY] notes in the draft. */
+  verifyCount: number;
 }
 
 export interface MediaAsset {
@@ -133,23 +135,30 @@ export function createBlock(type: BlockType, id = createId(type)): Block {
         findings: [{ id: createId("finding"), label: "Finding", detail: "What the reporting shows." }],
       };
     case "chart":
-      return { id, type, title: "Chart title", caption: "What the chart is doing on the page.", src: "" };
+      return {
+        id,
+        type,
+        title: "Chart title",
+        caption: "What the chart is doing on the page.",
+        src: "",
+        alt: "",
+      };
     case "callout":
       return { id, type, title: "Desk note", text: "A short note beside the body." };
     case "sources":
       return {
         id,
         type,
-        items: [{ id: createId("source"), label: "Field Desk sample", href: "/articles/lumen-rail" }],
+        items: [{ id: createId("source"), label: "Source name, title, date", href: "https://" }],
       };
     case "image":
-      return { id, type, src: "", alt: "", caption: "Caption for the plate." };
+      return { id, type, src: "", alt: "", caption: "" };
     case "video":
       return { id, type, src: "", caption: "What the clip shows." };
     case "audio":
       return { id, type, src: "", caption: "What the recording is." };
     case "download":
-      return { id, type, label: "Night sheet", href: "" };
+      return { id, type, label: "Dataset (CSV)", href: "", description: "" };
     default: {
       const exhaustive: never = type;
       throw new Error(`Unknown block ${exhaustive}`);
@@ -200,7 +209,7 @@ export function documentStatus(draft: Doc, published: Doc | null): DocStatus {
   return "published";
 }
 
-export function toSummary(draft: Doc, published: Doc | null): DocSummary {
+export function toSummary(draft: Doc, published: Doc | null, verifyCount = 0): DocSummary {
   return {
     id: draft.id,
     kind: draft.kind,
@@ -209,5 +218,6 @@ export function toSummary(draft: Doc, published: Doc | null): DocSummary {
     dek: draft.dek,
     status: documentStatus(draft, published),
     hasPublished: published !== null,
+    verifyCount,
   };
 }
