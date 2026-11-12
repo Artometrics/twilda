@@ -1,23 +1,41 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { StorageBackend } from "../contract";
+import type { KeyValueStore } from "../backend/persistent";
+import { seedArtometrics } from "../backend/artometrics";
+import { createArticle, parseDocJson, uniqueSlug } from "../doc";
 import { downscaleImage } from "../media/downscale";
 import { fingerprint, type MediaAsset, type MetaPatch } from "../model";
 import { CmsError, createCms } from "../backend/service";
-import { FAILURE_LABEL, editorReducer, initialState, isDirty } from "../state/reducer";
+import { FAILURE_LABEL, editorReducer, initialState, isDirty, type DeskView } from "../state/reducer";
 import { ArticleList } from "./ArticleList";
 import { BlockEditor, SectionEditor } from "./editors";
+import { ExportPanel } from "./ExportPanel";
 import { MediaPanel } from "./MediaPanel";
 import { Modal } from "./Modal";
+import { NewArticleSheet, type NewArticleValues } from "./NewArticleSheet";
 import { PreviewPane } from "./PreviewPane";
 import { Field } from "./Field";
 
-export function App({ backend }: { backend: StorageBackend }) {
+const AUTOSAVE_MS = 1500;
+
+export function App({
+  backend,
+  storageKind = "memory",
+}: {
+  backend: StorageBackend;
+  storageKind?: KeyValueStore["kind"];
+}) {
   const cms = useMemo(() => createCms(backend), [backend]);
   const [state, dispatch] = useReducer(editorReducer, initialState);
+  const [creating, setCreating] = useState(false);
   const desktop = useDesktop();
   const dismissConfirm = useCallback(() => dispatch({ type: "dismiss-confirm" }), []);
+  const closeCreating = useCallback(() => setCreating(false), []);
   const busy = state.phase === "busy";
   const draft = state.draft;
+  const dirty = isDirty(state);
+  const latest = useRef(state);
+  latest.current = state;
 
   useEffect(() => {
     let cancel = false;
@@ -45,10 +63,41 @@ export function App({ backend }: { backend: StorageBackend }) {
     document.title = draft ? `${draft.title} · Twilda` : "Twilda desk";
   }, [draft]);
 
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  // Safari drops background tabs without warning, so edits are written to the draft
+  // after a short pause. This is the draft file only. Publishing stays a separate step.
+  useEffect(() => {
+    if (!draft || !dirty || state.phase !== "ready") return;
+    const snapshot = draft;
+    const timer = window.setTimeout(() => {
+      cms
+        .save(snapshot)
+        .then(async (stamped) => {
+          if (latest.current.activeId !== stamped.id) return;
+          const documents = await cms.listDocuments();
+          dispatch({ type: "autosaved", saved: stamped, documents });
+        })
+        .catch((error: unknown) => dispatch(failure("save", error, "The draft could not be written.")));
+    }, AUTOSAVE_MS);
+    return () => window.clearTimeout(timer);
+  }, [cms, draft, dirty, state.phase]);
+
   async function openDocument(id: string) {
-    if (draft && state.saved && fingerprint(draft) !== fingerprint(state.saved)) {
-      const leave = window.confirm("This draft has unsaved edits. Leave without saving?");
-      if (!leave) return;
+    if (draft && dirty) {
+      try {
+        await cms.save(draft);
+      } catch (error) {
+        dispatch(failure("save", error, "The draft could not be written."));
+        return;
+      }
     }
     dispatch({ type: "busy", label: "Opening" });
     try {
@@ -68,6 +117,62 @@ export function App({ backend }: { backend: StorageBackend }) {
       dispatch({ type: "saved", draft: saved, documents });
     } catch (error) {
       dispatch(failure("save", error, "The draft could not be written."));
+    }
+  }
+
+  async function createNew(values: NewArticleValues) {
+    setCreating(false);
+    dispatch({ type: "busy", label: "Creating" });
+    try {
+      const taken = state.documents.map((item) => item.id);
+      const doc = createArticle({ ...values, taken });
+      const saved = await cms.create(doc);
+      const documents = await cms.listDocuments();
+      dispatch({ type: "created", draft: saved, documents, notice: `Created ${saved.title}. It is saved as a draft on this device.` });
+    } catch (error) {
+      dispatch(failure("save", error, "The draft could not be created."));
+    }
+  }
+
+  async function importFile(file: File) {
+    dispatch({ type: "busy", label: "Importing" });
+    try {
+      const parsed = parseDocJson(await file.text());
+      const taken = state.documents.map((item) => item.id);
+      const id = taken.includes(parsed.id) ? uniqueSlug(parsed.id, taken) : parsed.id;
+      const saved = await cms.create({ ...parsed, id, slug: id === parsed.id ? parsed.slug : id });
+      const documents = await cms.listDocuments();
+      const renamed = id === parsed.id ? "" : ` An older copy with the same id exists, so this one is "${id}".`;
+      dispatch({ type: "created", draft: saved, documents, notice: `Imported ${saved.title}.${renamed}` });
+    } catch (error) {
+      dispatch(failure("import", error, "That file could not be imported."));
+    }
+  }
+
+  async function restoreSamples() {
+    dispatch({ type: "busy", label: "Restoring" });
+    try {
+      const written = await seedArtometrics(backend);
+      const documents = await cms.listDocuments();
+      dispatch({
+        type: "documents",
+        documents,
+        notice: written === 0 ? "All sample drafts are already here." : `Restored ${written} sample draft${written === 1 ? "" : "s"}.`,
+      });
+    } catch (error) {
+      dispatch(failure("save", error, "The samples could not be restored."));
+    }
+  }
+
+  async function deleteDocument() {
+    if (!draft) return;
+    dispatch({ type: "busy", label: "Deleting" });
+    try {
+      await cms.remove(draft.id);
+      const documents = await cms.listDocuments();
+      dispatch({ type: "deleted", id: draft.id, documents });
+    } catch (error) {
+      dispatch(failure("save", error, "The document could not be deleted."));
     }
   }
 
@@ -99,7 +204,7 @@ export function App({ backend }: { backend: StorageBackend }) {
     }
   }
 
-  async function upload(file: File) {
+  async function upload(file: File): Promise<MediaAsset | null> {
     dispatch({ type: "busy", label: "Scaling image" });
     try {
       const scaled = await downscaleImage(file);
@@ -115,8 +220,10 @@ export function App({ backend }: { backend: StorageBackend }) {
       };
       const stored = await cms.upload(asset);
       dispatch({ type: "uploaded", asset: stored });
+      return stored;
     } catch (error) {
       dispatch(failure("upload", error, "The file could not be stored."));
+      return null;
     }
   }
 
@@ -135,9 +242,10 @@ export function App({ backend }: { backend: StorageBackend }) {
 
   const showList = desktop || state.view === "list" || !draft;
   const showMedia = state.view === "media";
-  const showEditor = Boolean(draft) && !showMedia && (desktop || state.view === "edit");
-  const showPreview = Boolean(draft) && (desktop || state.view === "preview");
-  const showActions = Boolean(draft) && (desktop || state.view !== "list");
+  const showExport = Boolean(draft) && state.view === "export";
+  const showEditor = Boolean(draft) && !showMedia && !showExport && (desktop || state.view === "edit");
+  const showPreview = Boolean(draft) && !showExport && (desktop || state.view === "preview");
+  const showActions = Boolean(draft) && (desktop || state.view === "edit" || state.view === "preview");
 
   return (
     <div className={desktop ? "app desktop" : "app"}>
@@ -147,7 +255,7 @@ export function App({ backend }: { backend: StorageBackend }) {
       <header className="mast">
         <div className="mark">
           <p className="wordmark">Twilda</p>
-          <p className="issue">Field Desk</p>
+          <p className="issue">Desk</p>
         </div>
         <p className="mast-status" data-testid="mast-status">
           {busy ? state.busyLabel : statusText(state)}
@@ -169,13 +277,25 @@ export function App({ backend }: { backend: StorageBackend }) {
 
       <main id="desk-main" className={draft ? "workspace" : "workspace no-doc"}>
         {showList ? (
-          <ArticleList documents={state.documents} activeId={state.activeId} onOpen={(id) => void openDocument(id)} />
+          <ArticleList
+            documents={state.documents}
+            activeId={state.activeId}
+            storageKind={storageKind}
+            busy={busy}
+            onOpen={(id) => void openDocument(id)}
+            onNew={() => setCreating(true)}
+            onImport={(file) => void importFile(file)}
+            onRestoreSamples={() => void restoreSamples()}
+          />
         ) : null}
         {desktop && !draft ? (
           <section className="pane pane-empty" aria-label="Desk">
             <header className="pane-head">
               <h2>Desk</h2>
-              <p>Open a document. Articles are blocks. Pages are prepared sections. Save and publish stay separate.</p>
+              <p>
+                Open a draft or start a new article. Articles are prepared blocks. Edits save to this device as you
+                type. Export gives you Markdown or MDX for Astro.
+              </p>
             </header>
           </section>
         ) : null}
@@ -183,15 +303,24 @@ export function App({ backend }: { backend: StorageBackend }) {
           <section className="pane pane-edit" aria-label="Editor">
             <header className="doc-head">
               <p className="kicker">{draft.kicker || (draft.kind === "page" ? "Page" : "Article")}</p>
-              <h2>{draft.title}</h2>
+              <h2 data-testid="doc-title">{draft.title || "Untitled"}</h2>
             </header>
             <details className="meta">
-              <summary>Document fields</summary>
-              <Field label="Title" value={draft.title} onChange={(title) => editMeta({ title })} />
-              <Field label="Kicker" value={draft.kicker} onChange={(kicker) => editMeta({ kicker })} />
-              <Field label="Dek" value={draft.dek} multiline onChange={(dek) => editMeta({ dek })} />
-              <Field label="Byline" value={draft.byline} onChange={(byline) => editMeta({ byline })} />
-              <Field label="Slug" value={draft.slug} onChange={(slug) => editMeta({ slug })} />
+              <summary data-testid="meta-summary">Document fields</summary>
+              <Field label="Title" value={draft.title} testId="meta-title" onChange={(title) => editMeta({ title })} />
+              <Field label="Kicker" value={draft.kicker} testId="meta-kicker" onChange={(kicker) => editMeta({ kicker })} />
+              <Field label="Dek" value={draft.dek} multiline testId="meta-dek" onChange={(dek) => editMeta({ dek })} />
+              <Field label="Byline" value={draft.byline} testId="meta-byline" onChange={(byline) => editMeta({ byline })} />
+              <Field label="Slug" value={draft.slug} testId="meta-slug" onChange={(slug) => editMeta({ slug })} />
+              <button
+                type="button"
+                className="btn btn-danger"
+                data-testid="delete-document"
+                disabled={busy}
+                onClick={() => dispatch({ type: "ask-confirm", confirm: "delete" })}
+              >
+                Delete this document
+              </button>
             </details>
             {draft.kind === "article" ? (
               <BlockEditor
@@ -201,6 +330,7 @@ export function App({ backend }: { backend: StorageBackend }) {
                 onAdd={(block) => dispatch({ type: "add-block", block })}
                 onRemove={(id) => dispatch({ type: "remove-block", id })}
                 onMove={(id, to) => dispatch({ type: "move-block", id, to })}
+                onUploadImage={upload}
               />
             ) : (
               <SectionEditor
@@ -218,6 +348,15 @@ export function App({ backend }: { backend: StorageBackend }) {
         ) : null}
         {showPreview && draft ? (
           <PreviewPane doc={draft} media={state.media} previewUrl={state.previewUrl} />
+        ) : null}
+        {showExport && draft ? (
+          <ExportPanel
+            doc={draft}
+            media={state.media}
+            dirty={dirty}
+            onNotice={(message) => dispatch({ type: "notice", message })}
+            onFailure={(message) => dispatch({ type: "failed", phase: "save", message })}
+          />
         ) : null}
       </main>
 
@@ -251,15 +390,23 @@ export function App({ backend }: { backend: StorageBackend }) {
         <Tab id="list" label="Documents" current={state.view} onSelect={(view) => dispatch({ type: "view", view })} />
         <Tab id="edit" label="Edit" current={state.view} onSelect={(view) => dispatch({ type: "view", view })} />
         <Tab id="preview" label="Preview" current={state.view} onSelect={(view) => dispatch({ type: "view", view })} />
+        <Tab id="export" label="Export" current={state.view} onSelect={(view) => dispatch({ type: "view", view })} />
         <Tab id="media" label="Media" current={state.view} onSelect={(view) => dispatch({ type: "view", view })} />
       </nav>
 
+      {creating ? <NewArticleSheet onCreate={(values) => void createNew(values)} onClose={closeCreating} /> : null}
+
       {state.confirm ? (
-        <Modal title={state.confirm === "publish" ? "Publish this document?" : "Revert the draft?"} testId="confirm-dialog" onClose={dismissConfirm}>
+        <Modal title={confirmTitle(state.confirm)} testId="confirm-dialog" onClose={dismissConfirm}>
           {state.confirm === "publish" ? (
             <p>
               Publishing writes the copy you are looking at, including unsaved edits, to the published file. Saving a
               draft does not do this. The static site reads the published file the next time it is built.
+            </p>
+          ) : state.confirm === "delete" ? (
+            <p>
+              This removes the draft and any published copy from this device. Export a JSON backup first if you might
+              want it back.
             </p>
           ) : (
             <p>This replaces the draft with the published copy. Edits that were never published are discarded.</p>
@@ -271,6 +418,10 @@ export function App({ backend }: { backend: StorageBackend }) {
             {state.confirm === "publish" ? (
               <button type="button" className="btn btn-primary" data-testid="confirm-publish" onClick={() => void publishDocument()}>
                 Publish
+              </button>
+            ) : state.confirm === "delete" ? (
+              <button type="button" className="btn btn-danger" data-testid="confirm-delete" onClick={() => void deleteDocument()}>
+                Delete
               </button>
             ) : (
               <button type="button" className="btn" data-testid="confirm-revert" onClick={() => void revertDocument()}>
@@ -284,16 +435,22 @@ export function App({ backend }: { backend: StorageBackend }) {
   );
 }
 
+function confirmTitle(confirm: "publish" | "revert" | "delete"): string {
+  if (confirm === "publish") return "Publish this document?";
+  if (confirm === "delete") return "Delete this document?";
+  return "Revert the draft?";
+}
+
 function Tab({
   id,
   label,
   current,
   onSelect,
 }: {
-  id: "list" | "edit" | "preview" | "media";
+  id: DeskView;
   label: string;
-  current: "list" | "edit" | "preview" | "media";
-  onSelect: (view: "list" | "edit" | "preview" | "media") => void;
+  current: DeskView;
+  onSelect: (view: DeskView) => void;
 }) {
   return (
     <button
@@ -310,13 +467,13 @@ function Tab({
 function statusText(state: typeof initialState): string {
   if (!state.draft || !state.saved) return "Choose a document";
   if (isDirty(state)) return "Unsaved edits";
-  if (!state.published) return "Draft only";
+  if (!state.published) return "Draft saved";
   if (fingerprint(state.draft) !== fingerprint(state.published)) return "Unpublished changes";
   return "Matches published";
 }
 
 function failure(
-  phase: "load" | "save" | "build" | "publish" | "revert" | "upload",
+  phase: "load" | "save" | "build" | "publish" | "revert" | "upload" | "import",
   error: unknown,
   fallback: string,
   extra = "",

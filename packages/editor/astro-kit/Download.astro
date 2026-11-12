@@ -1,0 +1,13 @@
+---
+interface Props {
+  href?: string;
+  label?: string;
+  description?: string;
+}
+const { href, label = "Download", description } = Astro.props;
+---
+
+<p class="twilda-download">
+  {href ? <a href={href} rel="noopener" download>{label}</a> : label}
+  {description ? <span> {description}</span> : null}
+</p>

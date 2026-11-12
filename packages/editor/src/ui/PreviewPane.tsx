@@ -1,4 +1,25 @@
+import { Fragment } from "react";
+import { safeHref } from "../export/mdx";
 import type { Block, Doc, MediaAsset } from "../model";
+
+const VERIFY = /(\[verify\b[^\]]*\])/gi;
+
+/** Plain text with any [VERIFY ...] note picked out so it cannot be missed. */
+export function Marked({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(VERIFY).map((part, index) =>
+        index % 2 === 1 ? (
+          <mark key={index} className="verify" data-testid="verify-mark">
+            {part}
+          </mark>
+        ) : (
+          <Fragment key={index}>{part}</Fragment>
+        ),
+      )}
+    </>
+  );
+}
 
 export function PreviewPane({
   doc,
@@ -13,12 +34,21 @@ export function PreviewPane({
     <section className="pane pane-preview" aria-label="Preview">
       <header className="pane-head">
         <h2>Preview</h2>
-        <p>The proof is this draft, including unsaved edits. The frame is the URL from the backend.</p>
+        <p>The proof is this draft as the reader would meet it, including unsaved edits.</p>
       </header>
       <article className="proof" data-testid="preview-fallback">
+        <p className="ribbon" data-testid="draft-ribbon">
+          Draft proof
+        </p>
         <p className="kicker">{doc.kicker}</p>
-        <h3 className="proof-title">{doc.title}</h3>
-        {doc.dek ? <p className="dek proof-dek">{doc.dek}</p> : null}
+        <h3 className="proof-title" data-testid="proof-title">
+          <Marked text={doc.title} />
+        </h3>
+        {doc.dek ? (
+          <p className="dek proof-dek">
+            <Marked text={doc.dek} />
+          </p>
+        ) : null}
         {doc.byline ? <p className="byline">{doc.byline}</p> : null}
         {doc.kind === "article" ? <ArticleProof blocks={doc.blocks} media={media} /> : <PageProof doc={doc} />}
       </article>
@@ -30,7 +60,7 @@ export function PreviewPane({
         </div>
       ) : (
         <p className="hint" data-testid="preview-iframe-missing">
-          The backend did not provide a preview URL. The draft proof above is the fallback.
+          No site preview is connected. The proof above is the page as this draft would read.
         </p>
       )}
     </section>
@@ -50,12 +80,22 @@ function ArticleProof({ blocks, media }: { blocks: Block[]; media: MediaAsset[] 
 function BlockProof({ block, media }: { block: Block; media: MediaAsset[] }) {
   switch (block.type) {
     case "heading":
-      return block.level === 3 ? <h5>{block.text}</h5> : <h4>{block.text}</h4>;
+      return block.level === 3 ? (
+        <h5>
+          <Marked text={block.text} />
+        </h5>
+      ) : (
+        <h4>
+          <Marked text={block.text} />
+        </h4>
+      );
     case "paragraph":
       return (
         <>
           {block.text.split(/\n\n+/).map((paragraph, index) => (
-            <p key={`${block.id}-${index}`}>{paragraph}</p>
+            <p key={`${block.id}-${index}`}>
+              <Marked text={paragraph} />
+            </p>
           ))}
         </>
       );
@@ -66,46 +106,85 @@ function BlockProof({ block, media }: { block: Block; media: MediaAsset[] }) {
           <dl>
             {block.findings.map((finding) => (
               <div key={finding.id}>
-                <dt>{finding.label}</dt>
-                <dd>{finding.detail}</dd>
+                <dt>
+                  <Marked text={finding.label} />
+                </dt>
+                <dd>
+                  <Marked text={finding.detail} />
+                </dd>
               </div>
             ))}
           </dl>
         </section>
       );
-    case "chart":
+    case "chart": {
+      const link = safeHref(block.src);
+      const isImage = /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(link);
       return (
         <figure className="chart">
-          <div className="chart-bars" aria-hidden="true">
-            <span style={{ height: "42%" }} />
-            <span style={{ height: "74%" }} />
-            <span style={{ height: "58%" }} />
-            <span style={{ height: "36%" }} />
-          </div>
+          {isImage ? (
+            <img src={link} alt={block.alt} />
+          ) : (
+            <div className="chart-bars" role="img" aria-label={block.alt || "Chart placeholder"}>
+              <span style={{ height: "42%" }} />
+              <span style={{ height: "74%" }} />
+              <span style={{ height: "58%" }} />
+              <span style={{ height: "36%" }} />
+            </div>
+          )}
           <figcaption>
             <strong>{block.title}</strong>
-            {block.caption ? ` ${block.caption}` : ""}
+            {block.caption ? (
+              <>
+                {" "}
+                <Marked text={block.caption} />
+              </>
+            ) : null}
+            {link ? (
+              <>
+                {" "}
+                <a href={link} target="_blank" rel="noreferrer noopener">
+                  Open the chart
+                </a>
+              </>
+            ) : (
+              <span className="hint"> No chart link yet.</span>
+            )}
           </figcaption>
         </figure>
       );
+    }
     case "callout":
       return (
         <aside className="callout">
-          <strong>{block.title}</strong>
-          <p>{block.text}</p>
+          <strong>
+            <Marked text={block.title} />
+          </strong>
+          <p>
+            <Marked text={block.text} />
+          </p>
         </aside>
       );
     case "sources":
       return (
         <section>
           <h4>Sources</h4>
-          <ul>
-            {block.items.map((item) => (
-              <li key={item.id}>
-                {item.href ? <a href={item.href}>{item.label}</a> : item.label}
-              </li>
-            ))}
-          </ul>
+          <ol className="sources">
+            {block.items.map((item) => {
+              const href = safeHref(item.href);
+              return (
+                <li key={item.id}>
+                  {href ? (
+                    <a href={href} target="_blank" rel="noreferrer noopener">
+                      <Marked text={item.label || item.href} />
+                    </a>
+                  ) : (
+                    <Marked text={item.label || item.href} />
+                  )}
+                </li>
+              );
+            })}
+          </ol>
         </section>
       );
     case "image": {
@@ -138,7 +217,14 @@ function BlockProof({ block, media }: { block: Block; media: MediaAsset[] }) {
     case "download":
       return (
         <p className="download">
-          {block.href ? <a href={block.href}>{block.label || "Download"}</a> : block.label || "Download"}
+          {safeHref(block.href) ? (
+            <a href={safeHref(block.href)} target="_blank" rel="noreferrer noopener">
+              {block.label || "Download"}
+            </a>
+          ) : (
+            block.label || "Download"
+          )}
+          {block.description ? <span className="hint"> {block.description}</span> : null}
         </p>
       );
     default: {
@@ -166,6 +252,6 @@ function resolveMedia(media: MediaAsset[], src: string): string | null {
   if (!src) return null;
   const match = media.find((item) => item.path === src);
   if (match) return match.dataUrl;
-  if (src.startsWith("data:") || src.startsWith("/") || src.startsWith("http")) return src;
+  if (src.startsWith("data:image/") || src.startsWith("/") || /^https?:\/\//.test(src)) return src;
   return null;
 }

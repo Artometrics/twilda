@@ -1,0 +1,152 @@
+{
+  "id": "dodgers-four-million-fans",
+  "kind": "article",
+  "title": "Dodgers: Four Million Fans, One Brewers-Shaped Problem",
+  "slug": "dodgers-four-million-fans",
+  "kicker": "DRAFT · Sports",
+  "dek": "Los Angeles won back-to-back titles, drew the biggest crowds in franchise history and still got swept in October. The ballpark was full. The bracket was not.",
+  "byline": "Kyle McAuliffe · DRAFT",
+  "updatedAt": "2026-11-12T18:00:00.000Z",
+  "blocks": [
+    {
+      "id": "draft-note",
+      "type": "callout",
+      "title": "DRAFT. Not for publication.",
+      "text": "This updates the published Artometrics Dodgers report (1 July 2026), which counts eight titles and twelve straight postseasons through 2024. Both counts have moved since. Facts were read on 12 November 2026. Clear every [VERIFY] note before this leaves the desk."
+    },
+    {
+      "id": "banner",
+      "type": "image",
+      "src": "https://artometrics.com/images/content/articles/dodgers/hero.png",
+      "alt": "Illustration of red, blue and cream baseball-shaped gears feeding a conveyor belt of baseballs, with two palm trees on top.",
+      "caption": "Hero art from the published Dodgers report. Linked, not copied."
+    },
+    {
+      "id": "findings",
+      "type": "key-findings",
+      "title": "Where the ledger stands",
+      "findings": [
+        {
+          "id": "f-titles",
+          "label": "World Series titles",
+          "detail": "9: 1955, 1959, 1963, 1965, 1981, 1988, 2020, 2024 and 2025. The ninth ties the Athletics and Red Sox for third-most, per FOX Sports."
+        },
+        {
+          "id": "f-ws25",
+          "label": "2025 World Series",
+          "detail": "Dodgers over the Blue Jays, 4–3. Game 7 went to the Dodgers 5–4 in 11 innings on 1 November 2025 (Baseball-Reference)."
+        },
+        {
+          "id": "f-2026",
+          "label": "2026 regular season",
+          "detail": "100–62 and first in the NL West (StatMuse standings)."
+        },
+        {
+          "id": "f-nlcs",
+          "label": "2026 NLCS",
+          "detail": "Swept in four games by the 103–59 Brewers, who won the clincher 6–4 on 15 October 2026 (MLB.com)."
+        },
+        {
+          "id": "f-gate",
+          "label": "Attendance",
+          "detail": "4,012,470 in 2025, the first four-million season in franchise history, and 4,034,219 in 2026 (Wikipedia). [VERIFY: confirm both gates against MLB or Baseball-Reference.]"
+        }
+      ]
+    },
+    {
+      "id": "h-machine",
+      "type": "heading",
+      "level": 2,
+      "text": "The access machine, updated"
+    },
+    {
+      "id": "p-machine",
+      "type": "paragraph",
+      "text": "In July, Artometrics described the Dodgers as an access machine: build a roster that reaches October year after year and wait for variance to cooperate. The 2025 title is the machine collecting.\n\nThe 2025 team was also the first to repeat as champion since the Yankees of 1998 to 2000, per MLB.com. A third straight title would have been a first for any National League club."
+    },
+    {
+      "id": "chart-wins",
+      "type": "chart",
+      "title": "Dodgers regular-season wins, modern contention era",
+      "src": "https://artometrics.com/dodgers",
+      "alt": "Line chart of Dodgers regular-season wins since the early 2010s, peaking at 111 in 2022.",
+      "caption": "From the published report, which stops at 2024. [VERIFY: extend with 2025 and 2026. We confirmed 100 wins for 2026 only. The 2025 total was not checked here.]"
+    },
+    {
+      "id": "h-october",
+      "type": "heading",
+      "level": 2,
+      "text": "The October asterisk"
+    },
+    {
+      "id": "p-october",
+      "type": "paragraph",
+      "text": "In 2025 the Dodgers swept the Brewers in the NLCS on the way to a second straight title. A year later Milwaukee returned the favor. MLB.com and Yahoo Sports both report that no team in MLB history had been swept, come back the next year and swept the same opponent in a best-of-seven series until these Brewers did.\n\nESPN has the Brewers outscoring Los Angeles 21–9 and outhomering them 7–1. A 100-win season is a census of 162 games. A four-game series is a small sample with better lighting."
+    },
+    {
+      "id": "callout-streak",
+      "type": "callout",
+      "title": "Streak check",
+      "text": "Wikipedia says the 2026 Dodgers clinched on 14 September, their 14th straight postseason appearance, matching the record the Braves set from 1991 to 2005. That squares with twelve straight through 2024 plus 2025 and 2026. [VERIFY: confirm the count and the record with the MLB.com article that Wikipedia cites, and note that 1994 had no postseason.]"
+    },
+    {
+      "id": "h-park",
+      "type": "heading",
+      "level": 2,
+      "text": "The ballpark did its part"
+    },
+    {
+      "id": "p-park",
+      "type": "paragraph",
+      "text": "Wikipedia says the Dodgers have led the majors in attendance every season since 2013, excluding the shortened 2020 season. [VERIFY: confirm with MLB attendance tables.]\n\nIn March 2026 Uniqlo bought the naming rights to the playing field, which became UNIQLO Field at Dodger Stadium. It is reported as the first naming-rights deal in the ballpark's history. The stadium itself kept its name. The grass got a sponsor and the building kept its dignity."
+    },
+    {
+      "id": "sources",
+      "type": "sources",
+      "items": [
+        {
+          "id": "s-wiki",
+          "label": "Wikipedia, Los Angeles Dodgers (read 12 Nov 2026)",
+          "href": "https://en.wikipedia.org/wiki/Los_Angeles_Dodgers"
+        },
+        {
+          "id": "s-br",
+          "label": "Baseball-Reference, 2025 World Series",
+          "href": "https://www.baseball-reference.com/postseason/2025_WS.shtml"
+        },
+        {
+          "id": "s-fox",
+          "label": "FOX Sports, 9 World Series titles: a look through Dodgers championship history (3 Nov 2025)",
+          "href": "https://www.foxsports.com/stories/mlb/9-world-series-titles-look-through-dodgers-championship-history"
+        },
+        {
+          "id": "s-mlb",
+          "label": "MLB.com, Brewers end Dodgers' three-peat bid with an NLCS sweep (16 Oct 2026)",
+          "href": "https://www.mlb.com/news/brewers-win-nlcs-2026"
+        },
+        {
+          "id": "s-espn",
+          "label": "ESPN, How Dodgers' three-peat hopes ended with NLCS loss to Brewers",
+          "href": "https://www.espn.com/mlb/story/_/id/50193486/playoffs-dodgers-eliminated-brewers-nlcs"
+        },
+        {
+          "id": "s-stat",
+          "label": "StatMuse, 2026 MLB standings",
+          "href": "https://www.statmuse.com/mlb/ask/brewers-standings-2026"
+        },
+        {
+          "id": "s-art",
+          "label": "Artometrics, Dodgers: 111 Wins Still Wasn't Enough (1 Jul 2026)",
+          "href": "https://artometrics.com/dodgers"
+        }
+      ]
+    },
+    {
+      "id": "dl-lahman",
+      "type": "download",
+      "label": "Lahman Baseball Database (SABR)",
+      "href": "https://sabr.org/lahman-database/",
+      "description": "Season-level records of the kind the published report cites. Check the current release before use."
+    }
+  ]
+}

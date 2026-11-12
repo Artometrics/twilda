@@ -13,7 +13,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5174 --strictPort",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/state/*.test.ts src/media/*.test.ts src/backend/*.test.ts",
+    "test": "tsx --test src/*.test.ts src/*/*.test.ts",
     "test:e2e": "playwright test",
     "icons": "node scripts/icons.mjs"
   },

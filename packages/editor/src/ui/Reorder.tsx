@@ -82,6 +82,9 @@ export function ItemFrame({
   index,
   count,
   label,
+  summary,
+  collapsed,
+  onToggle,
   onMoveBy,
   onRemove,
   children,
@@ -90,13 +93,21 @@ export function ItemFrame({
   index: number;
   count: number;
   label: string;
+  summary: string;
+  collapsed: boolean;
+  onToggle: () => void;
   onMoveBy: (delta: number) => void;
   onRemove: () => void;
   children: ReactNode;
 }) {
   const reorder = useReorder();
   return (
-    <section className="item" data-reorder-item="" data-id={id} data-testid={`item-${id}`}>
+    <section
+      className={collapsed ? "item is-collapsed" : "item"}
+      data-reorder-item=""
+      data-id={id}
+      data-testid={`item-${id}`}
+    >
       <div className="item-bar">
         <button
           type="button"
@@ -119,38 +130,52 @@ export function ItemFrame({
         >
           <GripIcon />
         </button>
-        <h3 className="item-type">{label}</h3>
         <button
           type="button"
-          className="btn"
+          className="item-title"
+          data-testid={`toggle-${id}`}
+          aria-expanded={!collapsed}
+          aria-label={`${collapsed ? "Expand" : "Collapse"} ${label}`}
+          onClick={onToggle}
+        >
+          <span className="item-type">{label}</span>
+          {collapsed ? <span className="item-summary">{summary}</span> : null}
+        </button>
+        <button
+          type="button"
+          className="btn btn-icon"
           data-testid={`up-${id}`}
           aria-label={`Move ${label} up`}
           disabled={index === 0}
           onClick={() => onMoveBy(-1)}
         >
-          Up
+          <span aria-hidden="true">↑</span>
         </button>
         <button
           type="button"
-          className="btn"
+          className="btn btn-icon"
           data-testid={`down-${id}`}
           aria-label={`Move ${label} down`}
           disabled={index === count - 1}
           onClick={() => onMoveBy(1)}
         >
-          Down
-        </button>
-        <button
-          type="button"
-          className="btn"
-          data-testid={`delete-${id}`}
-          aria-label={`Delete ${label}`}
-          onClick={onRemove}
-        >
-          Delete
+          <span aria-hidden="true">↓</span>
         </button>
       </div>
-      <div className="item-body">{children}</div>
+      {collapsed ? null : (
+        <div className="item-body">
+          {children}
+          <button
+            type="button"
+            className="btn btn-danger"
+            data-testid={`delete-${id}`}
+            aria-label={`Delete ${label}`}
+            onClick={onRemove}
+          >
+            Delete {label.toLowerCase()}
+          </button>
+        </div>
+      )}
     </section>
   );
 }

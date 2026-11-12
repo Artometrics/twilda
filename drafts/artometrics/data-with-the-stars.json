@@ -1,0 +1,163 @@
+{
+  "id": "data-with-the-stars",
+  "kind": "article",
+  "title": "Data with the Stars: 421 Entries, Two Scoring Systems, One Bobby Bones",
+  "slug": "data-with-the-stars",
+  "kicker": "DRAFT · Culture",
+  "dek": "A math-modeling contest asked students to separate judge scores from secret fan votes on Dancing with the Stars. The public data shows why nobody can read the answer off the scoreboard.",
+  "byline": "Kyle McAuliffe · DRAFT",
+  "updatedAt": "2026-11-12T18:00:00.000Z",
+  "blocks": [
+    {
+      "id": "draft-note",
+      "type": "callout",
+      "title": "DRAFT. Not for publication.",
+      "text": "No Artometrics report on this topic was found on 12 November 2026, so this is built only from the public COMAP problem, its results page and its data file. Numbers marked as our own were computed from that file. Clear every [VERIFY] note before this leaves the desk."
+    },
+    {
+      "id": "findings",
+      "type": "key-findings",
+      "title": "The setup",
+      "findings": [
+        {
+          "id": "f-contest",
+          "label": "The contest",
+          "detail": "2026 MCM Problem C, titled Data With The Stars. Contest weekend: 29 January to 2 February 2026 (COMAP)."
+        },
+        {
+          "id": "f-teams",
+          "label": "Teams",
+          "detail": "13,185 teams took Problem C and 19 earned Outstanding Winner, under 1% (COMAP). [VERIFY: the five published designations add up to 13,015, which is 170 fewer than 13,185. Ask COMAP, or say the table omits some teams.]"
+        },
+        {
+          "id": "f-data",
+          "label": "The data file",
+          "detail": "421 contestant rows across 34 seasons, covering 408 different names because some stars danced more than once. We counted these in COMAP's CSV."
+        },
+        {
+          "id": "f-votes",
+          "label": "The missing column",
+          "detail": "Fan votes are not published. Estimating them is the task."
+        }
+      ]
+    },
+    {
+      "id": "h-show",
+      "type": "heading",
+      "level": 2,
+      "text": "How the show decides"
+    },
+    {
+      "id": "p-show",
+      "type": "paragraph",
+      "text": "Dancing with the Stars is the American version of the British format Strictly Come Dancing, originally Come Dancing. Each week celebrities dance with professionals, a judges' panel scores the dance, and viewers vote for the couple they want to keep. The two numbers are combined, and the lowest combined score goes home.\n\nViewers can vote to keep a star but cannot vote to send one home. COMAP notes that judge scores are meant to reflect technique, while fan votes are likely swayed by popularity and charisma as well."
+    },
+    {
+      "id": "h-methods",
+      "type": "heading",
+      "level": 2,
+      "text": "Two ways to add up a dance"
+    },
+    {
+      "id": "p-methods",
+      "type": "paragraph",
+      "text": "COMAP's problem statement says seasons 1 and 2 combined judge scores and fan votes by rank. After season 2, when Jerry Rice reached the final despite very low judge scores, the show moved to percentages.\n\nIn season 27 Bobby Bones won despite consistently low judge scores. From season 28 the bottom two were found from the combined score and the judges then chose who left. COMAP says the show also seems to have gone back to ranks around then, and that the exact season is not known, so season 28 is an assumption."
+    },
+    {
+      "id": "h-scoreboard",
+      "type": "heading",
+      "level": 2,
+      "text": "What the scoreboard says"
+    },
+    {
+      "id": "p-scoreboard",
+      "type": "paragraph",
+      "text": "We took each contestant's average judge score: the mean, across the weeks they were scored, of that week's average per judge. On that rough measure the four contestants COMAP names as controversial finished well above where the judges would have put them.\n\nThis is a quick calculation, not the contest's method. Judges, dances and score scales change from week to week, so treat the ranks as a sketch. [VERIFY: re-run in a notebook, attach the script, and check the weeks with bonus points or team dances.]"
+    },
+    {
+      "id": "findings-controversy",
+      "type": "key-findings",
+      "title": "Judge-score rank against final placement (our calculation)",
+      "findings": [
+        {
+          "id": "c-27",
+          "label": "Season 27, Bobby Bones",
+          "detail": "8th of 13 on average judge score (7.46). Finished 1st."
+        },
+        {
+          "id": "c-2",
+          "label": "Season 2, Jerry Rice",
+          "detail": "6th of 10 (7.51). Finished 2nd."
+        },
+        {
+          "id": "c-4",
+          "label": "Season 4, Billy Ray Cyrus",
+          "detail": "10th of 11 (6.33). Finished 5th."
+        },
+        {
+          "id": "c-11",
+          "label": "Season 11, Bristol Palin",
+          "detail": "6th of 12 (7.37). Finished 3rd."
+        }
+      ]
+    },
+    {
+      "id": "chart-controversy",
+      "type": "chart",
+      "title": "Judge-score rank against final placement, four contestants",
+      "src": "",
+      "alt": "Planned chart: for each of the four contestants, mean judge-score rank beside final placement.",
+      "caption": "[VERIFY: this chart is not built yet. Make it from COMAP's CSV, publish it, then paste its embed URL here.]"
+    },
+    {
+      "id": "h-cast",
+      "type": "heading",
+      "level": 2,
+      "text": "Who gets cast"
+    },
+    {
+      "id": "p-cast",
+      "type": "paragraph",
+      "text": "Of the 421 entries in the file, 128 are actors, 95 are athletes, 67 are TV personalities and 61 are singers or rappers. That is 351 of 421, about 83%. Models (17) and comedians (12) are the minor leagues.\n\nSeasons ran between 6 and 16 contestants each."
+    },
+    {
+      "id": "callout-limits",
+      "type": "callout",
+      "title": "What the file cannot tell you",
+      "text": "Fan votes are not in it. Judge scores run 1 to 10, can be averages across several dances, and spread bonus points across judges. A score of 0 marks an eliminated contestant. And Judge 1 is not necessarily the same person from week to week, per COMAP's notes."
+    },
+    {
+      "id": "sources",
+      "type": "sources",
+      "items": [
+        {
+          "id": "s-problem",
+          "label": "COMAP, 2026 MCM Problem C: Data With The Stars",
+          "href": "https://contest.comap.org/undergraduate/contests/mcm/contests/2026/problems/2026_MCM_Problem_C.pdf"
+        },
+        {
+          "id": "s-results",
+          "label": "COMAP, 2026 Problem C results",
+          "href": "https://contest.comap.org/undergraduate/contests/mcm/contests/2026/results/2026_MCM_Problem_C_Results.pdf"
+        },
+        {
+          "id": "s-blog",
+          "label": "COMAP, 2026 MCM/ICM results are in",
+          "href": "https://www.comap.org/blog/item/2026-mcm-icm-results"
+        },
+        {
+          "id": "s-csv",
+          "label": "COMAP, 2026_MCM_Problem_C_Data.csv",
+          "href": "https://contest.comap.org/undergraduate/contests/mcm/contests/2026/problems/2026_MCM_Problem_C_Data.csv"
+        }
+      ]
+    },
+    {
+      "id": "dl-csv",
+      "type": "download",
+      "label": "COMAP contestant and judge-score data (CSV)",
+      "href": "https://contest.comap.org/undergraduate/contests/mcm/contests/2026/problems/2026_MCM_Problem_C_Data.csv",
+      "description": "Contestant details, results and weekly judge scores for seasons 1 to 34."
+    }
+  ]
+}

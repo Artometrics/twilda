@@ -1,30 +1,21 @@
 import { expect, test, type Page } from "@playwright/test";
-import { mkdirSync } from "node:fs";
 
 const PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
   "base64",
 );
 
-mkdirSync("screenshots", { recursive: true });
-
-async function shot(page: Page, name: string) {
-  await page.evaluate(() => document.fonts.ready);
-  await page.screenshot({ path: `screenshots/${name}.png`, fullPage: false });
-}
-
 async function orderOf(page: Page) {
   return (await page.getByTestId("reorder-list").getAttribute("data-order")) ?? "";
 }
 
-test("edit, reorder, section, upload, preview, and publish", async ({ page }, info) => {
+test("field desk sample: edit, reorder, section, upload, preview, and publish", async ({ page }, info) => {
   const name = info.project.name;
-  await page.goto("/");
+  await page.goto("/?sample=field-desk");
   await expect(page.getByRole("heading", { name: "Documents" })).toBeVisible();
   await expect(page.getByTestId("doc-lumen-rail")).toContainText("Unpublished changes");
   await expect(page.getByTestId("doc-lumen-rail")).toContainText("Published");
   await expect(page.getByTestId("doc-river-note")).toContainText("Not published");
-  await shot(page, `${name}-list`);
 
   await page.getByTestId("doc-lumen-rail").click();
   await expect(page.getByTestId("text-p-concession")).toBeVisible();
@@ -41,7 +32,6 @@ test("edit, reorder, section, upload, preview, and publish", async ({ page }, in
     document.querySelector(".workspace")?.scrollTo(0, 0);
     document.querySelector(".pane-edit")?.scrollTo(0, 0);
   });
-  await shot(page, `${name}-editor`);
 
   await page.getByTestId("tab-media").click();
   await page.getByTestId("media-input").setInputFiles({
@@ -60,7 +50,6 @@ test("edit, reorder, section, upload, preview, and publish", async ({ page }, in
   await page.getByTestId("tab-preview").click();
   await expect(page.getByTestId("preview-fallback")).toContainText("The night sheet moved.");
   await expect(page.getByTestId("preview-iframe")).toBeVisible();
-  await shot(page, `${name}-preview`);
 
   await page.getByTestId("tab-list").click();
   await page.getByTestId("doc-home").click();
@@ -76,15 +65,13 @@ test("edit, reorder, section, upload, preview, and publish", async ({ page }, in
   await page.getByTestId("confirm-publish").click();
   await expect(page.getByTestId("notice")).toContainText("Published");
   await expect(page.getByTestId("mast-status")).toHaveText("Matches published");
-  await shot(page, `${name}-published`);
 
-  if (name === "phone") {
+  if (name === "iphone") {
     await page.evaluate(() => window.__TWILDA__?.plantBuildFault("home", "The static build exited with status 1."));
     await page.getByTestId("publish").click();
     await page.getByTestId("confirm-publish").click();
     await expect(page.getByTestId("error-banner")).toHaveAttribute("data-phase", "build");
     await expect(page.getByTestId("error-banner")).toContainText("Build failed");
     await expect(page.getByTestId("error-banner")).toContainText("status 1");
-    await shot(page, "phone-build-error");
   }
 });

@@ -1,4 +1,6 @@
 import type { StorageBackend } from "../contract";
+import { normalizeDoc } from "../doc";
+import { countVerify } from "../export/check";
 import type { Doc, DocSummary, MediaAsset } from "../model";
 import { toSummary } from "../model";
 import type { FailurePhase } from "../state/reducer";
@@ -25,6 +27,8 @@ export interface CmsClient {
   listDocuments(): Promise<DocSummary[]>;
   open(id: string): Promise<OpenedDocument>;
   save(doc: Doc): Promise<Doc>;
+  create(doc: Doc): Promise<Doc>;
+  remove(id: string): Promise<void>;
   publish(doc: Doc): Promise<Doc>;
   revert(id: string): Promise<Doc>;
   upload(asset: MediaAsset): Promise<MediaAsset>;
@@ -41,6 +45,8 @@ export function createCms(
     listDocuments: () => listDocuments(backend),
     open: (id) => openDocument(backend, id),
     save: (doc) => saveDraft(backend, doc, now),
+    create: (doc) => createDraft(backend, doc, now),
+    remove: (id) => removeDocument(backend, id),
     publish: (doc) => publishDocument(backend, doc, now),
     revert: (id) => revertDocument(backend, id),
     upload: (asset) => uploadMedia(backend, asset),
@@ -56,7 +62,7 @@ async function listDocuments(backend: StorageBackend): Promise<DocSummary[]> {
     const draft = parseDoc(await backend.read(item.path), "load");
     const publishedRaw = await readOptional(backend, publishedPath(draft.id));
     const published = publishedRaw ? parseDoc(publishedRaw, "load") : null;
-    summaries.push(toSummary(draft, published));
+    summaries.push(toSummary(draft, published, draft.kind === "article" ? countVerify(draft) : 0));
   }
   summaries.sort((a, b) => a.title.localeCompare(b.title));
   return summaries;
@@ -82,6 +88,22 @@ async function saveDraft(backend: StorageBackend, doc: Doc, now: () => string): 
     throw new CmsError("save", text(error, "The draft could not be written."));
   }
   return stamped;
+}
+
+async function createDraft(backend: StorageBackend, doc: Doc, now: () => string): Promise<Doc> {
+  const existing = await readOptional(backend, draftPath(doc.id));
+  if (existing !== null) throw new CmsError("save", `A document with the id "${doc.id}" already exists.`);
+  return saveDraft(backend, doc, now);
+}
+
+async function removeDocument(backend: StorageBackend, id: string): Promise<void> {
+  try {
+    for (const path of [draftPath(id), publishedPath(id), previewPath(id), buildFaultPath(id)]) {
+      await backend.delete(path);
+    }
+  } catch (error) {
+    throw new CmsError("save", text(error, "The document could not be deleted."));
+  }
 }
 
 /**
@@ -187,15 +209,11 @@ function parseDoc(raw: string, phase: FailurePhase): Doc {
   } catch {
     throw new CmsError(phase, "The file is not valid JSON.");
   }
-  if (!value || typeof value !== "object") throw new CmsError(phase, "The file is not a document.");
-  const doc = value as Partial<Doc>;
-  if (doc.kind !== "article" && doc.kind !== "page") {
-    throw new CmsError(phase, "The file is not a Twilda document.");
+  try {
+    return normalizeDoc(value);
+  } catch (error) {
+    throw new CmsError(phase, text(error, "The file is not a Twilda document."));
   }
-  if (typeof doc.id !== "string" || typeof doc.title !== "string") {
-    throw new CmsError(phase, "The document is missing an id or a title.");
-  }
-  return doc as Doc;
 }
 
 async function readOptional(backend: StorageBackend, path: string): Promise<string | null> {

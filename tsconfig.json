@@ -28,5 +28,6 @@
     "apps/**/*.tsx",
     "examples/studio/astro.config.ts",
     "tests/**/*.ts"
-  ]
+  ],
+  "exclude": ["packages/editor/astro-kit"]
 }

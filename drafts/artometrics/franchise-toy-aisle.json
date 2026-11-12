@@ -1,0 +1,148 @@
+{
+  "id": "franchise-toy-aisle",
+  "kind": "article",
+  "title": "Franchise: The Toy Aisle Outgrosses the Multiplex",
+  "slug": "franchise-toy-aisle",
+  "kicker": "DRAFT · Arts",
+  "dek": "On Wikipedia's ledger of 140 media franchises, merchandise, licensing and retail are more than half of lifetime consumer spending. Box office is the part with the red carpet.",
+  "byline": "Kyle McAuliffe · DRAFT",
+  "updatedAt": "2026-11-12T18:00:00.000Z",
+  "blocks": [
+    {
+      "id": "draft-note",
+      "type": "callout",
+      "title": "DRAFT. Not for publication.",
+      "text": "Figures come from Wikipedia's list at revision 1384334611 (7 November 2026) and from the published Artometrics Franchise report, read on 12 November 2026. Every [VERIFY] note must be cleared, and its marker deleted, before this leaves the desk."
+    },
+    {
+      "id": "banner",
+      "type": "image",
+      "src": "https://artometrics.com/images/content/articles/franchise/banner.png",
+      "alt": "The word FRANCHISE in cream capital letters over a heap of pink and blue hoodies, caps, mugs, game controllers and price tags.",
+      "caption": "Banner from the published Franchise report. Linked, not copied."
+    },
+    {
+      "id": "findings",
+      "type": "key-findings",
+      "title": "What the ledger says",
+      "findings": [
+        {
+          "id": "f-count",
+          "label": "Franchises on the list",
+          "detail": "140 rows at revision 1384334611. We counted the table rows ourselves."
+        },
+        {
+          "id": "f-pokemon",
+          "label": "Pokémon",
+          "detail": "$130.7 billion. Star Wars ($46.7 billion) plus the Marvel Cinematic Universe ($37.5 billion) come to $84.2 billion. Row values checked against the Wikipedia table."
+        },
+        {
+          "id": "f-merch",
+          "label": "Merchandise, licensing and retail",
+          "detail": "$812.4 billion, 55.6% of a $1,460.1 billion total, as read by Artometrics. [VERIFY: not rebuilt here. A quick sum of the table's stated totals gave $1,455.4 billion, so the headline total needs a proper re-parse.]"
+        },
+        {
+          "id": "f-games",
+          "label": "Video games",
+          "detail": "$268.2 billion, 18.3% of the total, per Artometrics. [VERIFY: 268.2 / 1,460.1 is 18.4% when we divide it ourselves.]"
+        },
+        {
+          "id": "f-box",
+          "label": "Box office",
+          "detail": "$265.3 billion, 18.1% of the total, per Artometrics. [VERIFY: 265.3 / 1,460.1 is 18.2% when we divide it ourselves.]"
+        }
+      ]
+    },
+    {
+      "id": "h-ledger",
+      "type": "heading",
+      "level": 2,
+      "text": "A ledger, not a balance sheet"
+    },
+    {
+      "id": "p-ledger",
+      "type": "paragraph",
+      "text": "The list is a volunteer-built estimate of what audiences have spent on a franchise over its whole life, stitched together from press and trade reports. It is not profit. It is not a company valuation. It is not the cash that reached the rights holder.\n\nWikipedia itself marks the page as needing an update for accuracy, with a tag dated January 2026. [VERIFY: confirm the tag is still on the page, and say so plainly in the published piece.]"
+    },
+    {
+      "id": "h-pokemon",
+      "type": "heading",
+      "level": 2,
+      "text": "One pocket monster versus a galaxy and a cinematic universe"
+    },
+    {
+      "id": "p-pokemon",
+      "type": "paragraph",
+      "text": "Star Wars started as a 1977 film. The Marvel Cinematic Universe started in 2008. Pokémon started in 1996. Put the first two together and they are still $46.5 billion short of the third.\n\nThat is arithmetic on a list, not a verdict on storytelling. It does say where the money on this list tends to live."
+    },
+    {
+      "id": "chart-pokemon",
+      "type": "chart",
+      "title": "Pokémon against Star Wars plus the MCU",
+      "src": "https://artometrics.com/franchise",
+      "alt": "Bar chart comparing Pokémon at $130.7 billion with Star Wars and the Marvel Cinematic Universe combined at $84.2 billion.",
+      "caption": "Lifetime consumer spending estimates, Wikipedia revision 1384334611. [VERIFY: this link is the report page. Swap in the direct chart embed URL.]"
+    },
+    {
+      "id": "h-streams",
+      "type": "heading",
+      "level": 2,
+      "text": "Where the money sits"
+    },
+    {
+      "id": "p-streams",
+      "type": "paragraph",
+      "text": "Artometrics splits the ledger into three streams. Merchandise, licensing and retail lead by a wide margin. Video games and box office are close enough that Artometrics' own resampling ranges overlap, so neither can be called the runner-up.\n\nOne loose end for the desk: $812.4 billion, $268.2 billion and $265.3 billion, plus the $27.2 billion Artometrics says has no itemised breakdown, add up to $1,373.1 billion. That is about $87.0 billion short of the $1,460.1 billion headline. [VERIFY: find where the remaining ~6% sits, or rewrite the sentence so the shares add up.]"
+    },
+    {
+      "id": "h-films",
+      "type": "heading",
+      "level": 2,
+      "text": "The multiplex is still crowded with sequels"
+    },
+    {
+      "id": "p-films",
+      "type": "paragraph",
+      "text": "On Artometrics' coding of the 2025 worldwide top ten, nine of the ten biggest films were franchise installments; F1 is the one that is not. That count rests on Box Office Mojo and The Numbers.\n\nThe dollars are shakier than the count. For Ne Zha 2, Artometrics reports $2.318 billion on Wikipedia, $2.271 billion on Box Office Mojo and $2.004 billion on The Numbers, and does not average them. [VERIFY: grosses move daily. Re-read all three trackers on the day this publishes.]"
+    },
+    {
+      "id": "callout-limits",
+      "type": "callout",
+      "title": "What this does not show",
+      "text": "A ledger that puts a movie ticket and a plush bear on the same line cannot tell you which one made the other happen. Rows can overlap, rights are sometimes shared, and a lifetime total says nothing about whether the latest release made money."
+    },
+    {
+      "id": "sources",
+      "type": "sources",
+      "items": [
+        {
+          "id": "s-wiki",
+          "label": "Wikipedia, List of highest-grossing media franchises, revision 1384334611 (7 Nov 2026)",
+          "href": "https://en.wikipedia.org/w/index.php?title=List_of_highest-grossing_media_franchises&oldid=1384334611"
+        },
+        {
+          "id": "s-art",
+          "label": "Artometrics, Franchise: Merchandise Owns the Ledger (read 12 Nov 2026)",
+          "href": "https://artometrics.com/franchise"
+        },
+        {
+          "id": "s-bom",
+          "label": "Box Office Mojo, 2025 worldwide grosses",
+          "href": "https://www.boxofficemojo.com/year/world/2025/"
+        },
+        {
+          "id": "s-tt",
+          "label": "TidyTuesday, 2019-07-02 media franchise revenues",
+          "href": "https://github.com/rfordatascience/tidytuesday/tree/main/data/2019/2019-07-02"
+        }
+      ]
+    },
+    {
+      "id": "dl-tt",
+      "type": "download",
+      "label": "TidyTuesday media franchises CSV (2019 baseline)",
+      "href": "https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2019/2019-07-02/media_franchises.csv",
+      "description": "The 2019 file that Artometrics uses as a baseline. It is not the November 2026 list."
+    }
+  ]
+}
