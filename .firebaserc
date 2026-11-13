@@ -5,8 +5,8 @@
   "targets": {
     "twilda-510519": {
       "hosting": {
-        "www": [
-          "twilda-landing"
+        "app": [
+          "twilda-510519"
         ]
       }
     }
