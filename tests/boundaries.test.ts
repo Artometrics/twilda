@@ -27,7 +27,8 @@ describe("repository boundaries", () => {
 
   it("records Firebase Hosting headers for the static dist", () => {
     type HostingSite = {
-      site: string;
+      site?: string;
+      target?: string;
       public: string;
       ignore: string[];
       cleanUrls: boolean;
@@ -39,8 +40,10 @@ describe("repository boundaries", () => {
     assert.equal(Array.isArray(config.hosting), true);
     const magazine = config.hosting.find((site) => site.site === "twilda-510519");
     const desk = config.hosting.find((site) => site.site === "twilda-desk-510519");
+    const landing = config.hosting.find((site) => site.target === "www");
     assert.ok(magazine, "magazine hosting site is missing");
     assert.ok(desk, "desk hosting site is missing");
+    assert.ok(landing, "marketing www hosting target is missing");
     assert.equal(magazine.public, "dist");
     assert.deepEqual(magazine.ignore, ["firebase.json", "**/node_modules/**"]);
     assert.equal(magazine.cleanUrls, true);
@@ -72,9 +75,21 @@ describe("repository boundaries", () => {
     assert.match(deskHeaders.get("Content-Security-Policy") ?? "", /script-src 'self'/);
     assert.match(deskHeaders.get("Content-Security-Policy") ?? "", /script-src(?! 'none')/);
 
-    const rc = JSON.parse(readFileSync(".firebaserc", "utf8")) as { projects: { default: string } };
-    assert.deepEqual(Object.keys(rc), ["projects"]);
+    assert.equal(landing.public, "www/dist");
+    assert.equal(landing.site, undefined);
+    const landingHeaders = new Map(
+      landing.headers.find((entry) => entry.source === "**")?.headers.map((header) => [header.key, header.value]),
+    );
+    assert.equal(landingHeaders.get("X-Robots-Tag"), "noindex, nofollow, noarchive");
+    assert.match(landingHeaders.get("Content-Security-Policy") ?? "", /script-src 'none'/);
+
+    const rc = JSON.parse(readFileSync(".firebaserc", "utf8")) as {
+      projects: { default: string };
+      targets?: { [project: string]: { hosting?: { [target: string]: string[] } } };
+    };
+    assert.deepEqual(Object.keys(rc).sort(), ["projects", "targets"]);
     assert.deepEqual(rc.projects, { default: "twilda-510519" });
+    assert.deepEqual(rc.targets?.["twilda-510519"]?.hosting?.www, ["twilda-landing"]);
   });
 
   it("has no deploy script", () => {
