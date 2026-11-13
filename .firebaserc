@@ -1,14 +1,5 @@
 {
   "projects": {
     "default": "twilda-510519"
-  },
-  "targets": {
-    "twilda-510519": {
-      "hosting": {
-        "app": [
-          "twilda-510519"
-        ]
-      }
-    }
   }
 }
