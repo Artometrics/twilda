@@ -155,6 +155,7 @@ a {
 }
 
 .nav__github {
+  display: none;
   font-weight: 500;
   color: var(--ink);
 }
@@ -175,6 +176,10 @@ a {
 
   .nav__links {
     display: flex;
+  }
+
+  .nav__github {
+    display: inline;
   }
 }
 
