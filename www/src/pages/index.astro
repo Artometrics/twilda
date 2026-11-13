@@ -1,0 +1,392 @@
+---
+import Base from "../layouts/Base.astro";
+
+const title = "Twilda — A Sanity alternative made for Astro";
+const description =
+  "Twilda is a writing-first, Git-friendly CMS from Artometrics for Astro websites. Content lives in your repository as JSON. Draft and publish stay separate. The public site is a static Astro build.";
+
+const appUrl = "https://twilda.artometrics.com";
+const githubUrl = "https://github.com/Artometrics/twilda";
+
+const features = [
+  {
+    title: "Git-native JSON",
+    body: "Documents live under content/ as draft.json and published.json. Your repository is the source of truth—no content database to rent.",
+  },
+  {
+    title: "Draft, then publish",
+    body: "Saving a draft and publishing are separate steps. The static build reads published files only, so unfinished copy stays off the live site.",
+  },
+  {
+    title: "Prepared sections",
+    body: "Authors add, remove, and reorder typed blocks—carousel, story grid, headings, pull quotes, and more. It is not a freeform canvas.",
+  },
+  {
+    title: "Static Astro output",
+    body: "Twilda requires output: \"static\". The public site ships HTML without an SSR adapter, and the editor never enters astro build.",
+  },
+  {
+    title: "Writing desk for Astro",
+    body: "The desk edits ordered blocks, previews the draft, and can export Markdown or MDX with Astro frontmatter for your site kit.",
+  },
+  {
+    title: "Open source, no account",
+    body: "Apache-2.0. Nothing here asks you to create a Twilda account or pick a paid plan. Host the static files wherever you already ship Astro.",
+  },
+];
+
+const comparisons = [
+  {
+    axis: "Where content lives",
+    twilda: "JSON files in your Git repository",
+    sanity: "Hosted Content Lake (Sanity’s cloud database)",
+  },
+  {
+    axis: "Public site model",
+    twilda: "Fully static Astro build; editor is a separate app",
+    sanity: "Studio plus Content API; Astro fetches at build or request time",
+  },
+  {
+    axis: "Account / seats",
+    twilda: "No Twilda account; local or Git workflows",
+    sanity: "Sanity project with user seats and roles",
+  },
+  {
+    axis: "Cost shape",
+    twilda: "Open source (Apache-2.0); you host static output",
+    sanity: "Free tier, then per-seat plans on Sanity’s pricing page",
+  },
+  {
+    axis: "Editing surface",
+    twilda: "Ordered prepared sections and article blocks",
+    sanity: "Schema-driven Studio you configure in code",
+  },
+  {
+    axis: "Collaboration",
+    twilda: "Git branches, pull requests, and file history",
+    sanity: "Real-time collaborative editing in Studio",
+  },
+  {
+    axis: "Astro constraint",
+    twilda: "Built for Astro static sites; rejects non-static output",
+    sanity: "Works with Astro via @sanity/astro across render modes",
+  },
+];
+
+const roadmap = [
+  {
+    tag: "Roadmap",
+    title: "Production GitHub auth from the desk",
+    body: "Device flow and contents writes are tested with a fake fetch today. A real OAuth client id and verified GitHub behavior are not shipped yet.",
+  },
+  {
+    tag: "Roadmap",
+    title: "CI preview builds per draft branch",
+    body: "The desk can preview a draft in-page. Automatic preview hosts for each draft branch are not implemented.",
+  },
+  {
+    tag: "Roadmap",
+    title: "One content contract",
+    body: "The localhost Field Desk and the phone desk still use different JSON shapes. Migrating them onto a single schema is unfinished.",
+  },
+];
+
+const faqs = [
+  {
+    q: "Is Twilda a hosted CMS?",
+    a: "No. Content stays in the repository. The public site is a static Astro build. The editor runs as its own static app (or on localhost in development), not inside the production page.",
+  },
+  {
+    q: "Do I need an account?",
+    a: "No Twilda account is required. The browser demo keeps drafts on the device. Wiring a real repository uses GitHub credentials you supply at runtime—nothing like that is committed in the repo.",
+  },
+  {
+    q: "How does it fit Astro?",
+    a: "Pages import published JSON and render prepared sections. The Twilda Astro helper insists on output: \"static\" and does not add an adapter or client JavaScript for the editor.",
+  },
+  {
+    q: "What can authors edit?",
+    a: "An ordered list of prepared types: magazine homepage sections and article blocks such as headings, paragraphs, pull quotes, figures, lists, callouts, and fact tables. Authors do not draw freeform layouts.",
+  },
+  {
+    q: "Where is the live desk?",
+    a: "Open the desk at twilda.artometrics.com. Source, issues, and the Apache-2.0 license live on GitHub under Artometrics/twilda.",
+  },
+  {
+    q: "Is this the same as the old Expo app in the repo?",
+    a: "No. An earlier Expo novel workspace lived in this repository through an older commit. That product is history. Twilda CMS is the git-native Astro CMS on this branch.",
+  },
+];
+---
+
+<Base title={title} description={description}>
+  <header class="site-header">
+    <div class="shell site-header__inner">
+      <a class="brand" href="/">
+        <span class="brand__name">Twilda</span>
+        <span class="brand__mark">from Artometrics</span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <div class="nav__links">
+          <a href="#how">How it works</a>
+          <a href="#compare">vs Sanity</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <a class="nav__github" href={githubUrl}>GitHub</a>
+        <a class="btn" href={appUrl}>Open the desk</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="shell hero__grid">
+        <div>
+          <p class="eyebrow">Git-native CMS for Astro</p>
+          <h1>Twilda</h1>
+          <p class="hero__pitch">A Sanity alternative made for Astro websites.</p>
+          <p class="hero__lede">
+            Writing-first and Git-friendly. Content is JSON in your repository.
+            Draft and publish stay separate. The live site is a static Astro build—
+            the desk never rides along in production HTML.
+          </p>
+          <div class="hero__actions btn-row">
+            <a class="btn" href={appUrl}>Open the desk</a>
+            <a class="btn btn--ghost" href={githubUrl}>View on GitHub</a>
+          </div>
+        </div>
+        <aside class="hero__aside" aria-label="Product summary">
+          <p>
+            <strong>Built for Astro static sites</strong>
+            Prepared sections, dual draft/publish files, Apache-2.0, no Twilda account.
+            Made by Artometrics.
+          </p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="how" aria-labelledby="how-title">
+      <div class="shell">
+        <header class="section__header">
+          <h2 id="how-title">How it works with Astro</h2>
+          <p>
+            Authors edit prepared sections in the desk. Publish writes a separate
+            file. Your Astro site reads published JSON at build time and renders HTML.
+          </p>
+        </header>
+        <div class="code-panel">
+          <div class="code-panel__bar">
+            <span>content/home/published.json</span>
+            <span>static build input</span>
+          </div>
+          <pre><code><span class="tok-comment">// Published homepage document (shape abbreviated)</span>
+{"{"}
+  <span class="tok-key">"id"</span>: <span class="tok-str">"home"</span>,
+  <span class="tok-key">"kind"</span>: <span class="tok-str">"page"</span>,
+  <span class="tok-key">"title"</span>: <span class="tok-str">"Field Desk"</span>,
+  <span class="tok-key">"sections"</span>: [
+    {"{"} <span class="tok-key">"type"</span>: <span class="tok-str">"carousel"</span>, <span class="tok-key">"slides"</span>: [<span class="tok-comment">/* … */</span>] {"}"},
+    {"{"} <span class="tok-key">"type"</span>: <span class="tok-str">"story-grid"</span>, <span class="tok-key">"lead"</span>: {"{"} <span class="tok-comment">/* … */</span> {"}"} {"}"}
+  ]
+{"}"}
+
+<span class="tok-comment">// Astro stays static — no adapter, no editor in dist/</span>
+<span class="tok-key">export default</span> defineConfig({"{"} <span class="tok-key">output</span>: <span class="tok-str">"static"</span> {"}"});</code></pre>
+        </div>
+        <p class="note">
+          The desk is a separate Vite app. <code>astro build</code> never imports it,
+          and Twilda’s helper refuses non-static output so the editor cannot hitch a ride on SSR.
+        </p>
+      </div>
+    </section>
+
+    <section class="section" id="features" aria-labelledby="features-title">
+      <div class="shell">
+        <header class="section__header">
+          <h2 id="features-title">What Twilda actually does</h2>
+          <p>
+            Features below match this repository. Nothing invented for the landing page.
+          </p>
+        </header>
+        <div class="feature-grid">
+          {
+            features.map((feature) => (
+              <article class="feature">
+                <h3>{feature.title}</h3>
+                <p>{feature.body}</p>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="desk" aria-labelledby="desk-title">
+      <div class="shell">
+        <header class="section__header">
+          <h2 id="desk-title">The desk</h2>
+          <p>
+            Real UI from the Twilda desk in this repository: document list, block editor,
+            draft save, and a separate publish step.
+          </p>
+        </header>
+        <div class="preview">
+          <figure class="frame">
+            <div class="frame__label">
+              <span>Desktop · document list</span>
+              <span>1440×900</span>
+            </div>
+            <img
+              src="/desk-desktop.png"
+              width="1440"
+              height="900"
+              alt="Twilda desk on desktop: document list with draft badges and an empty editor pane"
+              loading="lazy"
+            />
+          </figure>
+          <figure class="frame frame--phone">
+            <div class="frame__label">
+              <span>Phone · editor</span>
+              <span>390×844</span>
+            </div>
+            <img
+              src="/desk-phone.png"
+              width="390"
+              height="844"
+              alt="Twilda desk on a phone editing a callout block with Save draft and Publish actions"
+              loading="lazy"
+            />
+          </figure>
+        </div>
+        <p class="note">
+          Screenshots captured from the desk in this repo (<code>docs/screenshots/</code>).
+        </p>
+      </div>
+    </section>
+
+    <section class="section" id="compare" aria-labelledby="compare-title">
+      <div class="shell">
+        <header class="section__header">
+          <h2 id="compare-title">Twilda vs Sanity</h2>
+          <p>
+            Honest differences you can verify against this repo and Sanity’s public docs.
+            Sanity is a strong hosted content platform; Twilda is a different shape of tool.
+          </p>
+        </header>
+        <div class="compare-wrap">
+          <table class="compare">
+            <thead>
+              <tr>
+                <th scope="col">Axis</th>
+                <th scope="col">Twilda</th>
+                <th scope="col">Sanity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                comparisons.map((row) => (
+                  <tr>
+                    <th scope="row">{row.axis}</th>
+                    <td>{row.twilda}</td>
+                    <td>{row.sanity}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+            <caption>
+              Sanity details refer to Sanity’s published product model (Content Lake, Studio,
+              seats, and Astro integration docs). Twilda details refer to this repository’s
+              README and architecture notes.
+            </caption>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="roadmap" aria-labelledby="roadmap-title">
+      <div class="shell">
+        <header class="section__header">
+          <h2 id="roadmap-title">Roadmap</h2>
+          <p>
+            Aspirational work called out in the architecture notes. Not shipped claims.
+          </p>
+        </header>
+        <ul class="roadmap">
+          {
+            roadmap.map((item) => (
+              <li>
+                <span class="roadmap__tag">{item.tag}</span>
+                <div>
+                  <strong>{item.title}</strong>
+                  <p>{item.body}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="shell">
+        <header class="section__header">
+          <h2 id="faq-title">FAQ</h2>
+          <p>Short answers grounded in what the repo does today.</p>
+        </header>
+        <div class="faq">
+          {
+            faqs.map((item) => (
+              <details>
+                <summary>{item.q}</summary>
+                <p>{item.a}</p>
+              </details>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="cta-title">
+      <div class="shell">
+        <div class="cta-band">
+          <div>
+            <h2 id="cta-title">Try the desk, or read the code</h2>
+            <p>
+              No fake sign-up. Open the live desk or clone the repository.
+            </p>
+          </div>
+          <div class="btn-row">
+            <a class="btn" href={appUrl}>Open the desk</a>
+            <a class="btn btn--ghost" href={githubUrl}>GitHub</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell">
+      <div class="site-footer__grid">
+        <div>
+          <h2>Twilda</h2>
+          <p>
+            A writing-first, Git-friendly CMS for Astro websites.
+            Content in Git. Static builds. Separate draft and publish.
+          </p>
+        </div>
+        <div>
+          <ul>
+            <li><a href={appUrl}>Desk · twilda.artometrics.com</a></li>
+            <li><a href={githubUrl}>Source · github.com/Artometrics/twilda</a></li>
+            <li><a href="#compare">Twilda vs Sanity</a></li>
+            <li><a href="#roadmap">Roadmap</a></li>
+          </ul>
+        </div>
+      </div>
+      <p class="site-footer__credit">
+        Twilda is built by <a href="https://artometrics.com">Artometrics</a>.
+        Apache-2.0. This marketing site is temporarily <code>noindex</code>.
+      </p>
+    </div>
+  </footer>
+</Base>
