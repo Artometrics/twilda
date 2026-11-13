@@ -1,0 +1,21 @@
+{
+  "name": "twilda-www",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Marketing landing site for Twilda (twilda.com).",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1 --port 4322",
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview --host 127.0.0.1 --port 4322",
+    "check:links": "node scripts/check-links.mjs"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.2.6",
+    "@fontsource/ibm-plex-sans": "^5.2.8",
+    "astro": "^5.14.1"
+  }
+}
