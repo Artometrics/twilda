@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "./zod";
 import { FORM_FIELD_KINDS, FORM_VARIANTS, MAX_FORM_FIELDS } from "./forms";
 import { unsafeLinkTargets } from "./marks";
 import { isActionHref, isSafeHref, isSitePath, isWebUrl } from "./url";

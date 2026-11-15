@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "./zod";
 import { TwildaError } from "./errors";
 import { formsConfigSchema, type FormsConfig } from "./forms";
 import { assertJsonBounds } from "./json-guard";
