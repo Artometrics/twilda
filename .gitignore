@@ -13,3 +13,4 @@ blob-report/
 .env
 .env.*
 !.env.example
+dist-edit/

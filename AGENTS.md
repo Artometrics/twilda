@@ -11,6 +11,7 @@ The previous Expo novel workspace lived in this repo through commit `106b96f`. I
 - `npm run typecheck`
 - `npm test`
 - `npm run build` then `npm run check:static`
+- `npm run build:edit` — Phase 0 click-to-edit target into `dist-edit/` (never deployed, never `dist/`). `npm run dev:edit` serves it on port 4322. `npm run test:e2e:edit` runs it at 390px and desktop. See `docs/phase0-click-edit.md`.
 
 ## Product rules
 
