@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createBlock, createSection, fingerprint, type ArticleDoc, type PageDoc } from "../model";
 import { moveItem } from "./move";
-import { editorReducer, initialState, isDirty, type EditorState } from "./reducer";
+import { canRedoDraft, canUndoDraft, editorReducer, initialState, isDirty, type EditorState } from "./reducer";
 
 const article: ArticleDoc = {
   id: "lumen-rail",
@@ -265,5 +265,65 @@ describe("editor reducer", () => {
   it("asks before deleting", () => {
     const state = editorReducer(opened(article), { type: "ask-confirm", confirm: "delete" });
     assert.equal(state.confirm, "delete");
+  });
+});
+
+describe("undo and redo", () => {
+  const retitle = (state: EditorState, title: string, at: number) =>
+    editorReducer(state, { type: "replace-draft", draft: { ...(state.draft as ArticleDoc), title }, at });
+
+  it("steps back through separate edits and forward again", () => {
+    let state = opened(article, article);
+    assert.equal(canUndoDraft(state), false);
+    state = retitle(state, "One", 0);
+    state = editorReducer(state, { type: "move-block", id: "p-concession", to: 2 });
+    assert.equal(canUndoDraft(state), true);
+    state = editorReducer(state, { type: "undo" });
+    assert.deepEqual(state.draft?.kind === "article" ? state.draft.blocks.map((block) => block.id) : [], article.blocks.map((block) => block.id));
+    assert.equal(state.draft?.title, "One");
+    assert.equal(canRedoDraft(state), true);
+    state = editorReducer(state, { type: "undo" });
+    assert.equal(state.draft?.title, article.title);
+    assert.equal(isDirty(state), false);
+    state = editorReducer(state, { type: "redo" });
+    assert.equal(state.draft?.title, "One");
+  });
+
+  it("coalesces quick typing in one field into one step, and not slow typing", () => {
+    let state = opened(article, article);
+    for (const [i, text] of ["A", "AB", "ABC"].entries()) state = retitle(state, text, i * 100);
+    state = editorReducer(state, { type: "undo" });
+    assert.equal(state.draft?.title, article.title);
+    state = retitle(state, "X", 10_000);
+    state = retitle(state, "XY", 20_000);
+    state = editorReducer(state, { type: "undo" });
+    assert.equal(state.draft?.title, "X");
+  });
+
+  it("drops the redo line after a new edit, and does nothing when there is nothing to do", () => {
+    let state = opened(article, article);
+    assert.equal(editorReducer(state, { type: "undo" }), state);
+    assert.equal(editorReducer(state, { type: "redo" }), state);
+    state = retitle(state, "One", 0);
+    state = editorReducer(state, { type: "undo" });
+    state = retitle(state, "Two", 50_000);
+    assert.equal(canRedoDraft(state), false);
+  });
+
+  it("starts fresh when another document opens", () => {
+    let state = opened(article, article);
+    state = retitle(state, "One", 0);
+    state = editorReducer(state, { type: "opened", draft: page, published: null, previewUrl: null });
+    assert.equal(canUndoDraft(state), false);
+    assert.equal(editorReducer(state, { type: "undo" }), state);
+  });
+
+  it("undo is a draft change: it makes the desk dirty so autosave stores it, and leaves the saved copy alone", () => {
+    let state = opened(article, article);
+    state = retitle(state, "One", 0);
+    state = { ...state, saved: state.draft };
+    state = editorReducer(state, { type: "undo" });
+    assert.equal(isDirty(state), true);
+    assert.equal(state.saved?.title, "One");
   });
 });
