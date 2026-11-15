@@ -114,7 +114,8 @@ export function assertInertMarkup(html: string, label = "markup", options: { for
   for (const tag of tags) {
     if (tag.name === "script") {
       // The only script a page may carry is the forms file, external, on a page with a live form.
-      assert.ok(options.forms && !tag.closing, `${label}: element <script> is not allowed (${tag.raw.slice(0, 80)})`);
+      assert.ok(options.forms, `${label}: element <script> is not allowed (${tag.raw.slice(0, 80)})`);
+      if (tag.closing) continue;
       assert.deepEqual(tag.attrs, { src: "/twilda-forms.js", defer: "" }, `${label}: unexpected script attributes`);
       continue;
     }
