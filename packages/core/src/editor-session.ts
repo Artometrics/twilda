@@ -38,9 +38,9 @@ async function readDoc(backend: StorageBackend, docPath: string): Promise<Twilda
   return parseDocument(file.text);
 }
 
-async function readOptionalDoc(backend: StorageBackend, docPath: string): Promise<TwildaDocument | null> {
+async function readOptionalDoc(backend: StorageBackend | (() => StorageBackend), docPath: string): Promise<TwildaDocument | null> {
   try {
-    return await readDoc(backend, docPath);
+    return await readDoc(typeof backend === "function" ? backend() : backend, docPath);
   } catch (error) {
     if (error instanceof TwildaError && error.code === "not-found") return null;
     throw error;
@@ -77,7 +77,7 @@ export function createEditorApi(backend: StorageBackend, options: EditorSessionO
       for (const id of [...ids].sort()) {
         const published = await readOptionalDoc(main(), publishedPath(id));
         const branch = draftBranchName(id);
-        const onBranch = await readOptionalDoc(backend.at(branch), draftPath(id));
+        const onBranch = await readOptionalDoc(() => backend.at(branch), draftPath(id));
         const onMain = await readOptionalDoc(main(), draftPath(id));
         const draft = onBranch ?? onMain ?? published;
         if (!draft) continue;
@@ -109,7 +109,7 @@ export function createEditorApi(backend: StorageBackend, options: EditorSessionO
     async readDocument(id, source) {
       if (source === "published") return readDoc(main(), publishedPath(id));
       const found =
-        (await readOptionalDoc(backend.at(draftBranchName(id)), draftPath(id))) ??
+        (await readOptionalDoc(() => backend.at(draftBranchName(id)), draftPath(id))) ??
         (await readOptionalDoc(main(), draftPath(id))) ??
         (await readOptionalDoc(main(), publishedPath(id)));
       if (!found) throw new TwildaError(`No document "${id}".`, "not-found");

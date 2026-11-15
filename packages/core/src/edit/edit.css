@@ -275,14 +275,10 @@
   cursor: pointer;
 }
 
-.twilda-live .embed-slot {
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  text-align: center;
+.twilda-live p.embed[data-twilda-type="video"] {
+  min-height: 3rem;
+  padding: 0.9rem 1rem;
   border: 2px dashed var(--tw-accent);
-  color: var(--ink);
-  font-size: 0.95rem;
 }
 
 .twilda-live [data-twilda-ref][data-twilda-type="video"]:focus-visible {

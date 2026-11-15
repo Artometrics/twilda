@@ -82,3 +82,14 @@ test("homepage fixture is a five-slide carousel plus a square grid", () => {
   assert.match(html, /Merchandise Owns the Ledger/);
   assert.doesNotMatch(html, /<script/i);
 });
+
+test("listing documents works for ones that have no draft branch yet", async () => {
+  const { api, backend } = openMemoryDemo();
+  const listed = await api.listDocuments();
+  const withBranch = (await backend.listDrafts()).map((draft) => draft.id);
+  assert.ok(listed.length > withBranch.length, "some sample documents have no draft branch");
+  for (const doc of listed) {
+    const read = await api.readDocument(doc.id, "draft");
+    assert.equal(read.id, doc.id);
+  }
+});
