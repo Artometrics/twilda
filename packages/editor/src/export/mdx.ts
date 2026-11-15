@@ -90,7 +90,7 @@ export function frontmatter(doc: ArticleDoc, draft = true): string {
   if (doc.dek.trim()) lines.push(`description: ${quote(oneLine(doc.dek))}`);
   if (doc.kicker.trim()) lines.push(`kicker: ${quote(oneLine(doc.kicker))}`);
   if (doc.byline.trim()) lines.push(`author: ${quote(oneLine(doc.byline))}`);
-  lines.push(`updatedDate: ${doc.updatedAt}`);
+  lines.push(`updatedDate: ${/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(doc.updatedAt) ? doc.updatedAt : quote(new Date().toISOString())}`);
   lines.push(`draft: ${draft ? "true" : "false"}`);
   lines.push("---");
   return lines.join("\n");
@@ -240,6 +240,7 @@ function renderBlock(ctx: Context, block: Block): string {
 }
 
 export function exportArticle(doc: ArticleDoc, options: ExportOptions): ExportedArticle {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(doc.slug)) throw new Error("The slug must be lowercase words joined by hyphens before it can be a file name.");
   const ctx: Context = {
     flavor: options.flavor,
     doc,

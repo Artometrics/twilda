@@ -689,6 +689,18 @@ function GitHubPanel() {
       <button type="button" className="ghost" onClick={() => void check()}>
         Check GitHub
       </button>
+      <button
+        type="button"
+        className="ghost"
+        disabled={!token}
+        onClick={() => {
+          setToken("");
+          setDeviceCode("");
+          setNote("Signed out. The token was cleared from this tab.");
+        }}
+      >
+        Sign out and forget the token
+      </button>
       <label>
         OAuth client id
         <input value={clientId} onChange={(event) => setClientId(event.target.value)} autoComplete="off" />

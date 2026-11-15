@@ -36,17 +36,8 @@ export function fitWithin(width: number, height: number, maxEdge: number): Fit {
   };
 }
 
-export type ImageKind = "jpeg" | "png" | "webp" | "gif";
-
-/** What the bytes are, from their first bytes and not from the file name or the declared type. */
-export function sniffImage(bytes: Uint8Array): ImageKind | null {
-  const at = (i: number) => bytes[i] ?? -1;
-  if (at(0) === 0xff && at(1) === 0xd8 && at(2) === 0xff) return "jpeg";
-  if (at(0) === 0x89 && at(1) === 0x50 && at(2) === 0x4e && at(3) === 0x47 && at(4) === 0x0d && at(5) === 0x0a && at(6) === 0x1a && at(7) === 0x0a) return "png";
-  if (at(0) === 0x47 && at(1) === 0x49 && at(2) === 0x46 && at(3) === 0x38) return "gif";
-  if (at(0) === 0x52 && at(1) === 0x49 && at(2) === 0x46 && at(3) === 0x46 && at(8) === 0x57 && at(9) === 0x45 && at(10) === 0x42 && at(11) === 0x50) return "webp";
-  return null;
-}
+export { sniffImage, type ImageKind } from "../media-guard";
+import { sniffImage } from "../media-guard";
 
 /** A repo-safe file name: lowercase letters, digits, and hyphens, never one that is already `taken`. */
 export function mediaFileName(original: string, extension: string, taken: Iterable<string> = []): string {

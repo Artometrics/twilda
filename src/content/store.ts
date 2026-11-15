@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ZodError } from "zod";
-import { documentSchema, type TwildaDocument } from "@twilda/core";
+import { TwildaError, assertJsonBounds, documentSchema, type TwildaDocument } from "@twilda/core";
 import { contentFingerprint } from "../schema/fingerprint";
 
 export type ContentDocument = TwildaDocument;
@@ -48,14 +48,20 @@ export function documentDir(root: string, id: string): string {
   return dir;
 }
 
+/** Same limit as `parseDocument` in `@twilda/core`. */
+const MAX_FILE_CHARS = 8_000_000;
+
 function readJson(file: string): unknown {
   let raw: string;
   try {
+    // A symlink in a pull request could point a content file at something outside the repository.
+    if (fs.lstatSync(file).isSymbolicLink()) throw new ContentError(`${path.basename(file)} is a symbolic link. Content files must be regular files.`);
     raw = fs.readFileSync(file, "utf8");
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
     throw error;
   }
+  if (raw.length > MAX_FILE_CHARS) throw new ContentError(`${path.basename(file)} is too large to read.`);
   try {
     return JSON.parse(raw) as unknown;
   } catch {
@@ -66,8 +72,10 @@ function readJson(file: string): unknown {
 function parseDocument(value: unknown, expectedId?: string): ContentDocument {
   let parsed: ContentDocument;
   try {
+    assertJsonBounds(value);
     parsed = documentSchema.parse(value);
   } catch (error) {
+    if (error instanceof TwildaError) throw new ContentError(error.message);
     if (error instanceof ZodError) {
       const detail = error.issues
         .map((issue) => `${issue.path.join(".") || "document"}: ${issue.message}`)

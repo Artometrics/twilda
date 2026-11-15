@@ -1,4 +1,5 @@
 import { escapeHtml } from "./escape";
+import { hasForbiddenChars, isSitePath, isWebUrl, labelContradictsTarget } from "./url";
 
 /**
  * Basic inline marks inside a plain string field: `**bold**`, `*italic*`, and
@@ -21,19 +22,17 @@ export type MarkNode =
 const SPECIAL = "\\*[]()";
 const MAX_HREF = 400;
 
-/** http(s) with a host and no credentials, `mailto:`, or a site path. No scripts, no `data:`, no `//host`. */
+/** http(s) with a dotted host and no credentials, `mailto:`, `#fragment`, or a site path. No scripts, no `data:`, no `//host`, no look-alike (punycode) host. */
 export function isSafeLinkTarget(value: string): boolean {
   const href = value.trim();
   if (href.length === 0 || href.length > MAX_HREF || href !== value) return false;
-  // eslint-disable-next-line no-control-regex
-  if (/[\s\u0000-\u001f\u007f<>"'`\\]/.test(href)) return false;
-  if (href.startsWith("/")) return !href.startsWith("//");
+  if (hasForbiddenChars(href)) return false;
+  if (href.startsWith("/")) return isSitePath(href);
   if (href.startsWith("#")) return href.length > 1;
   if (/^mailto:[^@\s]+@[^@\s]+\.[^@\s]+$/i.test(href)) return true;
-  if (!/^https?:\/\//i.test(href)) return false;
+  if (!isWebUrl(href)) return false;
   try {
-    const url = new URL(href);
-    return (url.protocol === "https:" || url.protocol === "http:") && url.hostname.includes(".") && !url.username && !url.password;
+    return new URL(href).hostname.includes(".");
   } catch {
     return false;
   }
@@ -109,7 +108,7 @@ function parseRange(source: string, allowLinks: boolean): MarkNode[] {
     }
     if (char === "[" && allowLinks) {
       const link = findLinkEnd(source, i);
-      if (link && isSafeLinkTarget(link.href)) {
+      if (link && isSafeLinkTarget(link.href) && !labelContradictsTarget(labelText(link.label), link.href)) {
         flush();
         out.push({ t: "a", href: link.href, c: parseRange(link.label, false) });
         i = link.next;
@@ -123,7 +122,16 @@ function parseRange(source: string, allowLinks: boolean): MarkNode[] {
   return out;
 }
 
+/**
+ * Emphasis matching rescans the rest of the string at each `*`, which is quadratic. A
+ * paragraph is capped at 4000 characters by the schema, so real text never nears this;
+ * a longer string from an unvalidated file is shown as plain text instead of being
+ * allowed to stall a build or a phone.
+ */
+export const MAX_MARKS_INPUT = 12_000;
+
 export function parseMarks(source: string, level: MarksLevel = "links"): MarkNode[] {
+  if (source.length > MAX_MARKS_INPUT) return [{ t: "text", v: source }];
   return parseRange(source, level === "links");
 }
 
@@ -153,6 +161,11 @@ function nodesToText(nodes: MarkNode[]): string {
   return nodes.map((node) => (node.t === "text" ? node.v : nodesToText(node.c))).join("");
 }
 
+/** The words of a link label with its own emphasis marks removed. */
+function labelText(label: string): string {
+  return nodesToText(parseRange(label, false));
+}
+
 /** The words with every mark removed. */
 export function stripMarks(source: string, level: MarksLevel = "links"): string {
   return nodesToText(parseMarks(source, level));
@@ -177,7 +190,7 @@ export function unsafeLinkTargets(source: string): string[] {
     if (source[i] === "[") {
       const link = findLinkEnd(source, i);
       if (link) {
-        if (!isSafeLinkTarget(link.href)) bad.push(link.href);
+        if (!isSafeLinkTarget(link.href) || labelContradictsTarget(labelText(link.label), link.href)) bad.push(link.href);
         i = link.next;
         continue;
       }
@@ -227,7 +240,8 @@ export function marksFromDom(root: DomLike, level: MarksLevel = "links"): string
     let out = inner;
     if (name === "a") {
       const href = (node.getAttribute?.("href") ?? node.getAttribute?.("data-twilda-href") ?? "").trim();
-      out = level === "links" && inner.trim() && isSafeLinkTarget(href) ? `[${inner.trim()}](${encodeLinkTarget(href)})` : inner;
+      const label = inner.trim();
+      out = level === "links" && label && isSafeLinkTarget(href) && !labelContradictsTarget(stripMarks(label, "emphasis"), href) ? `[${label}](${encodeLinkTarget(href)})` : inner;
     } else {
       const strong = name === "strong" || name === "b" || styleSays(node, /font-weight\s*:\s*(bold|[6-9]00)/i);
       const em = name === "em" || name === "i" || styleSays(node, /font-style\s*:\s*italic/i);

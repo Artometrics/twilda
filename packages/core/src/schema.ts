@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { unsafeLinkTargets } from "./marks";
+import { isSafeHref, isSitePath, isWebUrl } from "./url";
 
 /**
  * Contract v1 content model.
@@ -25,36 +26,27 @@ const documentId = z
 const shortText = (max: number) => z.string().max(max);
 const requiredText = (max: number) => z.string().trim().min(1).max(max);
 
-const MARK_LINK_MESSAGE = "A link target must be an https:// or http:// address, a mailto: address, or a site path.";
+const MARK_LINK_MESSAGE =
+  "A link target must be an https:// or http:// address, a mailto: address, or a site path, and link text that is a web address must point to that address.";
 const marksOk = (value: string) => unsafeLinkTargets(value).length === 0;
 /** Text that may carry `**bold**`, `*italic*`, and `[links](https://...)`. A link with an unsafe target is refused. */
 const markText = (max: number) => requiredText(max).refine(marksOk, MARK_LINK_MESSAGE);
 const shortMarkText = (max: number) => shortText(max).refine(marksOk, MARK_LINK_MESSAGE);
 
-/** Site path (`/articles/franchise`) or absolute http(s) URL. */
+/** Site path (`/articles/franchise`) or absolute http(s) URL. No whitespace, control characters, backslashes, credentials, or look-alike (punycode) hosts. */
 export const hrefSchema = z
   .string()
   .min(1)
   .max(400)
-  .refine(
-    (value) =>
-      (value.startsWith("/") && !value.startsWith("//")) ||
-      value.startsWith("https://") ||
-      value.startsWith("http://"),
-    "Use a site path or an http(s) URL.",
-  );
+  .refine(isSafeHref, "Use a site path or an http(s) URL with no spaces, backslashes, or look-alike characters.");
 
 export const imageSrcSchema = z
   .string()
   .min(1)
   .max(2_000_000)
   .refine(
-    (value) =>
-      (value.startsWith("/") && !value.startsWith("//")) ||
-      value.startsWith("https://") ||
-      value.startsWith("http://") ||
-      value.startsWith("data:image/"),
-    "Use a site path, an http(s) URL, or a data:image URL.",
+    (value) => isSitePath(value) || isWebUrl(value) || /^data:image\/(?:png|jpeg|gif|webp|avif);base64,[A-Za-z0-9+/]+={0,2}$/.test(value),
+    "Use a site path, an http(s) URL, or a PNG, JPEG, GIF, WebP, or AVIF data URL.",
   );
 
 export const headingBlockSchema = z.object({
@@ -83,9 +75,7 @@ const chartDataPath = z
   .max(400)
   .refine(
     (value) =>
-      /^content\/data\/[a-z0-9][a-z0-9._-]*\.csv$/.test(value) ||
-      value.startsWith("https://") ||
-      value.startsWith("http://"),
+      /^content\/data\/[a-z0-9][a-z0-9._-]*\.csv$/.test(value) || isWebUrl(value),
     "Chart data must be a CSV under content/data/ or an http(s) URL.",
   );
 

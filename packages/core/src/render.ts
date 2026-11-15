@@ -3,6 +3,7 @@ import { escapeHtml, safeHref, safeMedia } from "./escape";
 import { MAGAZINE_CSS } from "./magazine-css";
 import { renderMarks, type MarksLevel } from "./marks";
 import { parseVideoUrl } from "./embed";
+import { isSafeHref } from "./url";
 
 export { escapeHtml, safeHref, safeMedia } from "./escape";
 
@@ -298,7 +299,7 @@ function renderBlock(ctx: Ctx, block: Block, index: number): string {
 }
 
 function renderMast(chrome: SiteChrome): string {
-  const nav = chrome.nav.map((item) => `<a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`).join("\n      ");
+  const nav = chrome.nav.map((item) => `<a href="${escapeHtml(isSafeHref(item.href) ? item.href : "#")}">${escapeHtml(item.label)}</a>`).join("\n      ");
   return `<header class="mast">
     <div class="mast-row">
       <a class="mark" href="/">${escapeHtml(chrome.name)}</a>

@@ -30,6 +30,9 @@ export function listDocumentIds(root: string): string[] {
 function readDocumentFile(root: string, id: string, file: "draft" | "published") {
   const target = path.join(root, id, `${file}.json`);
   if (!fs.existsSync(target)) return null;
+  if (fs.lstatSync(target).isSymbolicLink()) {
+    throw new TwildaError(`${id}/${file}.json is a symbolic link. Content files must be regular files.`, "invalid-document");
+  }
   let doc;
   try {
     doc = parseDocument(fs.readFileSync(target, "utf8"));

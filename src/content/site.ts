@@ -10,6 +10,8 @@ export function readSite(root = path.resolve(process.cwd(), "content")): SiteSet
   const file = path.join(root, "site.json");
   let raw: string;
   try {
+    // A symlink in a pull request could point site.json at a file outside the repository.
+    if (fs.lstatSync(file).isSymbolicLink()) throw new Error("content/site.json is a symbolic link. Content files must be regular files.");
     raw = fs.readFileSync(file, "utf8");
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return defaultSite();

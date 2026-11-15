@@ -101,6 +101,7 @@ export function changedRefs(before: unknown, after: unknown, prefix = ""): strin
   const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
   const out: string[] = [];
   for (const key of keys) {
+    if (BLOCKED.has(key)) continue;
     if (prefix === "" && (key === "status" || key === "updatedAt")) continue;
     out.push(
       ...changedRefs(

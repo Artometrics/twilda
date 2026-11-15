@@ -1,0 +1,6 @@
+# Reviewed false positives. Add a line only after checking the value is not a live credential.
+#
+# Build-time placeholder in the retired Expo workspace's CI file: the URL beside it is
+# https://example.supabase.co and the comment above says "no real secrets in CI".
+babdc3aab6046245ad7642f261714da8d5e6ff04:.github/workflows/ci.yml:generic-api-key:35
+b200d041550ff0d478166ea575e3ee4636a6a379:.github/workflows/ci.yml:generic-api-key:35

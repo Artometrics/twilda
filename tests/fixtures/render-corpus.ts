@@ -81,7 +81,7 @@ export const HOSTILE_PAGE = documentSchema.parse({
       stories: [
         { id: "st1", kicker: "Lead", title: "Lead <1>", dek: "Lead dek", href: "/a", image: "/media/plate-yard.svg", imageAlt: "Yard" },
         { id: "st2", kicker: "Two", title: "Two", dek: "Two dek", href: "/ok_path/x.y", image: "/media/plate-river.svg", imageAlt: "River" },
-        { id: "st3", kicker: "Three", title: "Three", dek: "Three dek", href: "https://example.com", image: "/media/../x.svg", imageAlt: "Bad" },
+        { id: "st3", kicker: "Three", title: "Three", dek: "Three dek", href: "https://example.com", image: "/elsewhere/x.svg", imageAlt: "Bad" },
       ],
     },
     {

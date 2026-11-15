@@ -40,6 +40,8 @@ import { GithubPanel } from "./GithubPanel";
 import { ThemePanel } from "./ThemePanel";
 
 const AUTOSAVE_MS = 250;
+/** How long a pasted token is kept in memory before the desk forgets it. */
+const TOKEN_LIFETIME_MS = 30 * 60 * 1000;
 
 export function App({
   backend,
@@ -52,6 +54,17 @@ export function App({
   const [state, dispatch] = useReducer(editorReducer, initialState);
   const [creating, setCreating] = useState(false);
   const [githubToken, setGithubToken] = useState("");
+  useEffect(() => {
+    // The token lives only in this component's state. Leaving the page, or 30 minutes after it was pasted, forgets it.
+    if (!githubToken) return undefined;
+    const forget = () => setGithubToken("");
+    const timer = window.setTimeout(forget, TOKEN_LIFETIME_MS);
+    window.addEventListener("pagehide", forget);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pagehide", forget);
+    };
+  }, [githubToken]);
   const [githubOwnerName, setGithubOwnerName] = useState(githubOwner);
   const [githubRepoName, setGithubRepoName] = useState(githubRepo);
   const [panelOpen, setPanelOpen] = useState(false);

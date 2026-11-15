@@ -1,5 +1,6 @@
 import { ZodError } from "zod";
 import { TwildaError } from "./errors";
+import { assertJsonBounds } from "./json-guard";
 import { documentSchema, type TwildaDocument } from "./schema";
 
 /** Contract v1: JSON object, two-space indent, trailing newline. Key order follows the parsed object. */
@@ -10,13 +11,20 @@ export function formatDocumentError(error: ZodError): string {
     .join("; ");
 }
 
+/** Largest document file Twilda will parse. Real documents are a few kilobytes; this stops a hostile or broken file from exhausting memory before validation runs. */
+export const MAX_DOCUMENT_CHARS = 8_000_000;
+
 export function parseDocument(text: string): TwildaDocument {
+  if (text.length > MAX_DOCUMENT_CHARS) {
+    throw new TwildaError("Document is too large to read.", "too-large");
+  }
   let value: unknown;
   try {
     value = JSON.parse(text) as unknown;
   } catch {
     throw new TwildaError("Document is not valid JSON.", "invalid-json");
   }
+  assertJsonBounds(value);
   try {
     return documentSchema.parse(value);
   } catch (error) {
