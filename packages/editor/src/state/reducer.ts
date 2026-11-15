@@ -13,7 +13,8 @@ import { moveById } from "./move";
 
 export type FailurePhase = "load" | "save" | "build" | "publish" | "revert" | "upload" | "import";
 
-export type DeskView = "list" | "edit" | "preview" | "media" | "export";
+/** `page` is the draft in the real template; `edit` is the Blocks panel. */
+export type DeskView = "list" | "page" | "edit" | "media" | "export";
 
 export interface EditorState {
   phase: "ready" | "busy";
@@ -40,6 +41,7 @@ export type Action =
   | { type: "autosaved"; saved: Doc; documents: DocSummary[] }
   | { type: "notice"; message: string }
   | { type: "view"; view: DeskView }
+  | { type: "replace-draft"; draft: Doc }
   | { type: "edit-meta"; patch: MetaPatch }
   | { type: "update-block"; block: Block }
   | { type: "add-block"; block: Block }
@@ -99,7 +101,7 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
         saved: action.draft,
         published: action.published,
         previewUrl: action.previewUrl,
-        view: "edit",
+        view: "page",
         notice: `Opened ${action.draft.title}.`,
       };
     case "created":
@@ -115,7 +117,7 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
         published: null,
         previewUrl: null,
         documents: action.documents,
-        view: "edit",
+        view: "page",
         notice: action.notice,
       };
     case "deleted":
@@ -155,6 +157,9 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
       return { ...state, notice: action.message };
     case "view":
       return { ...state, view: action.view };
+    case "replace-draft":
+      if (!state.draft || state.draft.id !== action.draft.id) return state;
+      return { ...state, error: null, draft: action.draft };
     case "edit-meta":
       if (!state.draft) return state;
       if (state.draft.kind === "page") {

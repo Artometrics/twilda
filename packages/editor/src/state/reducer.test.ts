@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createBlock, createSection, fingerprint, type ArticleDoc, type PageDoc } from "../model";
 import { moveItem } from "./move";
-import { editorReducer, initialState, type EditorState } from "./reducer";
+import { editorReducer, initialState, isDirty, type EditorState } from "./reducer";
 
 const article: ArticleDoc = {
   id: "lumen-rail",
@@ -89,9 +89,25 @@ describe("editor reducer", () => {
   it("opens a document and remembers the preview URL", () => {
     const state = opened(article, { ...article, blocks: article.blocks.slice(0, 2) });
     assert.equal(state.activeId, "lumen-rail");
-    assert.equal(state.view, "edit");
+    assert.equal(state.view, "page");
     assert.equal(state.previewUrl, "/preview-frame.html");
     assert.equal(state.published?.kind, "article");
+  });
+
+  it("takes a whole-document edit from the page and leaves the saved copy alone", () => {
+    const start = opened(article, article);
+    const next = { ...article, title: "Edited on the page" };
+    const state = editorReducer(start, { type: "replace-draft", draft: next });
+    assert.equal(state.draft?.title, "Edited on the page");
+    assert.equal(state.saved?.title, article.title);
+    assert.equal(isDirty(state), true);
+    assert.equal(state.published?.title, article.title);
+  });
+
+  it("ignores a page edit for a document that is no longer open", () => {
+    const start = opened(article, article);
+    const state = editorReducer(start, { type: "replace-draft", draft: { ...article, id: "other", title: "Stale" } });
+    assert.equal(state, start);
   });
 
   it("edits a paragraph without touching the saved copy", () => {
@@ -240,7 +256,7 @@ describe("editor reducer", () => {
     const created = editorReducer(initialState, { type: "created", draft: article, documents: [], notice: "Created." });
     assert.equal(created.activeId, "lumen-rail");
     assert.equal(created.published, null);
-    assert.equal(created.view, "edit");
+    assert.equal(created.view, "page");
     const deleted = editorReducer(created, { type: "deleted", id: "lumen-rail", documents: [] });
     assert.equal(deleted.draft, null);
     assert.equal(deleted.view, "list");

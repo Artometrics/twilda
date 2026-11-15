@@ -10,6 +10,8 @@ import { PersistentBackend, openBestStore, type KeyValueStore } from "./backend/
 import { seedFieldDesk } from "./backend/seed";
 import { buildFaultPath } from "./backend/paths";
 import { App } from "./ui/App";
+import "@twilda/core/magazine.css";
+import "@twilda/core/edit.css";
 import "./styles.css";
 
 async function start(): Promise<void> {
