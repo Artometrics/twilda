@@ -14,5 +14,8 @@ Twilda has two editors. They do not share a process.
 | [phase0-bakeoff.md](phase0-bakeoff.md) | Twilda against EmDash, TinaCMS, and CloudCannon |
 | [phase0-decision.md](phase0-decision.md) | Go, narrow, or switch, and why |
 | [phase1.md](phase1.md) | The single renderer, the drafting dashboard and page view, the design refresh, and auth scope limits |
+| [phase2.md](phase2.md) | The live visual editor on prepared sections, media uploads, and merge handling |
+| [phase3.md](phase3.md) | Security hardening: what was found and fixed, and the checks that keep it fixed |
+| [security.md](security.md) | Architecture, trust boundaries, token handling, what Twilda does and does not protect, remaining risks |
 
 The production site is still `npm run build`. Output is `dist/`. The phone demo is `npm run build:demo`. Output is `demo-dist/`. Do not point either build at an existing Artometrics or Twilda hosting project.

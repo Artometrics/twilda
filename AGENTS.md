@@ -11,7 +11,16 @@ The previous Expo novel workspace lived in this repo through commit `106b96f`. I
 - `npm run typecheck`
 - `npm test`
 - `npm run build` then `npm run check:static`
+- `npm run check:content`, `npm run check:secrets`, `npm run check:audit` — Phase 3 security checks (content and public-file audit, secret scan, `npm audit` against `security/audit-allowlist.json`). `npm test` includes the hostile-content suite in `tests/security/` and the header and built-output tests. See `docs/security.md`.
+- `cd packages/editor && npm run test:e2e:csp` — the desk in a browser under the production CSP.
 - `npm run build:edit` — Phase 0 click-to-edit target into `dist-edit/` (never deployed, never `dist/`). `npm run dev:edit` serves it on port 4322. `npm run test:e2e:edit` runs it at 390px and desktop. See `docs/phase0-click-edit.md`.
+
+## Security rules
+
+- Do not weaken a header or Content-Security-Policy in `firebase.json` or `EDIT_CSP`. `tests/csp.test.ts` pins them. No `unsafe-inline`, no `unsafe-eval`, no wildcard. A change that needs a new origin (for example a device-flow proxy) updates the test in the same pull request.
+- The GitHub token stays in memory, goes only to `api.github.com`, and is never logged or stored. `tests/security/token.test.ts` enforces it.
+- Link targets and media go through `packages/core/src/url.ts` and `media-guard.ts`. Do not add a second rule.
+- Workflows keep a read-only token, no `pull_request_target`, and no secret in a step that runs pull-request code. `tests/security/workflows.test.ts` enforces it. See `SECURITY.md`.
 
 ## Product rules
 
