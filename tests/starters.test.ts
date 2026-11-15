@@ -4,7 +4,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { after, before, describe, it } from "node:test";
-import { PRESETS, PRESET_IDS, parseSite, type PresetId } from "@twilda/core";
+import { FORMS_CLIENT_JS, PRESETS, PRESET_IDS, parseSite, siteCsp, type PresetId } from "@twilda/core";
+import { readSiteFile } from "@twilda/core/node";
 import { auditRepository } from "../scripts/lib/content-audit";
 import { create } from "../scripts/create-twilda";
 import { checkoutPackages, exampleFiles, recommendedHeaders, registryPackages, repoPackages, starterDir, starterFiles } from "../scripts/lib/starter";
@@ -14,7 +15,10 @@ import { auditOutput, walk } from "./support/dist";
 const root = process.cwd();
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "twilda-starters-"));
 const built = new Map<string, string>();
-const policy = parsePolicy(headersFor(hostingTarget("site")).get("Content-Security-Policy") as string);
+const lockedCsp = headersFor(hostingTarget("site")).get("Content-Security-Policy") as string;
+/** The policy a starter is served with: the repository site's own, or that one opened to the starter's single form address. */
+const policyFor = (id: PresetId) => parsePolicy(siteCsp(readSiteFile(path.join(starterDir(id), "content"))));
+const hasForm = (id: PresetId) => id !== "magazine";
 
 after(() => fs.rmSync(scratch, { recursive: true, force: true }));
 
@@ -112,6 +116,19 @@ describe("what a starter is", () => {
     });
   }
 
+  it("a starter with no form is served with exactly the repository's locked policy; one with a form gets the same policy opened to its one address", () => {
+    assert.equal(siteCsp(readSiteFile(path.join(starterDir("magazine"), "content"))), lockedCsp);
+    for (const id of ["corporate", "leadgen"] as const) {
+      const site = readSiteFile(path.join(starterDir(id), "content"));
+      const csp = siteCsp(site);
+      const origin = new URL((site.forms as { endpoint: string }).endpoint).origin;
+      assert.equal(csp, lockedCsp.replace("form-action 'none'", `form-action ${origin}`).replace("script-src 'none'", "script-src 'self'").replace("connect-src 'none'", `connect-src ${origin}`));
+      const readme = fs.readFileSync(path.join(starterDir(id), "README.md"), "utf8");
+      assert.ok(readme.includes(`Content-Security-Policy: ${csp}`), "the README prints the policy the site needs");
+      assert.ok(readme.includes("## Forms"));
+    }
+  });
+
   it("the README's headers are the ones the repository's own site is served with", () => {
     const headers = recommendedHeaders();
     assert.ok(headers.some((header) => header.key === "Content-Security-Policy"));
@@ -123,9 +140,16 @@ describe("a starter builds into a site the production policy accepts", () => {
   for (const id of PRESET_IDS) {
     it(`${id}: home and article pass the policy: no script, no inline style, same-origin assets only`, () => {
       const dist = built.get(id) as string;
-      assert.deepEqual(auditOutput(dist, { policy, runsScript: false }), []);
+      assert.deepEqual(auditOutput(dist, { policy: policyFor(id), runsScript: hasForm(id), forms: hasForm(id) }), []);
       const pages = walk(dist).filter((file) => file.endsWith(".html"));
       assert.equal(pages.length, 3, "home, one article, and 404");
+    });
+
+    it(`${id}: the forms script ships only where there is a form, and is the one script in @twilda/core`, () => {
+      const file = path.join(built.get(id) as string, "twilda-forms.js");
+      if (!hasForm(id)) return assert.equal(fs.existsSync(file), false, "a site with no form ships no script");
+      assert.equal(fs.readFileSync(file, "utf8"), FORMS_CLIENT_JS);
+      assert.equal(walk(built.get(id) as string).filter((entry) => entry.endsWith(".js")).length, 1, "no other script in the build");
     });
 
     it(`${id}: the home page prints its headline once, the mode class, and its theme link`, () => {
@@ -135,7 +159,8 @@ describe("a starter builds into a site the production policy accepts", () => {
       if (id === "magazine") assert.doesNotMatch(html, /mode-/);
       else assert.match(html, new RegExp(`class="magazine mode-${id}"`));
       assert.equal(/href="\/theme\.css"/.test(html), id !== "magazine");
-      assert.equal(/<script/i.test(html), false);
+      if (hasForm(id)) assert.deepEqual(html.match(/<script\b[^>]*>/gi), ['<script src="/twilda-forms.js" defer>'], "the form's one external script and nothing inline");
+      else assert.equal(/<script/i.test(html), false);
       assert.equal(/twilda-surface|data-twilda/.test(html), false, "no editor markup in the public build");
     });
 
@@ -166,7 +191,7 @@ describe("create-twilda scaffolds a project from this checkout", () => {
       const out = path.join(scratch, `project-dist-${id}`);
       astroBuild(dir, out);
       assert.ok(fs.readFileSync(path.join(out, "index.html"), "utf8").includes(HOME_TEXT[id]));
-      assert.deepEqual(auditOutput(out, { policy, runsScript: false }), []);
+      assert.deepEqual(auditOutput(out, { policy: policyFor(id), runsScript: hasForm(id), forms: hasForm(id) }), []);
     });
   }
 

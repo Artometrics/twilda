@@ -986,6 +986,35 @@
   background: var(--paper);
 }
 
+.lead-form {
+  margin: 0;
+}
+
+.form-contact .form-card,
+.form-lead .form-card {
+  max-width: 40rem;
+}
+
+.form-newsletter .form-card {
+  max-width: 32rem;
+}
+
+.form-row-message .form-input {
+  min-height: 7rem;
+}
+
+.form-row-name .form-input,
+.form-row-email .form-input,
+.form-row-phone .form-input,
+.form-row-company .form-input,
+.form-row-text .form-input {
+  text-overflow: ellipsis;
+}
+
+.form-success {
+  border-left-color: var(--kicker);
+}
+
 .form-section [hidden] {
   display: none !important;
 }

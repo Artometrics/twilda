@@ -56,9 +56,14 @@ export interface RenderOptions {
    * no `action`, and no script, so a preview or an unconnected site can never post anywhere.
    */
   forms?: FormsConfig;
+  /**
+   * The page is shown in an editor, not served. Forms print inert whatever `forms` says: no `action`, no
+   * script, fields disabled. The desk and the edit build set it. It changes the form and nothing else.
+   */
+  preview?: boolean;
 }
 
-type Ctx = { annotate: boolean; dataFiles: Record<string, string>; forms: FormsConfig | null };
+type Ctx = { annotate: boolean; dataFiles: Record<string, string>; forms: FormsConfig | null; preview: boolean };
 
 type FieldType = "text" | "multiline";
 
@@ -356,7 +361,7 @@ function renderFormField(ctx: Ctx, base: string, section: Extract<PageSection, {
   const fieldId = `${section.id}-${field.id}`;
   const hintId = `${fieldId}-hint`;
   const errId = `${fieldId}-err`;
-  const showHint = field.hint !== "" || ctx.annotate;
+  const showHint = field.hint !== "";
   const describedBy = `${showHint ? `${hintId} ` : ""}${errId}`;
   const req = field.required ? ' required aria-required="true"' : "";
   const mark = field.required ? '<span class="form-req" aria-hidden="true"> *</span>' : "";
@@ -386,13 +391,13 @@ function renderFormField(ctx: Ctx, base: string, section: Extract<PageSection, {
 
 /**
  * A form. Integrate-only: when the site has a valid `forms.endpoint` the form posts there and nowhere
- * else, and Twilda keeps nothing. Without one (or while editing) it prints inert, so it cannot post.
+ * else, and Twilda keeps nothing. Without one (or in a `preview`) it prints inert, so it cannot post.
  * Every string is escaped, every name and id is derived from validated data, and there is no inline
  * script, handler, or style. The honeypot (`_hp`) and the time trap (`_elapsed_ms`, added by the page's
  * script) are the spam checks; the receiver should repeat both.
  */
 function renderForm(ctx: Ctx, base: string, section: Extract<PageSection, { type: "form" }>): string {
-  const live = ctx.forms !== null && !ctx.annotate;
+  const live = ctx.forms !== null && !ctx.preview;
   const names = formFieldNames(section.fields);
   const fields = section.fields.map((_, index) => renderFormField(ctx, base, section, index, names[index] as string)).join("\n      ");
   const hiddenFields = live
@@ -404,15 +409,13 @@ function renderForm(ctx: Ctx, base: string, section: Extract<PageSection, { type
   const attrs = live
     ? ` method="post" action="${escapeHtml((ctx.forms as FormsConfig).endpoint)}" accept-charset="utf-8" data-tf data-tf-mode="${(ctx.forms as FormsConfig).mode}" data-tf-format="${(ctx.forms as FormsConfig).format}"`
     : "";
-  const notice =
-    live || ctx.annotate ? "" : '<p class="form-note" role="note">This form is not connected yet. Add your form address to content/site.json.</p>';
-  const privacy = section.privacy
-    ? `<p class="form-privacy"${text(ctx, `${base}.privacy`, "text", "links")}>${renderMarks(section.privacy, "links")}</p>`
-    : ctx.annotate
-      ? `<p class="form-privacy"${text(ctx, `${base}.privacy`, "text", "links")}></p>`
-      : "";
+  const notice = live
+    ? ""
+    : ctx.forms
+      ? '<p class="form-note" role="note">Preview: this form sends nothing here. It is live on the published site.</p>'
+      : '<p class="form-note" role="note">This form is not connected yet. Add your form address to content/site.json.</p>';
+  const privacy = section.privacy ? `<p class="form-privacy"${text(ctx, `${base}.privacy`, "text", "links")}>${renderMarks(section.privacy, "links")}</p>` : "";
   const script = live ? `<script src="${FORMS_SCRIPT_PATH}" defer></script>` : "";
-  const hiddenAttr = ctx.annotate ? "" : " hidden";
   return `<section class="section form-section form-${section.variant}" id="${escapeHtml(section.id)}"${node(ctx, base, "form")}>
     ${sectionHead(ctx, base, section)}
     <div class="form-card">
@@ -429,11 +432,11 @@ function renderForm(ctx: Ctx, base: string, section: Extract<PageSection, { type
       </form>
       <p class="form-error form-summary" role="alert" hidden></p>
       ${privacy}
-      <div class="form-status form-success" role="status" tabindex="-1"${hiddenAttr}>
+      <div class="form-status form-success" role="status" tabindex="-1" hidden>
         <h3${text(ctx, `${base}.successTitle`)}>${escapeHtml(section.successTitle)}</h3>
         <p${text(ctx, `${base}.successText`)}>${escapeHtml(section.successText)}</p>
       </div>
-      <div class="form-status form-failure" role="alert" tabindex="-1"${hiddenAttr}>
+      <div class="form-status form-failure" role="alert" tabindex="-1" hidden>
         <p${text(ctx, `${base}.errorText`)}>${escapeHtml(section.errorText)}</p>
       </div>
       ${script}
@@ -774,7 +777,7 @@ function renderArticle(ctx: Ctx, doc: Extract<TwildaDocument, { kind: "article" 
  */
 export function renderDocument(doc: TwildaDocument, options: RenderOptions = {}): string {
   const forms = options.forms && isFormEndpoint(options.forms.endpoint) ? options.forms : null;
-  const ctx: Ctx = { annotate: options.annotate === true, dataFiles: options.dataFiles ?? {}, forms };
+  const ctx: Ctx = { annotate: options.annotate === true, dataFiles: options.dataFiles ?? {}, forms, preview: options.preview === true };
   const chrome = options.chrome ?? DEFAULT_CHROME;
   const body = doc.kind === "article" ? renderArticle(ctx, doc) : renderPage(ctx, doc);
   const mode = options.mode && options.mode !== "magazine" && /^[a-z]+$/.test(options.mode) ? ` mode-${options.mode}` : "";

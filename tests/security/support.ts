@@ -68,12 +68,22 @@ export const ALLOWED_TAGS = new Set([
   "a", "article", "aside", "br", "div", "em", "figcaption", "figure", "footer", "h1", "h2", "h3",
   "header", "iframe", "img", "li", "nav", "ol", "p", "section", "span", "strong", "table", "tbody",
   "td", "th", "thead", "tr", "ul", "time", "audio", "source", "dl", "dt", "dd", "small", "b", "i", "main", "h4",
+  // Phase 5 forms. A form prints inert unless the site has a form address; see FORM_RULES below.
+  "form", "fieldset", "legend", "label", "input", "textarea", "button",
 ]);
 
 const ALLOWED_ATTRS = new Set([
   "class", "id", "href", "rel", "src", "alt", "aria-label", "role", "title", "loading", "allowfullscreen",
   "referrerpolicy", "sandbox", "controls", "preload", "datetime", "colspan", "scope", "width", "height", "type", "download",
+  "for", "name", "value", "maxlength", "autocomplete", "inputmode", "required", "disabled", "hidden", "rows", "tabindex", "method",
+  "aria-required", "aria-describedby", "aria-invalid", "aria-hidden", "accept-charset", "data-tf-kind",
 ]);
+
+/** Attributes that exist only on a live form (one with a form address), and only with these values. */
+const LIVE_FORM_ATTRS = new Set(["action", "data-tf", "data-tf-mode", "data-tf-format"]);
+const INPUT_TYPES = new Set(["text", "email", "tel", "checkbox", "hidden"]);
+const FIELD_NAME = /^[A-Za-z_][A-Za-z0-9_-]{0,39}$/;
+const FORM_ACTION = /^https:\/\/[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?(?::\d{2,5})?(?:\/[A-Za-z0-9\-._~%!$&'()+=:@/?]*)?$/;
 
 const EMBED_SRC = /^https:\/\/(?:www\.youtube-nocookie\.com\/embed\/[A-Za-z0-9_-]{11}|player\.vimeo\.com\/video\/\d+)(?:\?[A-Za-z0-9_=&.-]*)?$/;
 const SITE_PATH = /^\/(?!\/)[A-Za-z0-9/._~%?=&#-]*$/;
@@ -97,16 +107,30 @@ export function isAllowedSrcValue(tag: string, value: string): boolean {
  * Parse generated HTML with a small independent scanner and assert it is exactly the inert
  * subset Twilda emits. This is deliberately not the code under test: it knows nothing about escapeHtml.
  */
-export function assertInertMarkup(html: string, label = "markup"): Tag[] {
+export function assertInertMarkup(html: string, label = "markup", options: { forms?: boolean } = {}): Tag[] {
   const { tags, text } = scanTags(html.replace(/<!doctype html>/i, ""));
   const stripped = text.replace(/<!--[\s\S]*?-->/g, "");
   assert.ok(!/[<>]/.test(stripped), `${label}: stray angle bracket in text: ${JSON.stringify(stripped.match(/.{0,30}[<>].{0,30}/)?.[0])}`);
   for (const tag of tags) {
+    if (tag.name === "script") {
+      // The only script a page may carry is the forms file, external, on a page with a live form.
+      assert.ok(options.forms && !tag.closing, `${label}: element <script> is not allowed (${tag.raw.slice(0, 80)})`);
+      assert.deepEqual(tag.attrs, { src: "/twilda-forms.js", defer: "" }, `${label}: unexpected script attributes`);
+      continue;
+    }
     assert.ok(ALLOWED_TAGS.has(tag.name), `${label}: element <${tag.name}> is not allowed (${tag.raw.slice(0, 80)})`);
     if (tag.closing) continue;
     for (const [key, value] of Object.entries(tag.attrs)) {
       assert.ok(!key.startsWith("on"), `${label}: event handler ${key} on <${tag.name}>`);
-      assert.ok(key.startsWith("data-twilda-") || ALLOWED_ATTRS.has(key), `${label}: attribute ${key} is not allowed on <${tag.name}>`);
+      const liveOnly = LIVE_FORM_ATTRS.has(key);
+      if (liveOnly) assert.ok(options.forms && tag.name === "form", `${label}: attribute ${key} is only for a live form (${tag.raw.slice(0, 80)})`);
+      assert.ok(liveOnly || key.startsWith("data-twilda-") || ALLOWED_ATTRS.has(key), `${label}: attribute ${key} is not allowed on <${tag.name}>`);
+      if (key === "action") assert.ok(FORM_ACTION.test(value) && !/[;,*]/.test(value.split("?")[0] ?? ""), `${label}: form action ${JSON.stringify(value)} is not a plain https address`);
+      if (key === "method") assert.equal(value, "post", `${label}: a form must use post`);
+      if (key === "type" && (tag.name === "input" || tag.name === "button")) {
+        assert.ok(tag.name === "button" ? value === "submit" : INPUT_TYPES.has(value), `${label}: <${tag.name} type=${value}> is not allowed`);
+      }
+      if (key === "name") assert.ok(FIELD_NAME.test(value), `${label}: field name ${JSON.stringify(value)} is not allowed`);
       if (key === "href") assert.ok(isAllowedHrefValue(value), `${label}: href ${JSON.stringify(value)} is not allowed`);
       if (key === "src") assert.ok(isAllowedSrcValue(tag.name, value), `${label}: src ${JSON.stringify(value)} is not allowed on <${tag.name}>`);
     }
