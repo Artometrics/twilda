@@ -32,6 +32,10 @@ npm run create:twilda -- ../my-site --mode leadgen     # scaffold your own, then
 
 Starters are in `examples/starter-corporate`, `starter-magazine`, and `starter-leadgen`. Nothing is published to npm. See [docs/phase4.md](docs/phase4.md).
 
+## Forms
+
+Corporate and lead-generation sites can add a **Form** section (contact, lead, or newsletter). Twilda is not a database: set one `https://` address in **Theme → Forms** and the browser posts there (Formspree, Basin, Netlify Forms, a Zapier or Make webhook, your own receiver). The site's Content-Security-Policy opens that one address and nothing else, and stays fully shut when no form is set. Honeypot, time trap, client-side validation, accessible messages, and a plain-POST fallback with JavaScript off are built in. `npm run check:forms` checks a site; `npm run headers -- content` prints the policy to serve. See [docs/forms-and-crm.md](docs/forms-and-crm.md), [docs/phase5.md](docs/phase5.md), and the optional [leads inbox](packages/leads-inbox/README.md) template.
+
 ## Demo
 
 The checked-in issue is **Field Desk**, original sample fiction about a made-up operator called Lumen Rail. It is not Artometrics copy. The article draft has one extra note that the published file omits, so the desk opens with unpublished changes on that document.
@@ -120,6 +124,7 @@ GitHub Actions runs those four commands on pull requests and on this branch. Tha
 | `content/` | Git content. Draft and published JSON. |
 | `src/` | Astro site: pages, section HTML, content store. The section schema is `@twilda/core`. |
 | `packages/core/` | `@twilda/core`. Article blocks, page sections, storage interface, and the one document renderer (`@twilda/core/node` loads content, `@twilda/core/edit` is the browser overlay). |
+| `packages/leads-inbox/` | Optional template: a stateless receiver (Cloudflare Worker or Firebase function) and a read-only inbox for form leads. Not deployed by Twilda, not required, no dependencies. |
 | `packages/astro/` | `@twilda/astro`. The `twilda()` integration. |
 | `editor/` | Vite + React desk. Dev only. |
 | `packages/editor/` | The phone-first desk: a drafts dashboard, new drafts from templates, the draft as the real page edited in place, save, export to Astro MDX or Markdown, and publish as a pull request. Own `package.json`. Hosted on site `twilda-desk`. `/desk` on the magazine site redirects there. |
@@ -127,6 +132,7 @@ GitHub Actions runs those four commands on pull requests and on this branch. Tha
 | `public/media/` | Demo plates (original SVG). |
 | `docs/architecture.md` | Static contract, the one renderer, phone editor, drafts, and open questions. |
 | `docs/phase1.md` | Phase 1: single renderer, drafting dashboard, design refresh, auth scope limits. |
+| `docs/phase5.md`, `docs/forms-and-crm.md` | Phase 5: forms, the per-site policy, and how to send leads to a form service or CRM. |
 | `docs/phase2.md` | Phase 2: live visual editor on prepared sections (marks, images, uploads, video, theme, sections, undo, moved main). |
 | `docs/content-model.md` | Localhost desk section types. |
 | `docs/franchise-slice.md` | Franchise article mapped onto blocks. |

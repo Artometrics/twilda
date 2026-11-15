@@ -1,5 +1,7 @@
 # Phase 4: modes, presets, and starters
 
+> Phase 5 later added forms: the "no form" limits below now apply only until a site sets a form address. See [phase5.md](phase5.md).
+
 Follows [phase3.md](phase3.md). Phase 4 makes Twilda usable for more than one kind of site without turning it into a page builder: three **modes** (corporate, magazine, lead generation), eleven new **prepared sections** and three new **article blocks** that the modes draw on, and three **starters** that scaffold a working Astro site in a mode. Every Phase 3 guarantee is kept: no script and no inline style in the output, validation before render, and the hostile-content tests apply to every new part. [choose-a-mode.md](choose-a-mode.md) is the guide for a person picking one.
 
 ## What changed for the contract

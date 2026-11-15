@@ -60,5 +60,6 @@ The things Twilda defends: a reader of the published site, a person using the de
 ## Checks that run on every pull request
 
 - `tests/security/` (hostile-content suite), `tests/csp.test.ts`, `tests/dist-headers.test.ts`, and `packages/editor/src/dist-csp.test.ts` run in CI.
+- The forms suite (`tests/forms.test.ts`, `tests/security/forms-hostile.test.ts`) and the optional receiver's tests (`packages/leads-inbox/test`) run in CI with `npm test`.
 - `.github/workflows/security.yml`: content and public-file audit, a secret scan of the tree, gitleaks over full history, and `npm audit` evaluated against a reviewed allowlist. It also runs weekly.
 - `.github/dependabot.yml` opens update pull requests for npm and GitHub Actions.
