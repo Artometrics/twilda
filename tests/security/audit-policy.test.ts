@@ -50,7 +50,6 @@ test("garbage input fails closed", () => {
 
 test("the allowlist file is valid, every entry explains itself, and none is already expired", () => {
   const list = validateAllowList(JSON.parse(fs.readFileSync("security/audit-allowlist.json", "utf8")));
-  assert.ok(list.entries.length > 0);
   const keys = list.entries.map((entry) => `${entry.package}:${entry.ghsa}`);
   assert.equal(new Set(keys).size, keys.length, "no duplicate entries");
 });

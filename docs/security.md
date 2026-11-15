@@ -135,13 +135,7 @@ The device flow needs a proxy because github.com sends no CORS headers. `example
 
 #### Accepted advisories
 
-| Package | Advisory | Why it is accepted for now |
-| --- | --- | --- |
-| astro 5.x | GHSA-26w7-cxv4-gfx2 (critical), GHSA-2pvr-wf23-7pc7, GHSA-8hv8-536x-4wqp | The first needs Astro's image service to process an untrusted AVIF. Twilda uses no `astro:assets` and no image endpoint. The other two affect server rendering or request-derived slot names. Twilda is `output: "static"` with no adapter. The fix is Astro 7 (Node 22.23 or later), a major upgrade that changes the `@twilda/astro` peer range. |
-| sharp | GHSA-f88m-g3jw-g9cj, GHSA-rgj7-g3m4-5g8c, GHSA-wq5f-xc86-pv6w | Only present as Astro's optional image service. Nothing calls it. |
-| zod 3.x | GHSA-mrhx-c7xc-m3w5 | A denial of service on crafted input. The structural bounds above run first, so deeply nested or huge input never reaches zod. The fix is zod 4, which changes the published API. |
-
-All seven entries are due for review on 2027-02-15. Upgrading Astro and zod is a decision for the owner, because it changes what `@twilda/astro` promises its users.
+None. The Astro 5, sharp and zod 3 advisories that were allowlisted until 2027-02-15 were removed by upgrading to Astro 7 and zod 4. `security/audit-allowlist.json` is now empty and `npm run check:audit` passes with no exceptions. An entry may be added again only with an advisory id, a written reason, and a review date.
 
 ### Workflows
 
@@ -173,7 +167,6 @@ Twilda does not:
 
 | Risk | Why it remains | What would reduce it |
 | --- | --- | --- |
-| Astro, zod, and sharp advisories are allowlisted | Fixes are major upgrades that change the peer range and published API | Astro 7 and zod 4 behind a planned major release |
 | `firebase-deploy*.yml` previews build pull-request code in the job that holds the Workload Identity credential (same-repo branches only) | Merging the build and deploy jobs is how the preview action is documented | Split into an unprivileged build job that uploads an artifact and a privileged deploy job that only deploys it |
 | Token in memory is readable by script in the desk origin | A browser cannot hide a secret from its own page | The CSP and review. A GitHub App with short-lived tokens. A server-side exchange is a different product. |
 | Device flow `repo` scope is broad | GitHub OAuth Apps have no narrower write scope for private repositories | GitHub App migration (owner) |

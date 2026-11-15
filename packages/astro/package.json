@@ -7,7 +7,7 @@
   "private": false,
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.23.4"
   },
   "repository": {
     "type": "git",
@@ -38,9 +38,9 @@
     "@twilda/core": "0.1.0"
   },
   "peerDependencies": {
-    "astro": "^5"
+    "astro": "^7"
   },
   "devDependencies": {
-    "vite": "^6.4.1"
+    "vite": "^8.3.8"
   }
 }

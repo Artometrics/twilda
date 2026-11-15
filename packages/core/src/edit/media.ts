@@ -209,7 +209,7 @@ function settle(next: TwildaDocument, refs: string[], lenient: boolean): MediaEd
   const own = parsed.error.issues.find((issue) => refs.some((ref) => ref.split(".").every((part, i) => String(issue.path[i]) === part)));
   if (!lenient || own) {
     const issue = own ?? parsed.error.issues[0];
-    return { ok: false, error: `${issue?.path.at(-1) ?? "field"}: ${issue?.message ?? "not valid"}` };
+    return { ok: false, error: `${String(issue?.path.at(-1) ?? "field")}: ${issue?.message ?? "not valid"}` };
   }
   return { ok: true, doc: next };
 }

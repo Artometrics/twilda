@@ -192,10 +192,10 @@ function normalizeBlock(value: unknown, index: number): Block {
 }
 
 /** A part of a type added by the modes is taken only if it already passes the core schema. */
-function schemaPart<T>(result: { success: true; data: T } | { success: false; error: { issues: Array<{ path: Array<string | number>; message: string }> } }, where: string): T {
+function schemaPart<T>(result: { success: true; data: T } | { success: false; error: { issues: ReadonlyArray<{ path: ReadonlyArray<PropertyKey>; message: string }> } }, where: string): T {
   if (result.success) return result.data;
   const first = result.error.issues[0];
-  throw new Error(`${where}: ${first ? `${first.path.join(".") || "part"} ${first.message}` : "is not valid"}`);
+  throw new Error(`${where}: ${first ? `${first.path.map(String).join(".") || "part"} ${first.message}` : "is not valid"}`);
 }
 
 const MODE_SECTION_TYPES = new Set(["hero", "feature-grid", "team", "pricing", "testimonials", "contact", "social-proof", "cta", "cover-story", "category-grid", "fast-facts", "form"]);
