@@ -1152,10 +1152,18 @@
 
 .form-trap {
   position: absolute;
-  left: -10000px;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.form-trap input {
+  width: 1px;
+  height: 1px;
 }
 
 .form-status {
