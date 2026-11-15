@@ -3,7 +3,9 @@ import { escapeHtml, safeHref, safeMedia } from "./escape";
 import { MAGAZINE_CSS } from "./magazine-css";
 import { renderMarks, type MarksLevel } from "./marks";
 import { parseVideoUrl } from "./embed";
-import { isSafeHref } from "./url";
+import { isMailto, isSafeHref, isSitePath, isWebUrl } from "./url";
+import type { PresetId } from "./modes";
+import { FORM_FIELD_MAX, formFieldNames, isFormEndpoint, type FormFieldKind, type FormsConfig } from "./forms";
 
 export { escapeHtml, safeHref, safeMedia } from "./escape";
 
@@ -42,9 +44,26 @@ export interface RenderOptions {
    * also renders its data as a table. Not read by the production site.
    */
   dataFiles?: Record<string, string>;
+  /**
+   * The site's mode (`corporate`, `magazine`, `leadgen`). It adds a `mode-<id>` class to the
+   * wrapper so the stylesheet can dress the masthead for that mode. `magazine` and no mode
+   * print the same markup, so a site that never chose a mode renders exactly as before.
+   */
+  mode?: PresetId;
+  /**
+   * The site's form settings (`forms` in `site.json`). A form section is a working form only when this
+   * is present, valid, and `annotate` is off. Otherwise the same markup prints inert: fields disabled,
+   * no `action`, and no script, so a preview or an unconnected site can never post anywhere.
+   */
+  forms?: FormsConfig;
+  /**
+   * The page is shown in an editor, not served. Forms print inert whatever `forms` says: no `action`, no
+   * script, fields disabled. The desk and the edit build set it. It changes the form and nothing else.
+   */
+  preview?: boolean;
 }
 
-type Ctx = { annotate: boolean; dataFiles: Record<string, string> };
+type Ctx = { annotate: boolean; dataFiles: Record<string, string>; forms: FormsConfig | null; preview: boolean };
 
 type FieldType = "text" | "multiline";
 
@@ -149,7 +168,384 @@ function renderMenu(ctx: Ctx, base: string, section: Extract<PageSection, { type
   </section>`;
 }
 
-function renderSection(ctx: Ctx, section: PageSection, index: number): string {
+/** `href` text for a button or contact line, or null. Site paths, http(s) addresses, and bare `mailto:` only. */
+function actionTarget(raw: string): string | null {
+  if (raw === "") return null;
+  if (isSitePath(raw) || isWebUrl(raw) || isMailto(raw)) return raw;
+  return null;
+}
+
+function action(ctx: Ctx, cls: string, raw: string, label: string, labelPath: string): string {
+  const target = actionTarget(raw);
+  if (target === null || label === "") return "";
+  const rel = /^https?:/i.test(target) ? ' rel="noopener noreferrer"' : "";
+  return `<a class="${cls}" href="${escapeHtml(target)}"${rel}${text(ctx, labelPath)}>${escapeHtml(label)}</a>`;
+}
+
+function sectionHead(ctx: Ctx, base: string, section: { kicker: string; heading: string; intro?: string }): string {
+  const intro =
+    section.intro === undefined ? "" : `<p class="dek section-intro"${text(ctx, `${base}.intro`, "text", "links")}>${renderMarks(section.intro, "links")}</p>`;
+  return `<header class="section-head">
+      <p class="kicker"${text(ctx, `${base}.kicker`)}>${escapeHtml(section.kicker)}</p>
+      <h2${text(ctx, `${base}.heading`)}>${escapeHtml(section.heading)}</h2>
+      ${intro}
+    </header>`;
+}
+
+function multiline(value: string): string {
+  return escapeHtml(value).replaceAll("\n", "<br />");
+}
+
+function renderHero(ctx: Ctx, base: string, section: Extract<PageSection, { type: "hero" }>, leads: boolean): string {
+  const tag = leads ? "h1" : "h2";
+  const buttons = [
+    action(ctx, "btn btn-primary", section.primaryHref, section.primaryLabel, `${base}.primaryLabel`),
+    action(ctx, "btn btn-secondary", section.secondaryHref, section.secondaryLabel, `${base}.secondaryLabel`),
+  ].join("");
+  return `<section class="section hero-section" id="${escapeHtml(section.id)}"${node(ctx, base, "hero")}>
+    <div class="hero">
+      <div class="hero-copy">
+        <p class="kicker"${text(ctx, `${base}.kicker`)}>${escapeHtml(section.kicker)}</p>
+        <${tag}${text(ctx, `${base}.title`)}>${escapeHtml(section.title)}</${tag}>
+        <p class="lede"${text(ctx, `${base}.dek`, "text", "links")}>${renderMarks(section.dek, "links")}</p>
+        ${buttons ? `<p class="actions">${buttons}</p>` : ""}
+      </div>
+      <div class="hero-plate">${plate(ctx, `${base}.image`, `${base}.imageAlt`, section.image, section.imageAlt)}</div>
+    </div>
+  </section>`;
+}
+
+function renderFeatureGrid(ctx: Ctx, base: string, section: Extract<PageSection, { type: "feature-grid" }>): string {
+  const items = section.items
+    .map((item, i) => {
+      const at = `${base}.items.${i}`;
+      return `<li class="feature-card">
+        <p class="feature-label"${text(ctx, `${at}.label`)}>${escapeHtml(item.label)}</p>
+        <h3${text(ctx, `${at}.title`)}>${escapeHtml(item.title)}</h3>
+        <p${text(ctx, `${at}.text`, "text", "links")}>${renderMarks(item.text, "links")}</p>
+      </li>`;
+    })
+    .join("");
+  return `<section class="section feature-section" id="${escapeHtml(section.id)}"${node(ctx, base, "feature-grid")}>
+    ${sectionHead(ctx, base, section)}
+    <ul class="feature-grid">${items}</ul>
+  </section>`;
+}
+
+function renderTeam(ctx: Ctx, base: string, section: Extract<PageSection, { type: "team" }>): string {
+  const members = section.members
+    .map((member, i) => {
+      const at = `${base}.members.${i}`;
+      return `<li class="member">
+        <div class="member-photo">${plate(ctx, `${at}.image`, `${at}.imageAlt`, member.image, member.imageAlt)}</div>
+        <h3${text(ctx, `${at}.name`)}>${escapeHtml(member.name)}</h3>
+        <p class="member-role"${text(ctx, `${at}.role`)}>${escapeHtml(member.role)}</p>
+        <p class="member-bio"${text(ctx, `${at}.bio`, "multiline")}>${escapeHtml(member.bio)}</p>
+      </li>`;
+    })
+    .join("");
+  return `<section class="section team-section" id="${escapeHtml(section.id)}"${node(ctx, base, "team")}>
+    ${sectionHead(ctx, base, section)}
+    <ul class="team-grid">${members}</ul>
+  </section>`;
+}
+
+function renderPricing(ctx: Ctx, base: string, section: Extract<PageSection, { type: "pricing" }>): string {
+  const tiers = section.tiers
+    .map((tier, i) => {
+      const at = `${base}.tiers.${i}`;
+      const features = tier.features
+        .map((feature, f) => `<li${text(ctx, `${at}.features.${f}`)}>${escapeHtml(feature)}</li>`)
+        .join("");
+      const button = action(ctx, tier.featured ? "btn btn-primary" : "btn btn-secondary", tier.ctaHref, tier.ctaLabel, `${at}.ctaLabel`);
+      return `<li class="tier${tier.featured ? " tier-featured" : ""}">
+        ${tier.featured ? `<p class="tier-flag">Recommended</p>` : ""}
+        <h3${text(ctx, `${at}.name`)}>${escapeHtml(tier.name)}</h3>
+        <p class="price"><span class="amount"${text(ctx, `${at}.price`)}>${escapeHtml(tier.price)}</span> <span class="period"${text(ctx, `${at}.period`)}>${escapeHtml(tier.period)}</span></p>
+        <p class="tier-summary"${text(ctx, `${at}.summary`, "multiline")}>${escapeHtml(tier.summary)}</p>
+        <ul class="tier-features">${features}</ul>
+        ${button ? `<p class="actions">${button}</p>` : ""}
+      </li>`;
+    })
+    .join("");
+  return `<section class="section pricing-section" id="${escapeHtml(section.id)}"${node(ctx, base, "pricing")}>
+    ${sectionHead(ctx, base, section)}
+    <ol class="tiers">${tiers}</ol>
+  </section>`;
+}
+
+function renderTestimonials(ctx: Ctx, base: string, section: Extract<PageSection, { type: "testimonials" }>): string {
+  const items = section.items
+    .map((item, i) => {
+      const at = `${base}.items.${i}`;
+      return `<li><figure class="quote">
+        <p class="quote-text"${text(ctx, `${at}.quote`, "multiline")}>${escapeHtml(item.quote)}</p>
+        <figcaption><strong${text(ctx, `${at}.name`)}>${escapeHtml(item.name)}</strong> <span class="quote-role"${text(ctx, `${at}.role`)}>${escapeHtml(item.role)}</span></figcaption>
+      </figure></li>`;
+    })
+    .join("");
+  return `<section class="section testimonials-section" id="${escapeHtml(section.id)}"${node(ctx, base, "testimonials")}>
+    ${sectionHead(ctx, base, section)}
+    <ul class="quotes">${items}</ul>
+  </section>`;
+}
+
+function renderContact(ctx: Ctx, base: string, section: Extract<PageSection, { type: "contact" }>): string {
+  const channels = section.channels
+    .map((channel, i) => {
+      const at = `${base}.channels.${i}`;
+      const target = actionTarget(channel.href);
+      const rel = target !== null && /^https?:/i.test(target) ? ' rel="noopener noreferrer"' : "";
+      const value = target
+        ? `<a class="channel-value" href="${escapeHtml(target)}"${rel}${text(ctx, `${at}.value`)}>${escapeHtml(channel.value)}</a>`
+        : `<span class="channel-value"${text(ctx, `${at}.value`)}>${escapeHtml(channel.value)}</span>`;
+      return `<li><span class="fact-label"${text(ctx, `${at}.label`)}>${escapeHtml(channel.label)}</span>${value}</li>`;
+    })
+    .join("");
+  return `<section class="section contact-section" id="${escapeHtml(section.id)}"${node(ctx, base, "contact")}>
+    ${sectionHead(ctx, base, section)}
+    <div class="contact-layout">
+      <ul class="channels">${channels}</ul>
+      <p class="address"${text(ctx, `${base}.address`, "multiline")}>${multiline(section.address)}</p>
+    </div>
+  </section>`;
+}
+
+function renderSocialProof(ctx: Ctx, base: string, section: Extract<PageSection, { type: "social-proof" }>): string {
+  const stats = section.stats
+    .map((stat, i) => {
+      const at = `${base}.stats.${i}`;
+      return `<li><strong class="stat-value"${text(ctx, `${at}.value`)}>${escapeHtml(stat.value)}</strong><span class="stat-label"${text(ctx, `${at}.label`)}>${escapeHtml(stat.label)}</span></li>`;
+    })
+    .join("");
+  const brands = section.brands.map((brand, i) => `<li${text(ctx, `${base}.brands.${i}`)}>${escapeHtml(brand)}</li>`).join("");
+  return `<section class="section proof-section" id="${escapeHtml(section.id)}"${node(ctx, base, "social-proof")}>
+    ${sectionHead(ctx, base, section)}
+    ${stats ? `<ul class="stats">${stats}</ul>` : ""}
+    ${brands ? `<ul class="brands">${brands}</ul>` : ""}
+  </section>`;
+}
+
+function renderCta(ctx: Ctx, base: string, section: Extract<PageSection, { type: "cta" }>): string {
+  const asks = section.asks.map((ask, i) => `<li${text(ctx, `${base}.asks.${i}`)}>${escapeHtml(ask)}</li>`).join("");
+  const button = action(ctx, "btn btn-primary", section.buttonHref, section.buttonLabel, `${base}.buttonLabel`);
+  return `<section class="section cta-section" id="${escapeHtml(section.id)}"${node(ctx, base, "cta")}>
+    <div class="cta">
+      <p class="kicker"${text(ctx, `${base}.kicker`)}>${escapeHtml(section.kicker)}</p>
+      <h2${text(ctx, `${base}.heading`)}>${escapeHtml(section.heading)}</h2>
+      <p class="dek cta-text"${text(ctx, `${base}.text`, "text", "links")}>${renderMarks(section.text, "links")}</p>
+      ${asks ? `<ul class="cta-asks">${asks}</ul>` : ""}
+      ${button ? `<p class="actions">${button}</p>` : ""}
+      <p class="cta-note"${text(ctx, `${base}.note`)}>${escapeHtml(section.note)}</p>
+    </div>
+  </section>`;
+}
+
+const INPUT_TYPE: Record<FormFieldKind, { type: string; autocomplete: string; inputmode?: string }> = {
+  name: { type: "text", autocomplete: "name" },
+  email: { type: "email", autocomplete: "email", inputmode: "email" },
+  phone: { type: "tel", autocomplete: "tel", inputmode: "tel" },
+  company: { type: "text", autocomplete: "organization" },
+  message: { type: "text", autocomplete: "off" },
+  text: { type: "text", autocomplete: "off" },
+  consent: { type: "checkbox", autocomplete: "off" },
+};
+
+/** The script a connected form loads. One external file served by the site itself, never inline. */
+export const FORMS_SCRIPT_PATH = "/twilda-forms.js";
+
+function renderFormField(ctx: Ctx, base: string, section: Extract<PageSection, { type: "form" }>, index: number, name: string): string {
+  const field = section.fields[index];
+  if (!field) return "";
+  const at = `${base}.fields.${index}`;
+  const fieldId = `${section.id}-${field.id}`;
+  const hintId = `${fieldId}-hint`;
+  const errId = `${fieldId}-err`;
+  const showHint = field.hint !== "";
+  const describedBy = `${showHint ? `${hintId} ` : ""}${errId}`;
+  const req = field.required ? ' required aria-required="true"' : "";
+  const mark = field.required ? '<span class="form-req" aria-hidden="true"> *</span>' : "";
+  const label = `<label class="form-label" for="${escapeHtml(fieldId)}"><span${text(ctx, `${at}.label`)}>${escapeHtml(field.label)}</span>${mark}</label>`;
+  const hint = showHint ? `<p class="form-hint" id="${escapeHtml(hintId)}"${text(ctx, `${at}.hint`)}>${escapeHtml(field.hint)}</p>` : "";
+  const error = `<p class="form-error" id="${escapeHtml(errId)}" hidden></p>`;
+  const max = FORM_FIELD_MAX[field.kind];
+  const common = `id="${escapeHtml(fieldId)}" name="${name}" data-tf-kind="${field.kind}" maxlength="${max}" aria-describedby="${escapeHtml(describedBy)}"`;
+  if (field.kind === "consent") {
+    return `<div class="form-row form-row-consent">
+        <input class="form-check" type="checkbox" id="${escapeHtml(fieldId)}" name="${name}" value="yes" data-tf-kind="consent" aria-describedby="${escapeHtml(describedBy)}"${req} />
+        ${label}
+        ${hint}${error}
+      </div>`;
+  }
+  const control =
+    field.kind === "message"
+      ? `<textarea class="form-input form-textarea" ${common} rows="5" autocomplete="off"${req}></textarea>`
+      : `<input class="form-input" type="${INPUT_TYPE[field.kind].type}" ${common} autocomplete="${INPUT_TYPE[field.kind].autocomplete}"${INPUT_TYPE[field.kind].inputmode ? ` inputmode="${INPUT_TYPE[field.kind].inputmode}"` : ""}${req} />`;
+  return `<div class="form-row form-row-${field.kind}">
+        ${label}
+        ${hint}
+        ${control}
+        ${error}
+      </div>`;
+}
+
+/**
+ * A form. Integrate-only: when the site has a valid `forms.endpoint` the form posts there and nowhere
+ * else, and Twilda keeps nothing. Without one (or in a `preview`) it prints inert, so it cannot post.
+ * Every string is escaped, every name and id is derived from validated data, and there is no inline
+ * script, handler, or style. The honeypot (`_hp`) and the time trap (`_elapsed_ms`, added by the page's
+ * script) are the spam checks; the receiver should repeat both.
+ */
+function renderForm(ctx: Ctx, base: string, section: Extract<PageSection, { type: "form" }>): string {
+  const live = ctx.forms !== null && !ctx.preview;
+  const names = formFieldNames(section.fields);
+  const fields = section.fields.map((_, index) => renderFormField(ctx, base, section, index, names[index] as string)).join("\n      ");
+  const hiddenFields = live
+    ? Object.entries((ctx.forms as FormsConfig).hidden)
+        .map(([key, value]) => `<input type="hidden" name="${escapeHtml(key)}" value="${escapeHtml(value)}" />`)
+        .join("")
+    : "";
+  const trap = `<div class="form-trap" aria-hidden="true"><label>Leave this field empty<input type="text" name="_hp" tabindex="-1" autocomplete="off" value="" /></label></div>`;
+  const attrs = live
+    ? ` method="post" action="${escapeHtml((ctx.forms as FormsConfig).endpoint)}" accept-charset="utf-8" data-tf data-tf-mode="${(ctx.forms as FormsConfig).mode}" data-tf-format="${(ctx.forms as FormsConfig).format}"`
+    : "";
+  const notice = live
+    ? ""
+    : ctx.forms
+      ? '<p class="form-note" role="note">Preview: this form sends nothing here. It is live on the published site.</p>'
+      : '<p class="form-note" role="note">This form is not connected yet. Add your form address to content/site.json.</p>';
+  const privacy = section.privacy ? `<p class="form-privacy"${text(ctx, `${base}.privacy`, "text", "links")}>${renderMarks(section.privacy, "links")}</p>` : "";
+  const script = live ? `<script src="${FORMS_SCRIPT_PATH}" defer></script>` : "";
+  return `<section class="section form-section form-${section.variant}" id="${escapeHtml(section.id)}"${node(ctx, base, "form")}>
+    ${sectionHead(ctx, base, section)}
+    <div class="form-card">
+      ${notice}
+      <form class="lead-form"${attrs}>
+        <fieldset class="form-fields"${live ? "" : " disabled"}>
+          <legend class="form-legend">${escapeHtml(section.heading)}</legend>
+          ${fields}
+          <input type="hidden" name="_form" value="${escapeHtml(section.id)}" />
+          ${hiddenFields}
+          ${trap}
+          <button class="btn btn-primary form-submit" type="submit"${text(ctx, `${base}.submitLabel`)}>${escapeHtml(section.submitLabel)}</button>
+        </fieldset>
+      </form>
+      <p class="form-error form-summary" role="alert" hidden></p>
+      ${privacy}
+      <div class="form-status form-success" role="status" tabindex="-1" hidden>
+        <h3${text(ctx, `${base}.successTitle`)}>${escapeHtml(section.successTitle)}</h3>
+        <p${text(ctx, `${base}.successText`)}>${escapeHtml(section.successText)}</p>
+      </div>
+      <div class="form-status form-failure" role="alert" tabindex="-1" hidden>
+        <p${text(ctx, `${base}.errorText`)}>${escapeHtml(section.errorText)}</p>
+      </div>
+      ${script}
+    </div>
+  </section>`;
+}
+
+function renderCoverStory(ctx: Ctx, base: string, section: Extract<PageSection, { type: "cover-story" }>, leads: boolean): string {
+  const tag = leads ? "h1" : "h2";
+  const target = actionTarget(section.href);
+  const rel = target !== null && /^https?:/i.test(target) ? ' rel="noopener noreferrer"' : "";
+  const more =
+    target && section.linkLabel
+      ? `<a class="more" href="${escapeHtml(target)}"${rel}${text(ctx, `${base}.linkLabel`)}>${escapeHtml(section.linkLabel)}</a>`
+      : "";
+  return `<section class="section cover-section" id="${escapeHtml(section.id)}"${node(ctx, base, "cover-story")}>
+    <div class="cover">
+      <div class="cover-plate">${plate(ctx, `${base}.image`, `${base}.imageAlt`, section.image, section.imageAlt)}</div>
+      <div class="cover-copy">
+        <p class="kicker"${text(ctx, `${base}.kicker`)}>${escapeHtml(section.kicker)}</p>
+        <${tag}${text(ctx, `${base}.title`)}>${escapeHtml(section.title)}</${tag}>
+        <p class="lede"${text(ctx, `${base}.dek`, "text", "links")}>${renderMarks(section.dek, "links")}</p>
+        <p class="byline"${text(ctx, `${base}.byline`)}>${escapeHtml(section.byline)}</p>
+        ${more}
+      </div>
+    </div>
+  </section>`;
+}
+
+function renderCategoryGrid(ctx: Ctx, base: string, section: Extract<PageSection, { type: "category-grid" }>): string {
+  const items = section.categories
+    .map((category, i) => {
+      const at = `${base}.categories.${i}`;
+      const target = actionTarget(category.href);
+      const rel = target !== null && /^https?:/i.test(target) ? ' rel="noopener noreferrer"' : "";
+      return `<li><a class="category" href="${escapeHtml(target ?? "#")}"${rel}>
+        <span class="category-count"${text(ctx, `${at}.count`)}>${escapeHtml(category.count)}</span>
+        <h3${text(ctx, `${at}.label`)}>${escapeHtml(category.label)}</h3>
+        <p class="dek"${text(ctx, `${at}.dek`)}>${escapeHtml(category.dek)}</p>
+      </a></li>`;
+    })
+    .join("");
+  return `<section class="section category-section" id="${escapeHtml(section.id)}"${node(ctx, base, "category-grid")}>
+    ${sectionHead(ctx, base, section)}
+    <ul class="categories">${items}</ul>
+  </section>`;
+}
+
+function factSquares(ctx: Ctx, base: string, facts: Array<{ value: string; label: string }>): string {
+  const squares = facts
+    .map(
+      (fact, i) =>
+        `<li><strong class="square-value"${text(ctx, `${base}.facts.${i}.value`)}>${escapeHtml(fact.value)}</strong><span class="square-label"${text(ctx, `${base}.facts.${i}.label`)}>${escapeHtml(fact.label)}</span></li>`,
+    )
+    .join("");
+  return `<ol class="fact-squares">${squares}</ol>`;
+}
+
+function renderFastFactsSection(ctx: Ctx, base: string, section: Extract<PageSection, { type: "fast-facts" }>): string {
+  return `<section class="section squares-section" id="${escapeHtml(section.id)}"${node(ctx, base, "fast-facts")}>
+    ${sectionHead(ctx, base, section)}
+    ${factSquares(ctx, base, section.facts)}
+  </section>`;
+}
+
+function renderFastFactsBlock(ctx: Ctx, base: string, block: Extract<Block, { type: "fast-facts" }>): string {
+  return `<section class="section squares-section" id="${escapeHtml(block.id)}"${node(ctx, base, "fast-facts")}>
+    <h2${text(ctx, `${base}.title`)}>${escapeHtml(block.title)}</h2>
+    ${factSquares(ctx, base, block.facts)}
+  </section>`;
+}
+
+function renderPullQuote(ctx: Ctx, base: string, block: Extract<Block, { type: "pull-quote" }>): string {
+  return `<figure class="pull-quote" id="${escapeHtml(block.id)}"${node(ctx, base, "pull-quote")}>
+    <p${text(ctx, `${base}.quote`, "multiline")}>${escapeHtml(block.quote)}</p>
+    <figcaption${text(ctx, `${base}.attribution`)}>${escapeHtml(block.attribution)}</figcaption>
+  </figure>`;
+}
+
+/** Bar width as a whole percent of the largest bar. The stylesheet has one class per percent, so no inline style is needed. */
+function barPercent(value: string, max: number): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || !Number.isFinite(max) || max <= 0 || n <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((n / max) * 100)));
+}
+
+function renderBarChart(ctx: Ctx, base: string, block: Extract<Block, { type: "bar-chart" }>): string {
+  const max = Math.max(0, ...block.bars.map((bar) => Number(bar.value)).filter(Number.isFinite));
+  const rows = block.bars
+    .map((bar, i) => {
+      const at = `${base}.bars.${i}`;
+      return `<li class="bar-row"><span class="bar-label"${text(ctx, `${at}.label`)}>${escapeHtml(bar.label)}</span><span class="bar-track"><span class="bar bar-w-${barPercent(bar.value, max)}"></span></span><span class="bar-value"><span${text(ctx, `${at}.value`)}>${escapeHtml(bar.value)}</span> <span class="bar-unit">${escapeHtml(block.unit)}</span></span></li>`;
+    })
+    .join("");
+  return `<figure class="figure bar-chart" id="${escapeHtml(block.id)}"${node(ctx, base, "bar-chart")}>
+    <figcaption><strong${text(ctx, `${base}.title`)}>${escapeHtml(block.title)}</strong></figcaption>
+    <p class="dek"${text(ctx, `${base}.alt`)}>${escapeHtml(block.alt)}</p>
+    <ol class="bars">${rows}</ol>
+    ${block.caption ? `<p class="dek"${text(ctx, `${base}.caption`)}>${escapeHtml(block.caption)}</p>` : ""}
+  </figure>`;
+}
+
+/** A page that opens with a hero or a cover story lets that section carry the `h1`, so the page title is not printed twice. */
+function leadsPage(doc: Extract<TwildaDocument, { kind: "page" }>): boolean {
+  const first = doc.sections[0]?.type;
+  return first === "hero" || first === "cover-story";
+}
+
+function renderSection(ctx: Ctx, section: PageSection, index: number, leads = false): string {
   const base = `sections.${index}`;
   switch (section.type) {
     case "carousel":
@@ -158,6 +554,30 @@ function renderSection(ctx: Ctx, section: PageSection, index: number): string {
       return renderStoryGrid(ctx, base, section);
     case "menu-shelf":
       return renderMenu(ctx, base, section);
+    case "hero":
+      return renderHero(ctx, base, section, leads && index === 0);
+    case "feature-grid":
+      return renderFeatureGrid(ctx, base, section);
+    case "team":
+      return renderTeam(ctx, base, section);
+    case "pricing":
+      return renderPricing(ctx, base, section);
+    case "testimonials":
+      return renderTestimonials(ctx, base, section);
+    case "contact":
+      return renderContact(ctx, base, section);
+    case "social-proof":
+      return renderSocialProof(ctx, base, section);
+    case "cta":
+      return renderCta(ctx, base, section);
+    case "cover-story":
+      return renderCoverStory(ctx, base, section, leads && index === 0);
+    case "category-grid":
+      return renderCategoryGrid(ctx, base, section);
+    case "fast-facts":
+      return renderFastFactsSection(ctx, base, section);
+    case "form":
+      return renderForm(ctx, base, section);
     default: {
       const exhaustive: never = section;
       return exhaustive;
@@ -291,6 +711,12 @@ function renderBlock(ctx: Ctx, block: Block, index: number): string {
       return renderEmbed(ctx, base, block);
     case "download":
       return renderDownload(ctx, base, block);
+    case "fast-facts":
+      return renderFastFactsBlock(ctx, base, block);
+    case "pull-quote":
+      return renderPullQuote(ctx, base, block);
+    case "bar-chart":
+      return renderBarChart(ctx, base, block);
     default: {
       const exhaustive: never = block;
       return exhaustive;
@@ -319,12 +745,15 @@ function renderFooter(chrome: SiteChrome): string {
 }
 
 function renderPage(ctx: Ctx, doc: Extract<TwildaDocument, { kind: "page" }>): string {
+  const leads = leadsPage(doc);
+  const sections = doc.sections.map((section, index) => renderSection(ctx, section, index, leads)).join("\n");
+  if (leads) return sections;
   return `<header class="issue-intro">
     <p class="kicker"${text(ctx, "kicker")}>${escapeHtml(doc.kicker)}</p>
     <h1${text(ctx, "title")}>${escapeHtml(doc.title)}</h1>
     <p class="lede"${text(ctx, "dek", "text", "links")}>${renderMarks(doc.dek, "links")}</p>
   </header>
-  ${doc.sections.map((section, index) => renderSection(ctx, section, index)).join("\n")}`;
+  ${sections}`;
 }
 
 function renderArticle(ctx: Ctx, doc: Extract<TwildaDocument, { kind: "article" }>): string {
@@ -347,10 +776,12 @@ function renderArticle(ctx: Ctx, doc: Extract<TwildaDocument, { kind: "article" 
  * document and options, and it does not touch Node, so it bundles for a browser.
  */
 export function renderDocument(doc: TwildaDocument, options: RenderOptions = {}): string {
-  const ctx: Ctx = { annotate: options.annotate === true, dataFiles: options.dataFiles ?? {} };
+  const forms = options.forms && isFormEndpoint(options.forms.endpoint) ? options.forms : null;
+  const ctx: Ctx = { annotate: options.annotate === true, dataFiles: options.dataFiles ?? {}, forms, preview: options.preview === true };
   const chrome = options.chrome ?? DEFAULT_CHROME;
   const body = doc.kind === "article" ? renderArticle(ctx, doc) : renderPage(ctx, doc);
-  return `<div class="magazine">${renderMast(chrome)}${body}${renderFooter(chrome)}</div>`;
+  const mode = options.mode && options.mode !== "magazine" && /^[a-z]+$/.test(options.mode) ? ` mode-${options.mode}` : "";
+  return `<div class="magazine${mode}">${renderMast(chrome)}${body}${renderFooter(chrome)}</div>`;
 }
 
 const PREVIEW_EXTRA_CSS =

@@ -1,9 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import {
-  BLOCK_CATALOG,
-  SECTION_CATALOG,
   blockLabel,
   createBlock,
+  createFormSection,
   createId,
   createSection,
   sectionLabel,
@@ -14,8 +13,13 @@ import {
   type PageDoc,
   type PageSection,
 } from "../model";
+import { FORM_VARIANTS, FORM_VARIANT_LABELS, blockCatalogFor, inLibrary, sectionCatalogFor, type FormVariant, type PresetId } from "@twilda/core";
 import { Field } from "./Field";
+import { GenericFields } from "./GenericFields";
 import { ItemFrame, ReorderList } from "./Reorder";
+
+/** Appended to a part the current mode does not offer. It still renders and edits. */
+const OUTSIDE = " (outside this mode)";
 
 function useCollapsed(ids: string[]) {
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
@@ -59,6 +63,12 @@ export function blockSummary(block: Block): string {
       return clip(block.caption || block.title || block.src);
     case "download":
       return clip(block.label);
+    case "fast-facts":
+      return clip(block.title);
+    case "pull-quote":
+      return clip(block.quote);
+    case "bar-chart":
+      return clip(block.title);
     default:
       return "";
   }
@@ -66,6 +76,7 @@ export function blockSummary(block: Block): string {
 
 export function BlockEditor({
   doc,
+  mode,
   media,
   onChange,
   onAdd,
@@ -74,6 +85,7 @@ export function BlockEditor({
   onUploadImage,
 }: {
   doc: ArticleDoc;
+  mode: PresetId;
   media: MediaAsset[];
   onChange: (block: Block) => void;
   onAdd: (block: Block) => void;
@@ -113,7 +125,7 @@ export function BlockEditor({
             id={block.id}
             index={index}
             count={doc.blocks.length}
-            label={blockLabel(block.type)}
+            label={`${blockLabel(block.type)}${inLibrary(mode, block.type, "article") ? "" : OUTSIDE}`}
             summary={blockSummary(block)}
             collapsed={collapsed.has(block.id)}
             onToggle={() => toggle(block.id)}
@@ -127,7 +139,7 @@ export function BlockEditor({
       <AddChooser
         title="Add a block"
         testId="add-block"
-        options={BLOCK_CATALOG}
+        options={blockCatalogFor(mode)}
         onPick={(type) => onAdd(createBlock(type))}
       />
     </div>
@@ -136,12 +148,14 @@ export function BlockEditor({
 
 export function SectionEditor({
   doc,
+  mode,
   onChange,
   onAdd,
   onRemove,
   onMove,
 }: {
   doc: PageDoc;
+  mode: PresetId;
   onChange: (section: PageSection) => void;
   onAdd: (section: PageSection) => void;
   onRemove: (id: string) => void;
@@ -166,7 +180,7 @@ export function SectionEditor({
             id={section.id}
             index={index}
             count={doc.sections.length}
-            label={sectionLabel(section.type)}
+            label={`${sectionLabel(section.type)}${inLibrary(mode, section.type, "page") ? "" : OUTSIDE}`}
             summary={clip(sectionSummary(section))}
             collapsed={collapsed.has(section.id)}
             onToggle={() => toggle(section.id)}
@@ -180,9 +194,42 @@ export function SectionEditor({
       <AddChooser
         title="Add a section"
         testId="add-section"
-        options={SECTION_CATALOG}
+        options={sectionCatalogFor(mode)}
         onPick={(type) => onAdd(createSection(type))}
       />
+    </div>
+  );
+}
+
+/**
+ * A form starts from one of three field sets. Switching replaces the fields and the wording with that
+ * set's, which is what a person wants when they change their mind about the kind of form, so it asks first.
+ */
+function FormStarter({ section, onChange }: { section: Extract<PageSection, { type: "form" }>; onChange: (section: PageSection) => void }) {
+  const [kind, setKind] = useState<FormVariant>(section.variant);
+  return (
+    <div className="form-reset" data-testid={`form-starter-${section.id}`}>
+      <label className="field">
+        <span>Start from</span>
+        <select data-testid={`form-starter-kind-${section.id}`} value={kind} onChange={(event) => setKind(event.target.value as FormVariant)}>
+          {FORM_VARIANTS.map((value) => (
+            <option key={value} value={value}>
+              {FORM_VARIANT_LABELS[value]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        className="btn"
+        data-testid={`form-starter-apply-${section.id}`}
+        onClick={() => {
+          if (typeof window !== "undefined" && !window.confirm("Replace this form's fields and wording with the new set?")) return;
+          onChange({ ...createFormSection(section.id, kind) });
+        }}
+      >
+        Replace fields and wording
+      </button>
     </div>
   );
 }
@@ -243,10 +290,15 @@ function SectionFields({ section, onChange }: { section: PageSection; onChange: 
           ))}
         </>
       );
-    default: {
-      const exhaustive: never = section;
-      return exhaustive;
-    }
+    case "form":
+      return (
+        <>
+          <FormStarter section={section} onChange={onChange} />
+          <GenericFields kind="section" part={section} onChange={onChange} />
+        </>
+      );
+    default:
+      return <GenericFields kind="section" part={section} onChange={onChange} />;
   }
 }
 
@@ -521,9 +573,7 @@ function BlockFields({
           />
         </>
       );
-    default: {
-      const exhaustive: never = block;
-      throw new Error(`Unknown block ${String(exhaustive)}`);
-    }
+    default:
+      return <GenericFields kind="block" part={block} onChange={onChange} />;
   }
 }

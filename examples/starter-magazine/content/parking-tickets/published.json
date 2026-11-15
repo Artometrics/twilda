@@ -1,0 +1,112 @@
+{
+  "id": "parking-tickets",
+  "kind": "article",
+  "title": "The city that stopped printing parking tickets",
+  "slug": "parking-tickets",
+  "dek": "Eighteen months after Harrow turned off its enforcement cameras, the budget did not collapse. Here is what did change.",
+  "kicker": "Cities",
+  "byline": "By Ines Marlowe",
+  "status": "published",
+  "updatedAt": "2026-11-15T00:00:00.000Z",
+  "blocks": [
+    {
+      "id": "banner",
+      "type": "image",
+      "src": "/media/plate-map.svg",
+      "alt": "Geometric plate: a folded city map",
+      "caption": "Harrow's downtown, redrawn.",
+      "role": "banner"
+    },
+    {
+      "id": "lede",
+      "type": "paragraph",
+      "text": "When Harrow turned off its enforcement cameras, the finance office predicted a two-million-dollar hole. The hole arrived. The collapse did not."
+    },
+    {
+      "id": "facts",
+      "type": "fast-facts",
+      "title": "Fast facts",
+      "facts": [
+        {
+          "id": "n1",
+          "value": "-18%",
+          "label": "Downtown car trips"
+        },
+        {
+          "id": "n2",
+          "value": "$2.1M",
+          "label": "Ticket revenue lost"
+        },
+        {
+          "id": "n3",
+          "value": "31%",
+          "label": "More bus riders"
+        },
+        {
+          "id": "n4",
+          "value": "0",
+          "label": "Layoffs"
+        }
+      ]
+    },
+    {
+      "id": "h-money",
+      "type": "heading",
+      "level": 2,
+      "text": "Where the money went"
+    },
+    {
+      "id": "money",
+      "type": "paragraph",
+      "text": "Ticket revenue had been 4 percent of the general fund. The city covered the gap with a small parking-meter increase and a hiring freeze that was already planned."
+    },
+    {
+      "id": "chart",
+      "type": "bar-chart",
+      "title": "Downtown trips by mode, after the change",
+      "alt": "Bars compare the change in trips by car, bus, bike, and on foot.",
+      "unit": "% change",
+      "caption": "Source: Harrow transport office, fictional demo data.",
+      "bars": [
+        {
+          "id": "b1",
+          "label": "Car",
+          "value": "18"
+        },
+        {
+          "id": "b2",
+          "label": "Bus",
+          "value": "31"
+        },
+        {
+          "id": "b3",
+          "label": "Bike",
+          "value": "12"
+        },
+        {
+          "id": "b4",
+          "label": "Foot",
+          "value": "9"
+        }
+      ]
+    },
+    {
+      "id": "quote",
+      "type": "pull-quote",
+      "quote": "We expected a hole. We got a different city.",
+      "attribution": "Harrow city treasurer, in this demo"
+    },
+    {
+      "id": "sources",
+      "type": "sources",
+      "title": "Sources",
+      "items": [
+        {
+          "id": "so1",
+          "label": "Harrow transport office, annual report (fictional)",
+          "href": "https://example.com/harrow-report"
+        }
+      ]
+    }
+  ]
+}

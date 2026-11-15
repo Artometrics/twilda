@@ -50,7 +50,7 @@ const KNOWN_SOURCE = /^(?:'none'|'self'|data:|blob:|https:\/\/[a-z0-9.-]+(?::\d+
  * Directives and sources that must hold for every target. `kind` carries what differs:
  * only the desk and the edit build run script, only they need data: and blob: images.
  */
-export function policyProblems(policy: Policy, options: { runsScript: boolean; images: "self" | "self-data-blob"; connect: string[]; frames: string[]; workers?: string[]; manifest?: boolean }): string[] {
+export function policyProblems(policy: Policy, options: { runsScript: boolean; images: "self" | "self-data-blob"; connect: string[]; frames: string[]; workers?: string[]; manifest?: boolean; formAction?: string[] }): string[] {
   const problems: string[] = [];
   const get = (name: string) => policy.get(name);
   const expectExact = (name: string, expected: string[]) => {
@@ -60,7 +60,7 @@ export function policyProblems(policy: Policy, options: { runsScript: boolean; i
 
   expectExact("default-src", ["'none'"]);
   expectExact("base-uri", ["'none'"]);
-  expectExact("form-action", ["'none'"]);
+  expectExact("form-action", options.formAction ?? ["'none'"]);
   expectExact("frame-ancestors", ["'none'"]);
   expectExact("object-src", ["'none'"]);
   expectExact("media-src", ["'none'"]);

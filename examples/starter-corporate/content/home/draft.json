@@ -1,0 +1,225 @@
+{
+  "id": "home",
+  "kind": "page",
+  "title": "Brightline: plain tools for small teams",
+  "slug": "home",
+  "dek": "Brightline makes planning software for teams of five to fifty.",
+  "kicker": "Home",
+  "status": "draft",
+  "updatedAt": "2026-11-15T00:00:00.000Z",
+  "sections": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "kicker": "Planning software",
+      "title": "Plan the week in ten minutes",
+      "dek": "Brightline turns a pile of requests into a plan your whole team can read on a phone.",
+      "primaryLabel": "See pricing",
+      "primaryHref": "/#pricing",
+      "secondaryLabel": "Talk to us",
+      "secondaryHref": "/#contact",
+      "image": "/media/plate-signal.svg",
+      "imageAlt": "Geometric plate: three signal lights over a rail"
+    },
+    {
+      "id": "features",
+      "type": "feature-grid",
+      "kicker": "What you get",
+      "heading": "Everything a small team needs, nothing it does not",
+      "intro": "One shared plan, one inbox for requests, and a weekly review that fits in a meeting.",
+      "items": [
+        {
+          "id": "f1",
+          "label": "01",
+          "title": "One shared plan",
+          "text": "Everyone sees the same list, in the same order, on any screen."
+        },
+        {
+          "id": "f2",
+          "label": "02",
+          "title": "A single inbox",
+          "text": "Requests land in one place and are triaged once, not five times."
+        },
+        {
+          "id": "f3",
+          "label": "03",
+          "title": "Weekly review",
+          "text": "A ten-minute summary of what moved, what stalled, and what is next."
+        },
+        {
+          "id": "f4",
+          "label": "04",
+          "title": "Works offline",
+          "text": "Open it on a train. Changes sync when the signal returns."
+        }
+      ]
+    },
+    {
+      "id": "team",
+      "type": "team",
+      "kicker": "People",
+      "heading": "The team behind Brightline",
+      "intro": "Six people, one office, and a habit of answering email the same day.",
+      "members": [
+        {
+          "id": "m1",
+          "name": "Priya Raman",
+          "role": "Founder and product",
+          "bio": "Spent ten years running operations for logistics teams before writing software for them.",
+          "image": "/media/plate-river.svg",
+          "imageAlt": "Geometric plate: a river bend"
+        },
+        {
+          "id": "m2",
+          "name": "Tomas Ellery",
+          "role": "Engineering",
+          "bio": "Builds the sync engine and keeps the app fast on old phones.",
+          "image": "/media/plate-map.svg",
+          "imageAlt": "Geometric plate: a folded map"
+        },
+        {
+          "id": "m3",
+          "name": "Dana Okafor",
+          "role": "Customer success",
+          "bio": "Answers the support inbox and writes the guides customers actually read.",
+          "image": "/media/plate-night.svg",
+          "imageAlt": "Geometric plate: a night scene"
+        }
+      ]
+    },
+    {
+      "id": "pricing",
+      "type": "pricing",
+      "kicker": "Pricing",
+      "heading": "Simple plans, billed monthly",
+      "intro": "Every plan includes the shared plan, the inbox, and the weekly review.",
+      "tiers": [
+        {
+          "id": "t1",
+          "name": "Starter",
+          "price": "$0",
+          "period": "per team",
+          "summary": "For a team trying it out.",
+          "features": [
+            "Up to 5 people",
+            "One shared plan",
+            "Weekly review email"
+          ],
+          "ctaLabel": "Start free",
+          "ctaHref": "/#contact",
+          "featured": false
+        },
+        {
+          "id": "t2",
+          "name": "Team",
+          "price": "$12",
+          "period": "per person, monthly",
+          "summary": "For teams that plan every week.",
+          "features": [
+            "Up to 50 people",
+            "Request inbox",
+            "Offline mode",
+            "Priority support"
+          ],
+          "ctaLabel": "Choose Team",
+          "ctaHref": "/#contact",
+          "featured": true
+        },
+        {
+          "id": "t3",
+          "name": "Studio",
+          "price": "$29",
+          "period": "per person, monthly",
+          "summary": "For agencies running many clients.",
+          "features": [
+            "Unlimited people",
+            "Client views",
+            "Export to CSV"
+          ],
+          "ctaLabel": "Choose Studio",
+          "ctaHref": "/#contact",
+          "featured": false
+        }
+      ]
+    },
+    {
+      "id": "testimonials",
+      "type": "testimonials",
+      "kicker": "Customers",
+      "heading": "What teams say",
+      "intro": "",
+      "items": [
+        {
+          "id": "q1",
+          "quote": "We dropped three tools the week we switched. The Monday meeting now takes ten minutes.",
+          "name": "Mina Holt",
+          "role": "Operations lead, Kettle & Oar"
+        },
+        {
+          "id": "q2",
+          "quote": "It is the first planner my drivers actually open. It works on their phones.",
+          "name": "Jorge Salinas",
+          "role": "Dispatcher, Northline Freight"
+        }
+      ]
+    },
+    {
+      "id": "contact",
+      "type": "contact",
+      "kicker": "Contact",
+      "heading": "Talk to a person",
+      "intro": "We reply within one working day.",
+      "channels": [
+        {
+          "id": "c1",
+          "label": "Email",
+          "value": "hello@brightline.example",
+          "href": "mailto:hello@brightline.example"
+        },
+        {
+          "id": "c2",
+          "label": "Support guides",
+          "value": "brightline.example/help",
+          "href": "https://brightline.example/help"
+        }
+      ],
+      "address": "Brightline Ltd\n12 Canal Row\nLeeds LS1 4AB"
+    },
+    {
+      "id": "enquiry",
+      "type": "form",
+      "kicker": "Contact",
+      "heading": "Send us a message",
+      "intro": "We reply within one working day.",
+      "variant": "contact",
+      "fields": [
+        {
+          "id": "name",
+          "kind": "name",
+          "label": "Your name",
+          "required": true,
+          "hint": ""
+        },
+        {
+          "id": "email",
+          "kind": "email",
+          "label": "Email address",
+          "required": true,
+          "hint": "We reply here."
+        },
+        {
+          "id": "message",
+          "kind": "message",
+          "label": "How can we help?",
+          "required": true,
+          "hint": ""
+        }
+      ],
+      "submitLabel": "Send message",
+      "successTitle": "Message sent",
+      "successText": "Thank you. We will reply within one working day.",
+      "errorText": "Something went wrong and your message was not sent. Please try again in a moment.",
+      "privacy": "We use your details only to reply to you."
+    }
+  ]
+}

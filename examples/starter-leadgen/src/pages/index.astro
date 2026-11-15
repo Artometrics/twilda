@@ -1,0 +1,13 @@
+---
+import Base from "../layouts/Base.astro";
+import { loadPublished, loadSite, renderDocument, renderOptionsFor } from "twilda:content";
+
+const site = loadSite();
+const home = loadPublished().pages.find((page) => page.id === "home");
+if (!home) throw new Error("content/home/published.json is missing. The static site reads published files only.");
+const html = renderDocument(home, renderOptionsFor(site, home));
+---
+
+<Base title={`${home.title} · ${site.chrome.name}`} description={home.dek}>
+  <Fragment set:html={html} />
+</Base>

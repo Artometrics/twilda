@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { TwildaError } from "./errors";
+import { formsConfigSchema, type FormsConfig } from "./forms";
 import { assertJsonBounds } from "./json-guard";
+import { PRESET_IDS, type PresetId } from "./modes";
 import { hrefSchema } from "./schema";
 import type { SiteChrome } from "./render";
 import { DEFAULT_CHROME } from "./render";
@@ -87,7 +89,19 @@ const chromeOverrideSchema = siteChromeSchema.partial();
 
 export const siteSchema = z.object({
   version: z.literal(SITE_VERSION),
+  /**
+   * Which mode (preset) the site is in. Optional: a site with no `mode` is a magazine, as every
+   * site was before modes existed. The mode picks the section library the desk offers and the
+   * masthead styling. It never restricts what the renderer prints.
+   */
+  mode: z.enum(PRESET_IDS).optional(),
   chrome: siteChromeSchema,
+  /**
+   * Where a form on the site sends what a visitor typed. Optional: a site with no `forms` has no form
+   * endpoint, and its Content-Security-Policy keeps `form-action`, `connect-src`, and `script-src` shut
+   * (see `siteCsp`). Twilda stores nothing a visitor submits.
+   */
+  forms: formsConfigSchema.optional(),
   /** Per-template overrides: `article` pages and `page` pages can say a different issue label, note, or nav. */
   templates: z.object({ article: chromeOverrideSchema.optional(), page: chromeOverrideSchema.optional() }).default({}),
   /** Per-document overrides keyed by document id. Applied after the template override. */
@@ -96,6 +110,7 @@ export const siteSchema = z.object({
 });
 
 export type SiteSettings = z.infer<typeof siteSchema>;
+export type { FormsConfig };
 export type ChromeOverride = z.infer<typeof chromeOverrideSchema>;
 
 export function defaultSite(): SiteSettings {
@@ -141,6 +156,30 @@ export function resolveChrome(site: SiteSettings, doc: { id: string; kind: "arti
   const own = site.documents[doc.id] ?? {};
   const merged = { ...site.chrome, ...template, ...own };
   return { ...merged, nav: merged.nav.map((item) => ({ ...item })) };
+}
+
+/** Render options that depend on the site: the masthead for this document and the site's mode. */
+export function renderOptionsFor(
+  site: SiteSettings,
+  doc: { id: string; kind: "article" | "page" },
+): { chrome: SiteChrome; mode?: PresetId; forms?: FormsConfig } {
+  const chrome = resolveChrome(site, doc);
+  const options: { chrome: SiteChrome; mode?: PresetId; forms?: FormsConfig } = { chrome };
+  if (site.mode) options.mode = site.mode;
+  if (site.forms) options.forms = site.forms;
+  return options;
+}
+
+/**
+ * Render options for showing a document inside an editor (the desk's page pane, the click-to-edit build).
+ * The same as {@link renderOptionsFor} with `preview` on, so a form prints inert: it cannot post, and it
+ * loads no script, whatever `forms` says. Anything that serves the page to visitors uses `renderOptionsFor`.
+ */
+export function previewOptionsFor(
+  site: SiteSettings,
+  doc: { id: string; kind: "article" | "page" },
+): { chrome: SiteChrome; mode?: PresetId; forms?: FormsConfig; preview: true } {
+  return { ...renderOptionsFor(site, doc), preview: true };
 }
 
 const HEX = /^#[0-9a-fA-F]{6}$/;

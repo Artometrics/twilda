@@ -631,3 +631,6 @@ mark.verify, .verify { background: var(--verify); color: var(--text); padding: 0
     scroll-behavior: auto !important;
   }
 }
+
+.code-block { margin: 8px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.form-reset { display: grid; gap: 8px; padding: 10px 12px; background: var(--bg); border-radius: var(--radius-sm); margin-bottom: 8px; }

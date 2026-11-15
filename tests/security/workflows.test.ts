@@ -81,7 +81,7 @@ describe("workflows are safe to run on a pull request", () => {
   it("jobs that run pull-request code with no need for git credentials do not persist them", () => {
     for (const name of ["ci.yml", "security.yml"]) {
       const source = text(name);
-      const checkouts = [...source.matchAll(/uses: actions\/checkout@v4\n((?:\s+with:\n(?:\s+\S.*\n)+)?)/g)];
+      const checkouts = [...source.matchAll(/uses: actions\/checkout@v\d+\n((?:\s+with:\n(?:\s+\S.*\n)+)?)/g)];
       assert.ok(checkouts.length >= 1);
       for (const checkout of checkouts) assert.match(checkout[1], /persist-credentials:\s*false/, `${name} checkout keeps the token in .git/config`);
     }

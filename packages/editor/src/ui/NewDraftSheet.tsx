@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { slugify } from "../doc";
-import { DRAFT_TEMPLATES } from "../templates";
+import type { PresetId } from "@twilda/core";
+import { templatesForMode } from "../templates";
 import { Modal } from "./Modal";
 
 export interface NewDraftValues {
@@ -12,14 +13,17 @@ export interface NewDraftValues {
 }
 
 export function NewDraftSheet({
+  mode,
   onCreate,
   onClose,
 }: {
+  mode: PresetId;
   onCreate: (values: NewDraftValues) => void;
   onClose: () => void;
 }) {
+  const available = templatesForMode(mode);
   const [values, setValues] = useState<NewDraftValues>({
-    templateId: DRAFT_TEMPLATES[0]!.id,
+    templateId: available[0]!.id,
     title: "",
     kicker: "",
     byline: "",
@@ -27,7 +31,7 @@ export function NewDraftSheet({
   });
   const set = (patch: Partial<NewDraftValues>) => setValues((current) => ({ ...current, ...patch }));
   const ready = values.title.trim().length > 0;
-  const template = DRAFT_TEMPLATES.find((item) => item.id === values.templateId) ?? DRAFT_TEMPLATES[0]!;
+  const template = available.find((item) => item.id === values.templateId) ?? available[0]!;
 
   return (
     <Modal title="New draft" testId="new-article-dialog" onClose={onClose}>
@@ -41,7 +45,7 @@ export function NewDraftSheet({
         <fieldset className="templates">
           <legend>Start from</legend>
           <div className="template-grid" role="radiogroup" aria-label="Template">
-            {DRAFT_TEMPLATES.map((item) => (
+            {available.map((item) => (
               <label key={item.id} className={item.id === values.templateId ? "template is-chosen" : "template"}>
                 <input
                   type="radio"

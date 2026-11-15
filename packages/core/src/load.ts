@@ -3,6 +3,7 @@ import path from "node:path";
 import { TwildaError } from "./errors";
 import { parseDocument, serializeDocument } from "./serialize";
 import type { ArticleDocument, PageDocument } from "./schema";
+import { defaultSite, parseSite, type SiteSettings } from "./site";
 
 export interface LoadedContent {
   articles: ArticleDocument[];
@@ -61,6 +62,24 @@ export function loadContentTree(root: string): LoadedContent {
     else pages.push(doc);
   }
   return { articles, pages, root };
+}
+
+/**
+ * `<root>/site.json`: the masthead, theme tokens, and mode, one file in git. A missing file
+ * means the built-in Field Desk look, so a fresh clone builds without one.
+ */
+export function readSiteFile(root: string): SiteSettings {
+  const file = path.join(root, "site.json");
+  let raw: string;
+  try {
+    // A symlink in a pull request could point site.json at a file outside the repository.
+    if (fs.lstatSync(file).isSymbolicLink()) throw new TwildaError("site.json is a symbolic link. Content files must be regular files.", "invalid-document");
+    raw = fs.readFileSync(file, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return defaultSite();
+    throw error;
+  }
+  return parseSite(raw);
 }
 
 export interface MigrationReport {

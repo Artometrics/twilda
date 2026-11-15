@@ -49,6 +49,7 @@ Nothing a contributor does in the desk reaches the live site without a merge. A 
 - Embeds are YouTube and Vimeo only. The player URL is rebuilt from a validated video id on a fixed `youtube-nocookie.com` or `player.vimeo.com` origin, and the iframe carries a `sandbox` attribute and a `referrerpolicy`. The embed string in content is never printed.
 - Images in documents are a repo path under `/media/<name>` or a raster `data:image/(png|jpeg|gif|webp);base64,` URL. SVG in a data URL is refused (a finding fixed in Phase 3).
 - Theme settings are two closed font lists and six six-digit hex colors. A theme value is never concatenated into CSS. CSS custom properties are written from the validated list only.
+- Phase 4 added eleven page sections and three blocks, with a second, wider link kind (`actionHref`: a site path, `http(s)`, or a bare `mailto:address`, never a query, a second address, or a punycode host). Only the new section buttons use it. Bar charts are classes (`bar-w-0` to `bar-w-100`), not inline style or SVG, and a lead form is a link to an outside page because `form-action` is `'none'`. `tests/security/modes-xss.test.ts` runs every payload through every string of every new part.
 - Tests: `tests/security/xss.test.ts` (a payload in every string field of every block and section type), `marks.test.ts`, `links.test.ts`, `theme-css.test.ts`.
 
 ### Content-Security-Policy and headers
@@ -65,8 +66,20 @@ All three also set `base-uri 'none'`, `form-action 'none'`, `frame-ancestors 'no
 
 There is no `unsafe-inline`, `unsafe-eval`, `*`, `http:`, or bare `https:` in any policy. There are no nonces or hashes either, on purpose: a static host cannot issue a fresh nonce per response, and a fixed nonce is not a nonce. The way to hold `style-src 'self'` and `script-src 'none'` with no inline code is to build without any: Astro is set to `build.inlineStylesheets: "never"` and `assetsInlineLimit: 0` (site and marketing), the desk's preview frame is a static HTML file with a linked stylesheet, and the edit build's JSON data blocks are `type="application/json"` (data, not script) with `<` escaped.
 
+**Sites that take a form (Phase 5).** The three policies above are for the hosting targets in this repository, none of which has a form, and they are unchanged. A site built from a starter that sets `forms.endpoint` in `content/site.json` serves a different policy, derived by `siteCsp(site)` in `packages/core/src/csp.ts` and printed by `npm run headers -- content`. It changes exactly three directives and only for a valid address:
+
+| Directive | No form | With a form |
+| --- | --- | --- |
+| `form-action` | `'none'` | the address's origin |
+| `script-src` | `'none'` | `'self'` (Twilda's form script, a file on the same site) |
+| `connect-src` | `'none'` | the address's origin, in `fetch` mode only |
+
+The origin is rebuilt from the parsed address, which must be `https`, a host name (no IP, `localhost`, `.local`, credentials, punycode label), at most 300 characters, and free of `; , * ' " < > \`, whitespace, controls, `#`, and percent-encoded controls. So the address cannot end a directive or add a source. Never a wildcard, never `http:`, never `'unsafe-inline'`. See [phase5.md](phase5.md).
+
 How it is checked:
 
+- `tests/forms.test.ts` proves the no-form policy equals `firebase.json` exactly and the form policy differs only in those directives. `tests/security/forms-hostile.test.ts` runs hostile addresses (`javascript:`, `data:`, `http:`, wildcards, IPs, header-injection characters) and hostile content (XSS in every label, hint, and message) through the renderer live, inert, and annotated.
+- `tests/support/dist.ts` audits each `<form>` in built output: `method="post"`, an `action` the policy's `form-action` allows, no `target`, no file input, and only `/twilda-forms.js` as a script. The starters' browser tests run each starter under the policy it would send and confirm the browser blocks a post or fetch to any other host.
 - `tests/csp.test.ts` parses `firebase.json` and `EDIT_CSP` and fails on any weakening: a changed source list, an unsafe keyword, a wildcard, a missing header.
 - `tests/dist-headers.test.ts` runs `astro build` for the site, the marketing site, and the edit build, then audits the actual output against the policy that host sends: no inline script or style, no `on*=` handler, no `javascript:`, no `<base>` or `<form>`, no `<meta http-equiv>`, every stylesheet and image same-origin, every iframe on the allowlist, `noindex` on every page, and no source map or dotfile in the folder.
 - `packages/editor/src/dist-csp.test.ts` builds the desk and does the same.
@@ -138,7 +151,8 @@ All seven entries are due for review on 2027-02-15. Upgrading Astro and zod is a
 
 Twilda does:
 
-- Keep published content inert: no script, no inline style, no outside asset, no framing.
+- Keep published content inert: no script (except its own same-origin form script, only when a form address is set), no inline style, no outside asset, no framing.
+- Send a visitor's form input only to the one https address the owner set, with no cookie and no referrer, and never store it.
 - Refuse unsafe links and media at write time, at build time, and in CI.
 - Hold the token in memory only and send it to `api.github.com` only.
 - Keep draft and published apart, and leave the merge to a person.
@@ -146,6 +160,8 @@ Twilda does:
 
 Twilda does not:
 
+- Hold, secure, or delete lead data. The form service (or your own receiver) does. See [forms-and-crm.md](forms-and-crm.md) and [../packages/leads-inbox/THREATS.md](../packages/leads-inbox/THREATS.md).
+- Stop a determined bot at the form. The honeypot and time trap stop casual ones; the receiver must repeat checks.
 - Protect against someone who can merge to `main`, or who holds the maintainer's GitHub or Firebase accounts.
 - Authenticate readers or authors. Access to the desk is access to the static page. What an author can do is bounded by their GitHub token, not by Twilda.
 - Hide drafts. A draft on a branch in a public repository is public.
@@ -168,6 +184,8 @@ Twilda does not:
 | The renderer prints an external `https` link as `#` in some contexts | A safe default, and a product limitation | Decide the policy for external links, then add them to the renderer and tests |
 | Not verified on real devices or against real GitHub | Tests use WebKit and Chromium emulation and a fake GitHub | A manual run on an iPhone, and one real pull request |
 | The proxy origin must be added to the desk `connect-src` by hand | A static header cannot know the deployer's proxy | Document the change, and update `tests/csp.test.ts` with it |
+| A form sends to a third party the owner chose | The point of the feature. The address is validated and the policy names it, but what that service does with the data is its own | Choose a service with a retention and privacy policy you accept; use the optional receiver to own the path |
+| The forms script is a file the site serves | It is the one script a form site allows (`script-src 'self'`). A compromise of the host could change it | The host's own access controls; the script is a plain string in `packages/core/src/forms-client.ts` covered by tests and reviewed like code |
 | Two historic gitleaks findings | Placeholder text in old CI history. History is not rewritten | None needed. They are recorded in `.gitleaksignore` with a reason. |
 
 ## Items that need the owner
@@ -188,4 +206,5 @@ npm run check:secrets    # scan the tree for secrets
 npm run check:audit      # npm audit against security/audit-allowlist.json (needs network)
 cd packages/editor && npm test && npm run test:e2e:csp
 npm run test:e2e:edit
+npm run check:forms      # a site's form address is valid and used
 ```

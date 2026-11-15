@@ -1,14 +1,14 @@
 ---
 import Base from "../layouts/Base.astro";
 import { readPublished } from "../content/store";
-import { renderDocument, resolveChrome } from "@twilda/core";
+import { renderDocument, renderOptionsFor } from "@twilda/core";
 import { readSite } from "../content/site";
 
 const doc = readPublished("home");
 if (!doc || doc.kind !== "page") {
   throw new Error("content/home/published.json is missing. The static site reads published files only.");
 }
-const html = renderDocument(doc, { chrome: resolveChrome(readSite(), doc) });
+const html = renderDocument(doc, renderOptionsFor(readSite(), doc));
 ---
 
 <Base title={`${doc.title} · Field Desk`} description={doc.dek}>

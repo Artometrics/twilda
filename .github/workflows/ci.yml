@@ -48,6 +48,13 @@ jobs:
       - name: Confirm the editor and drafts stayed out of dist
         run: npm run check:static
 
+      - name: Form settings (starters and demo content)
+        run: |
+          npm run check:forms
+          npm run check:forms examples/starter-corporate/content
+          npm run check:forms examples/starter-leadgen/content
+          npm run check:forms examples/starter-magazine/content
+
       - name: Demo editor and sample preview
         run: npm run build:demo
 
@@ -59,6 +66,9 @@ jobs:
 
       - name: Click-to-edit prototype (390px and desktop)
         run: npm run test:e2e:edit
+
+      - name: Starters at 320, 390, and 1280 px under the production policy
+        run: npm run test:e2e:starters
 
   desk:
     runs-on: ubuntu-latest

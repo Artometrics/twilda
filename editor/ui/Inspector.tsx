@@ -239,10 +239,8 @@ function PartFields({ part, onChange }: { part: Part; onChange: (part: Part) => 
           ))}
         </>
       );
-    default: {
-      const exhaustive: never = part;
-      return exhaustive;
-    }
+    default:
+      return <p className="hint">This part is edited in the desk. The dev inspector covers the original parts only.</p>;
   }
 }
 

@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "mode": "corporate",
+  "chrome": {
+    "name": "Brightline",
+    "issueLabel": "",
+    "note": "",
+    "nav": [
+      {
+        "label": "Features",
+        "href": "/#features"
+      },
+      {
+        "label": "Team",
+        "href": "/#team"
+      },
+      {
+        "label": "Pricing",
+        "href": "/#pricing"
+      },
+      {
+        "label": "Contact",
+        "href": "/#contact"
+      }
+    ],
+    "colophon": "Brightline is a fictional company. This demo site ships with Twilda CMS so it can be tried without touching a live business."
+  },
+  "forms": {
+    "endpoint": "https://forms.example.com/replace-with-your-form-address",
+    "mode": "fetch",
+    "format": "form",
+    "hidden": {}
+  },
+  "templates": {},
+  "documents": {},
+  "theme": {
+    "colors": {
+      "paper": "#ffffff",
+      "ink": "#0f172a",
+      "muted": "#475569",
+      "hair": "#e2e8f0",
+      "kicker": "#1d4ed8",
+      "plate": "#0f2a4a"
+    },
+    "fonts": {
+      "heading": "public-sans",
+      "body": "public-sans"
+    },
+    "baseSize": 17,
+    "headingScale": 0.85,
+    "spacing": 1.1
+  }
+}

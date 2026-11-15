@@ -1,0 +1,18 @@
+---
+import Base from "../../layouts/Base.astro";
+import { loadPublished, loadSite, renderDocument, renderOptionsFor } from "twilda:content";
+
+export function getStaticPaths() {
+  return loadPublished().articles.map((article) => ({ params: { slug: article.slug }, props: { id: article.id } }));
+}
+
+const { id } = Astro.props;
+const site = loadSite();
+const article = loadPublished().articles.find((entry) => entry.id === id);
+if (!article) throw new Error(`Published article "${id}" disappeared during the build.`);
+const html = renderDocument(article, renderOptionsFor(site, article));
+---
+
+<Base title={`${article.title} · ${site.chrome.name}`} description={article.dek}>
+  <Fragment set:html={html} />
+</Base>
