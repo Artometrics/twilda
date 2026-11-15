@@ -1,15 +1,18 @@
 .magazine {
-  --paper: #f3efe4;
-  --ink: #1a1714;
-  --muted: #5c564c;
-  --hair: #d4cbb8;
-  --kicker: #9d2b1f;
-  --plate: #243126;
+  --paper: var(--site-paper, #f3efe4);
+  --ink: var(--site-ink, #1a1714);
+  --muted: var(--site-muted, #5c564c);
+  --hair: var(--site-hair, #d4cbb8);
+  --kicker: var(--site-kicker, #9d2b1f);
+  --plate: var(--site-plate, #243126);
+  --space: var(--site-space, 1);
+  --font-heading: var(--site-font-heading, "Newsreader", Georgia, serif);
+  --font-body: var(--site-font-body, "Public Sans", "Segoe UI", sans-serif);
   background: var(--paper);
   color: var(--ink);
   min-height: 100%;
-  font-family: "Public Sans", "Segoe UI", sans-serif;
-  font-size: 1.0625rem;
+  font-family: var(--font-body);
+  font-size: var(--site-base, 1.0625rem);
   line-height: 1.5;
 }
 
@@ -28,7 +31,7 @@
 .magazine h1,
 .magazine h2,
 .magazine h3 {
-  font-family: "Newsreader", Georgia, serif;
+  font-family: var(--font-heading);
   font-weight: 500;
   letter-spacing: -0.025em;
   line-height: 1.04;
@@ -36,15 +39,15 @@
 }
 
 .magazine h1 {
-  font-size: clamp(3rem, 7vw, 5.4rem);
+  font-size: calc(clamp(3rem, 7vw, 5.4rem) * var(--site-heading-scale, 1));
 }
 
 .magazine h2 {
-  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-size: calc(clamp(1.8rem, 3vw, 2.6rem) * var(--site-heading-scale, 1));
 }
 
 .magazine h3 {
-  font-size: 1.45rem;
+  font-size: calc(1.45rem * var(--site-heading-scale, 1));
 }
 
 .kicker {
@@ -65,7 +68,7 @@
 
 .lede {
   max-width: 38rem;
-  font-family: "Newsreader", Georgia, serif;
+  font-family: var(--font-heading);
   font-size: 1.35rem;
   color: var(--ink);
 }
@@ -93,7 +96,7 @@
 }
 
 .mark {
-  font-family: "Newsreader", Georgia, serif;
+  font-family: var(--font-heading);
   font-size: clamp(2rem, 4vw, 2.8rem);
   font-weight: 500;
   letter-spacing: -0.03em;
@@ -143,7 +146,7 @@
 .article-head {
   max-width: 76rem;
   margin: 0 auto;
-  padding: 2.2rem 1.5rem 0.4rem;
+  padding: calc(2.2rem * var(--space)) 1.5rem calc(0.4rem * var(--space));
 }
 
 .article-head {
@@ -153,7 +156,7 @@
 .section {
   max-width: 76rem;
   margin: 0 auto;
-  padding: 2.2rem 1.5rem;
+  padding: calc(2.2rem * var(--space)) 1.5rem;
   border-top: 1px solid var(--hair);
 }
 
@@ -178,7 +181,7 @@
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(16rem, 1fr);
-  gap: 1.25rem;
+  gap: calc(1.25rem * var(--space));
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   padding-bottom: 0.35rem;
@@ -249,7 +252,7 @@
 }
 
 .fact-value {
-  font-family: "Newsreader", Georgia, serif;
+  font-family: var(--font-heading);
   font-size: 1.25rem;
 }
 
@@ -291,11 +294,11 @@
 .article-body {
   max-width: 44rem;
   margin: 0 auto;
-  padding: 1.5rem 1.5rem 2rem;
+  padding: calc(1.5rem * var(--space)) 1.5rem calc(2rem * var(--space));
 }
 
 .article-body > * + * {
-  margin-top: 1.35rem;
+  margin-top: calc(1.35rem * var(--space));
 }
 
 .article-heading {
@@ -307,7 +310,39 @@
 }
 
 .prose p + p {
-  margin-top: 0.9rem;
+  margin-top: calc(0.9rem * var(--space));
+}
+
+.prose a,
+.lede a,
+.figure figcaption a,
+.callout a {
+  color: var(--kicker);
+}
+
+.embed-video {
+  margin: 0.4rem 0;
+}
+
+.embed-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--plate);
+}
+
+.embed-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.embed-video figcaption {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .pull-quote {
@@ -318,7 +353,7 @@
 
 .pull-quote p {
   margin: 0;
-  font-family: "Newsreader", Georgia, serif;
+  font-family: var(--font-heading);
   font-style: italic;
   font-size: clamp(1.6rem, 3vw, 2rem);
   line-height: 1.25;
@@ -414,10 +449,10 @@
   }
 
   .slide h2 {
-    font-size: 1.7rem;
+    font-size: calc(1.7rem * var(--site-heading-scale, 1));
   }
 
   .magazine h1 {
-    font-size: 2.6rem;
+    font-size: calc(2.6rem * var(--site-heading-scale, 1));
   }
 }

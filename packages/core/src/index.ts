@@ -12,11 +12,16 @@ export { BLOCK_LABELS, BLOCK_TYPES, PAGE_SECTION_TYPES, SECTION_LABELS, document
 export { TwildaError } from "./errors";
 export {
   BASE_BRANCH,
+  CONTENT_ROOT,
   DRAFT_BRANCH_PREFIX,
-  articlePath,
-  documentPath,
+  MEDIA_DIR,
+  SITE_PATH,
+  documentDir,
+  documentIdFromPath,
   draftBranchName,
-  pagePath,
+  draftPath,
+  mediaRepoPath,
+  publishedPath,
 } from "./paths";
 export { contentDigest, parseDocument, serializeDocument } from "./serialize";
 export type {
@@ -52,3 +57,49 @@ export {
 } from "./sample";
 export { clearBrowserDemo, openBrowserDemo, openMemoryDemo } from "./browser-demo";
 export { migrateFieldDeskDocument } from "./migrate";
+export {
+  encodeLinkTarget,
+  escapeMarks,
+  isSafeLinkTarget,
+  marksFromDom,
+  parseMarks,
+  renderMarks,
+  stripMarks,
+  unsafeLinkTargets,
+} from "./marks";
+export type { MarkNode, MarksLevel } from "./marks";
+export { EMBED_FRAME_HOSTS, VIDEO_PROVIDER_LABELS, isAllowlistedVideo, parseVideoUrl } from "./embed";
+export {
+  DEFAULT_THEME,
+  SITE_VERSION,
+  THEME_FONTS,
+  THEME_FONT_IDS,
+  contrastRatio,
+  defaultSite,
+  parseSite,
+  resolveChrome,
+  serializeSite,
+  siteChromeSchema,
+  siteSchema,
+  themeCss,
+  themeSchema,
+  themeVars,
+} from "./site";
+export type { ChromeOverride, SiteSettings, Theme } from "./site";
+export { BLOCK_CATALOG, SECTION_CATALOG, createBlock, createId, createSection } from "./library";
+export {
+  MAX_BLOCKS,
+  MAX_SECTIONS,
+  addNode,
+  duplicateNode,
+  libraryFor,
+  listLabel,
+  moveNode,
+  parseNodePath,
+  removeNode,
+} from "./structure";
+export type { StructureResult } from "./structure";
+export { canRedo, canUndo, emptyHistory, recordChange, redo, undo } from "./history";
+export type { History } from "./history";
+export { mergeDocuments } from "./merge";
+export type { MergeChoice, MergeConflict, MergeResult } from "./merge";

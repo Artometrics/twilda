@@ -10,11 +10,11 @@ import { sampleArticles } from "../../core/src/sample";
 test("filesystem backend writes a real file per branch", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "twilda-fs-"));
   const backend = FsBackend.open(root);
-  await backend.write("content/articles/franchise.json", serializeDocument(sampleArticles.franchise));
-  const mirror = path.join(root, "tree", encodeURIComponent("main"), "content/articles/franchise.json");
+  await backend.write("content/franchise/published.json", serializeDocument(sampleArticles.franchise));
+  const mirror = path.join(root, "tree", encodeURIComponent("main"), "content/franchise/published.json");
   assert.equal(fs.existsSync(mirror), true);
   assert.match(fs.readFileSync(mirror, "utf8"), /Merchandise Owns the Ledger/);
   const reopened = FsBackend.open(root);
-  const read = await reopened.read("content/articles/franchise.json");
+  const read = await reopened.read("content/franchise/published.json");
   assert.match(read.text, /Merchandise Owns the Ledger/);
 });

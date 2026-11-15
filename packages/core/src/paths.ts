@@ -30,18 +30,44 @@ export function draftBranchName(id: string): string {
   return `${DRAFT_BRANCH_PREFIX}${id}`;
 }
 
-export function articlePath(slug: string): string {
-  assertDocumentId(slug);
-  return `content/articles/${slug}.json`;
+/**
+ * One storage model for every editor and the static build: a folder per document,
+ * `content/<id>/draft.json` beside `content/<id>/published.json`. The site reads
+ * published files only. A draft is never read by the build. Merging a pull request
+ * that writes `published.json` is the publish decision.
+ */
+export const CONTENT_ROOT = "content";
+/** Site settings (masthead, theme tokens): one file, stored in git like a document. */
+export const SITE_PATH = "content/site.json";
+/** Where repo images live. `public/media/<name>` is served as `/media/<name>`. */
+export const MEDIA_DIR = "public/media";
+
+export function documentDir(id: string): string {
+  assertDocumentId(id);
+  return `${CONTENT_ROOT}/${id}`;
 }
 
-export function pagePath(slug: string): string {
-  assertDocumentId(slug);
-  return `content/pages/${slug}.json`;
+export function draftPath(id: string): string {
+  return `${documentDir(id)}/draft.json`;
 }
 
-export function documentPath(kind: "article" | "page", slug: string): string {
-  return kind === "article" ? articlePath(slug) : pagePath(slug);
+export function publishedPath(id: string): string {
+  return `${documentDir(id)}/published.json`;
+}
+
+/** `content/<id>/draft.json` or `published.json` to its document id, else null. */
+export function documentIdFromPath(path: string): { id: string; file: "draft" | "published" } | null {
+  const match = /^content\/([a-z0-9]+(?:-[a-z0-9]+)*)\/(draft|published)\.json$/.exec(path);
+  if (!match) return null;
+  return { id: match[1] as string, file: match[2] as "draft" | "published" };
+}
+
+const MEDIA_FILE = /^[a-z0-9][a-z0-9-]{0,78}\.(?:svg|jpg|png|webp|gif)$/;
+
+/** Repo path of an image file, e.g. `public/media/field-notes.jpg`. */
+export function mediaRepoPath(name: string): string {
+  if (!MEDIA_FILE.test(name)) throw new TwildaError("Media file name is not allowed.", "bad-path");
+  return `${MEDIA_DIR}/${name}`;
 }
 
 export function historyDir(id: string): string {

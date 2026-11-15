@@ -14,3 +14,19 @@ export {
   normalizeText,
 } from "./doc-path";
 export type { ApplyEditOptions, EditResult } from "./doc-path";
+export {
+  MAX_SOURCE_BYTES,
+  MAX_UPLOAD_BYTES,
+  MAX_UPLOAD_EDGE,
+  VIDEO_HELP,
+  applyImageChoice,
+  applyVideoChoice,
+  describeVideo,
+  fitWithin,
+  isRepoMedia,
+  mediaFileName,
+  prepareImage,
+  sniffImage,
+  toBase64,
+} from "./media";
+export type { PreparedImage } from "./media";

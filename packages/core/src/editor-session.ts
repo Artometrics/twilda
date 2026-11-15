@@ -2,11 +2,13 @@ import type { HistoryEntry, MediaUpload, TwildaEditorApi } from "./editor-api";
 import { TwildaError } from "./errors";
 import {
   BASE_BRANCH,
-  documentPath,
+  documentIdFromPath,
   draftBranchName,
+  draftPath,
   historyDir,
   historyPath,
   mediaRecordPath,
+  publishedPath,
   stampFromIso,
 } from "./paths";
 import { renderPreviewPage } from "./render";
@@ -36,13 +38,13 @@ async function readDoc(backend: StorageBackend, docPath: string): Promise<Twilda
   return parseDocument(file.text);
 }
 
-async function findPublishedPath(backend: StorageBackend, id: string): Promise<string> {
-  const articles = `content/articles/${id}.json`;
-  const pages = `content/pages/${id}.json`;
-  const listed = await backend.list("content");
-  const hit = listed.find((item) => item.path === articles || item.path === pages);
-  if (!hit) throw new TwildaError(`No published document "${id}".`, "not-found");
-  return hit.path;
+async function readOptionalDoc(backend: StorageBackend, docPath: string): Promise<TwildaDocument | null> {
+  try {
+    return await readDoc(backend, docPath);
+  } catch (error) {
+    if (error instanceof TwildaError && error.code === "not-found") return null;
+    throw error;
+  }
 }
 
 export function createEditorApi(backend: StorageBackend, options: EditorSessionOptions = {}): TwildaEditorApi {
@@ -65,33 +67,31 @@ export function createEditorApi(backend: StorageBackend, options: EditorSessionO
 
   return {
     async listDocuments() {
-      const published = await main().list("content");
+      const files = await main().list("content");
+      const ids = new Set<string>();
+      for (const item of files) {
+        const hit = documentIdFromPath(item.path);
+        if (hit) ids.add(hit.id);
+      }
       const docs = [];
-      for (const item of published) {
-        if (!/^content\/(articles|pages)\/[a-z0-9-]+\.json$/.test(item.path)) continue;
-        const doc = parseDocument((await main().read(item.path)).text);
-        const branch = draftBranchName(doc.id);
-        let hasUnpublishedChanges = false;
-        let updatedAt = doc.updatedAt;
-        try {
-          const draft = parseDocument((await backend.at(branch).read(item.path)).text);
-          hasUnpublishedChanges = contentDigest(draft) !== contentDigest(doc);
-          updatedAt = draft.updatedAt;
-        } catch (error) {
-          if (!(error instanceof TwildaError) || error.code !== "not-found") throw error;
-        }
+      for (const id of [...ids].sort()) {
+        const published = await readOptionalDoc(main(), publishedPath(id));
+        const branch = draftBranchName(id);
+        const onBranch = await readOptionalDoc(backend.at(branch), draftPath(id));
+        const onMain = await readOptionalDoc(main(), draftPath(id));
+        const draft = onBranch ?? onMain ?? published;
+        if (!draft) continue;
         docs.push({
-          id: doc.id,
-          kind: doc.kind,
-          title: doc.title,
-          slug: doc.slug,
-          updatedAt,
+          id,
+          kind: draft.kind,
+          title: draft.title,
+          slug: draft.slug,
+          updatedAt: draft.updatedAt,
           branch,
-          hasUnpublishedChanges,
+          hasUnpublishedChanges: !published || contentDigest(draft) !== contentDigest(published),
         });
       }
-      const drafts = await backend.listDrafts();
-      for (const draft of drafts) {
+      for (const draft of await backend.listDrafts()) {
         if (docs.some((doc) => doc.id === draft.id)) continue;
         docs.push({
           id: draft.id,
@@ -107,26 +107,19 @@ export function createEditorApi(backend: StorageBackend, options: EditorSessionO
     },
 
     async readDocument(id, source) {
-      const path = await findPublishedPath(main(), id).catch(async (error: unknown) => {
-        if (source === "published") throw error;
-        const drafts = await backend.listDrafts();
-        const draft = drafts.find((item) => item.id === id);
-        if (!draft) throw error;
-        return documentPath(draft.kind, draft.slug);
-      });
-      if (source === "published") return readDoc(main(), path);
-      try {
-        return await readDoc(backend.at(draftBranchName(id)), path);
-      } catch (error) {
-        if (error instanceof TwildaError && error.code === "not-found") return readDoc(main(), path);
-        throw error;
-      }
+      if (source === "published") return readDoc(main(), publishedPath(id));
+      const found =
+        (await readOptionalDoc(backend.at(draftBranchName(id)), draftPath(id))) ??
+        (await readOptionalDoc(main(), draftPath(id))) ??
+        (await readOptionalDoc(main(), publishedPath(id)));
+      if (!found) throw new TwildaError(`No document "${id}".`, "not-found");
+      return found;
     },
 
     async saveDraft(doc) {
       const stamped: TwildaDocument = { ...doc, status: "draft", updatedAt: now().toISOString() };
       const text = serializeDocument(stamped);
-      const path = documentPath(stamped.kind, stamped.slug);
+      const path = draftPath(stamped.id);
       const branch = draftBranchName(stamped.id);
       await backend.createBranch(branch, BASE_BRANCH);
       await backend.at(branch).write(path, text);
@@ -137,7 +130,7 @@ export function createEditorApi(backend: StorageBackend, options: EditorSessionO
       const current = await this.readDocument(id, "draft");
       let previous = "";
       try {
-        previous = (await main().read(documentPath(current.kind, current.slug))).text;
+        previous = (await main().read(publishedPath(current.id))).text;
         if (contentDigest(parseDocument(previous)) === contentDigest(current)) {
           throw new TwildaError("Nothing unpublished to publish.", "nothing-to-publish");
         }
@@ -147,7 +140,7 @@ export function createEditorApi(backend: StorageBackend, options: EditorSessionO
       const when = now().toISOString();
       const published: TwildaDocument = { ...current, status: "published", updatedAt: when };
       const text = serializeDocument(published);
-      const path = documentPath(published.kind, published.slug);
+      const path = publishedPath(published.id);
       const branch = draftBranchName(id);
       await backend.createBranch(branch, BASE_BRANCH);
       const history = {
@@ -158,6 +151,7 @@ export function createEditorApi(backend: StorageBackend, options: EditorSessionO
       };
       await backend.at(branch).write(historyPath(id, stampFromIso(when)), `${JSON.stringify(history, null, 2)}\n`);
       await backend.at(branch).write(path, text);
+      await backend.at(branch).write(draftPath(id), serializeDocument({ ...published, status: "draft" }));
       const pullRequest = await backend.openPullRequest({
         title: `Publish ${published.title}`,
         head: branch,
@@ -207,11 +201,11 @@ export function createEditorApi(backend: StorageBackend, options: EditorSessionO
       });
       await backend.mergePullRequest(pullRequest.number);
       if (latest.text === "") {
-        throw new TwildaError(`Rolled back "${id}" by removing it. It was not published before.`, "rolled-back-removed");
+        throw new TwildaError(`Rolled back "${id}" by unpublishing it. It was not published before, so only its draft is kept.`, "rolled-back-removed");
       }
       const restored = parseDocument(latest.text);
       await backend.createBranch(draftBranchName(id), BASE_BRANCH);
-      await backend.at(draftBranchName(id)).write(documentPath(restored.kind, restored.slug), latest.text);
+      await backend.at(draftBranchName(id)).write(draftPath(id), serializeDocument({ ...restored, status: "draft" }));
       return restored;
     },
 

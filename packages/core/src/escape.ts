@@ -1,4 +1,4 @@
-const MEDIA_PATH = /^\/media\/[a-z0-9-]+\.svg$/;
+const MEDIA_PATH = /^\/media\/[a-z0-9][a-z0-9-]{0,78}\.(?:svg|jpg|png|webp|gif)$/;
 const HREF_PATH = /^\/(?!\/)[a-zA-Z0-9/._~-]*$/;
 
 export function escapeHtml(value: string): string {
@@ -10,7 +10,7 @@ export function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
-/** Only repo media plates. Anything else becomes an empty plate. */
+/** Only repo media: `/media/<name>.svg|jpg|png|webp|gif`. Anything else becomes an empty plate. */
 export function safeMedia(src: string): string | null {
   return MEDIA_PATH.test(src) ? src : null;
 }

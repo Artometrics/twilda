@@ -49,7 +49,7 @@ describe("single renderer: parity with the pre-Phase-1 site template", () => {
       assert.equal(renderDocument(doc), golden(`${name}.html`));
     });
     if (doc.kind === "page") {
-      it(`${name}: annotated HTML is byte-identical to the Phase 0 golden file`, () => {
+      it(`${name}: annotated HTML is byte-identical to the Phase 2 golden file`, () => {
         assert.equal(renderDocument(doc, { annotate: true }), golden(`${name}.annotated.html`));
       });
     }

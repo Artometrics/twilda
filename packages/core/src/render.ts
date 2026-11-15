@@ -1,6 +1,8 @@
 import type { Block, PageSection, TwildaDocument } from "./schema";
 import { escapeHtml, safeHref, safeMedia } from "./escape";
 import { MAGAZINE_CSS } from "./magazine-css";
+import { renderMarks, type MarksLevel } from "./marks";
+import { parseVideoUrl } from "./embed";
 
 export { escapeHtml, safeHref, safeMedia } from "./escape";
 
@@ -45,9 +47,19 @@ type Ctx = { annotate: boolean; dataFiles: Record<string, string> };
 
 type FieldType = "text" | "multiline";
 
-/** `data-twilda-ref` is a dotted path into the document JSON, e.g. `sections.0.slides.2.title`. */
-function text(ctx: Ctx, path: string, type: FieldType = "text"): string {
-  return ctx.annotate ? ` data-twilda-ref="${escapeHtml(path)}" data-twilda-type="${type}"` : "";
+/**
+ * `data-twilda-ref` is a dotted path into the document JSON, e.g. `sections.0.slides.2.title`.
+ * `data-twilda-marks` says the field may carry bold, italic, and (when `links`) links.
+ */
+function text(ctx: Ctx, path: string, type: FieldType = "text", marks?: MarksLevel): string {
+  if (!ctx.annotate) return "";
+  const rich = marks ? ` data-twilda-marks="${marks}"` : "";
+  return ` data-twilda-ref="${escapeHtml(path)}" data-twilda-type="${type}"${rich}`;
+}
+
+/** `data-twilda-node` is the path of a whole section or block, so editors can move, add, and remove it. */
+function node(ctx: Ctx, path: string, type: string): string {
+  return ctx.annotate ? ` data-twilda-node="${escapeHtml(path)}" data-twilda-node-type="${escapeHtml(type)}"` : "";
 }
 
 function plate(ctx: Ctx, srcPath: string, altPath: string, src: string, alt: string): string {
@@ -67,7 +79,7 @@ function paragraphs(text: string): string {
     .split(/\n{2,}/)
     .map((part) => part.trim())
     .filter(Boolean)
-    .map((part) => `<p>${escapeHtml(part).replaceAll("\n", "<br />")}</p>`)
+    .map((part) => `<p>${renderMarks(part, "links").replaceAll("\n", "<br />")}</p>`)
     .join("");
 }
 
@@ -79,12 +91,12 @@ function renderCarousel(ctx: Ctx, base: string, section: Extract<PageSection, { 
         ${plate(ctx, `${at}.image`, `${at}.imageAlt`, slide.image, slide.imageAlt)}
         <p class="kicker"${text(ctx, `${at}.kicker`)}>${escapeHtml(slide.kicker)}</p>
         <h2${text(ctx, `${at}.title`)}>${escapeHtml(slide.title)}</h2>
-        <p class="dek"${text(ctx, `${at}.dek`)}>${escapeHtml(slide.dek)}</p>
+        <p class="dek"${text(ctx, `${at}.dek`, "text", "emphasis")}>${renderMarks(slide.dek, "emphasis")}</p>
       </a>`;
     })
     .join("");
   const label = section.label ? `<p class="kicker"${text(ctx, `${base}.label`)}>${escapeHtml(section.label)}</p>` : "";
-  return `<section class="section carousel" id="${escapeHtml(section.id)}" aria-label="${escapeHtml(section.label || "Carousel")}">${label}<div class="carousel-track">${slides}</div></section>`;
+  return `<section class="section carousel" id="${escapeHtml(section.id)}"${node(ctx, base, "carousel")} aria-label="${escapeHtml(section.label || "Carousel")}">${label}<div class="carousel-track">${slides}</div></section>`;
 }
 
 function renderStoryGrid(ctx: Ctx, base: string, section: Extract<PageSection, { type: "story-grid" }>): string {
@@ -98,13 +110,13 @@ function renderStoryGrid(ctx: Ctx, base: string, section: Extract<PageSection, {
           ${plate(ctx, `${at}.image`, `${at}.imageAlt`, story.image, story.imageAlt)}
           <p class="kicker"${text(ctx, `${at}.kicker`)}>${escapeHtml(story.kicker)}</p>
           <h3${text(ctx, `${at}.title`)}>${escapeHtml(story.title)}</h3>
-          <p class="dek"${text(ctx, `${at}.dek`)}>${escapeHtml(story.dek)}</p>
+          <p class="dek"${text(ctx, `${at}.dek`, "text", "emphasis")}>${renderMarks(story.dek, "emphasis")}</p>
         </a>
       </li>`;
     })
     .join("");
   const leadAt = `${base}.stories.0`;
-  return `<section class="section story-grid-section" id="${escapeHtml(section.id)}">
+  return `<section class="section story-grid-section" id="${escapeHtml(section.id)}"${node(ctx, base, "story-grid")}>
     <p class="kicker"${text(ctx, `${base}.kicker`)}>${escapeHtml(section.kicker)}</p>
     <h2${text(ctx, `${base}.heading`)}>${escapeHtml(section.heading)}</h2>
     <div class="story-grid">
@@ -112,7 +124,7 @@ function renderStoryGrid(ctx: Ctx, base: string, section: Extract<PageSection, {
         ${plate(ctx, `${leadAt}.image`, `${leadAt}.imageAlt`, lead.image, lead.imageAlt)}
         <p class="kicker"${text(ctx, `${leadAt}.kicker`)}>${escapeHtml(lead.kicker)}</p>
         <h2${text(ctx, `${leadAt}.title`)}>${escapeHtml(lead.title)}</h2>
-        <p class="dek"${text(ctx, `${leadAt}.dek`)}>${escapeHtml(lead.dek)}</p>
+        <p class="dek"${text(ctx, `${leadAt}.dek`, "text", "emphasis")}>${renderMarks(lead.dek, "emphasis")}</p>
       </a>
       <ol class="shorts">${stories}</ol>
     </div>
@@ -130,7 +142,7 @@ function renderMenu(ctx: Ctx, base: string, section: Extract<PageSection, { type
       </li>`,
     )
     .join("");
-  return `<section class="section shelf-section" id="${escapeHtml(section.id)}">
+  return `<section class="section shelf-section" id="${escapeHtml(section.id)}"${node(ctx, base, "menu-shelf")}>
     <h2${text(ctx, `${base}.heading`)}>${escapeHtml(section.heading)}</h2>
     <ol class="facts">${items}</ol>
   </section>`;
@@ -171,11 +183,11 @@ function csvTable(csv: string): string {
 
 function renderHeading(ctx: Ctx, base: string, block: Extract<Block, { type: "heading" }>): string {
   const tag = block.level === 3 ? "h3" : "h2";
-  return `<${tag} class="article-heading" id="${escapeHtml(block.id)}"${text(ctx, `${base}.text`)}>${escapeHtml(block.text)}</${tag}>`;
+  return `<${tag} class="article-heading" id="${escapeHtml(block.id)}"${node(ctx, base, "heading")}${text(ctx, `${base}.text`)}>${escapeHtml(block.text)}</${tag}>`;
 }
 
 function renderParagraph(ctx: Ctx, base: string, block: Extract<Block, { type: "paragraph" }>): string {
-  return `<div class="prose" id="${escapeHtml(block.id)}"${text(ctx, `${base}.text`, "multiline")}>${paragraphs(block.text)}</div>`;
+  return `<div class="prose" id="${escapeHtml(block.id)}"${node(ctx, base, "paragraph")}${text(ctx, `${base}.text`, "multiline", "links")}>${paragraphs(block.text)}</div>`;
 }
 
 function renderFindings(ctx: Ctx, base: string, block: Extract<Block, { type: "key-findings" }>): string {
@@ -187,7 +199,7 @@ function renderFindings(ctx: Ctx, base: string, block: Extract<Block, { type: "k
       return `<li${text(ctx, `${base}.items.${i}`)}><span class="fact-label">${escapeHtml(label)}</span><span class="fact-value">${escapeHtml(value)}</span></li>`;
     })
     .join("");
-  return `<section class="section facts-section" id="${escapeHtml(block.id)}">
+  return `<section class="section facts-section" id="${escapeHtml(block.id)}"${node(ctx, base, "key-findings")}>
     <div class="fact-layout">
       <h2${text(ctx, `${base}.title`)}>${escapeHtml(block.title)}</h2>
       <ol class="facts">${facts}</ol>
@@ -196,16 +208,18 @@ function renderFindings(ctx: Ctx, base: string, block: Extract<Block, { type: "k
 }
 
 function renderCallout(ctx: Ctx, base: string, block: Extract<Block, { type: "callout" }>): string {
-  return `<aside class="callout" id="${escapeHtml(block.id)}">
+  return `<aside class="callout" id="${escapeHtml(block.id)}"${node(ctx, base, "callout")}>
     <p class="kicker">Note</p>
     <h2${text(ctx, `${base}.title`)}>${escapeHtml(block.title)}</h2>
-    <p${text(ctx, `${base}.text`)}>${escapeHtml(block.text)}</p>
+    <p${text(ctx, `${base}.text`, "text", "links")}>${renderMarks(block.text, "links")}</p>
   </aside>`;
 }
 
 function renderImage(ctx: Ctx, base: string, block: Extract<Block, { type: "image" }>): string {
-  const caption = block.caption ? `<figcaption${text(ctx, `${base}.caption`)}>${escapeHtml(block.caption)}</figcaption>` : "";
-  return `<figure class="figure" id="${escapeHtml(block.id)}">${plate(ctx, `${base}.src`, `${base}.alt`, block.src, block.alt)}${caption}</figure>`;
+  const caption = block.caption
+    ? `<figcaption${text(ctx, `${base}.caption`, "text", "links")}>${renderMarks(block.caption, "links")}</figcaption>`
+    : "";
+  return `<figure class="figure" id="${escapeHtml(block.id)}"${node(ctx, base, "image")}>${plate(ctx, `${base}.src`, `${base}.alt`, block.src, block.alt)}${caption}</figure>`;
 }
 
 function renderChart(ctx: Ctx, base: string, block: Extract<Block, { type: "chart" }>): string {
@@ -213,7 +227,7 @@ function renderChart(ctx: Ctx, base: string, block: Extract<Block, { type: "char
   const link = href ? `<p><a href="${escapeHtml(href)}">Open the chart</a></p>` : `<p class="dek">${escapeHtml(block.dataPath)}</p>`;
   const csv = ctx.dataFiles[block.dataPath];
   const table = csv ? csvTable(csv) : "";
-  return `<figure class="figure chart" id="${escapeHtml(block.id)}">
+  return `<figure class="figure chart" id="${escapeHtml(block.id)}"${node(ctx, base, "chart")}>
     <figcaption><strong${text(ctx, `${base}.title`)}>${escapeHtml(block.title)}</strong></figcaption>
     <p${text(ctx, `${base}.alt`)}>${escapeHtml(block.alt)}</p>
     ${table}${block.caption ? `<p class="dek"${text(ctx, `${base}.caption`)}>${escapeHtml(block.caption)}</p>` : ""}
@@ -228,16 +242,27 @@ function renderSources(ctx: Ctx, base: string, block: Extract<Block, { type: "so
         `<li><a href="${escapeHtml(safeHref(item.href))}"${text(ctx, `${base}.items.${i}.label`)}>${escapeHtml(item.label)}</a></li>`,
     )
     .join("");
-  return `<section class="sources" id="${escapeHtml(block.id)}"><h2${text(ctx, `${base}.title`)}>${escapeHtml(block.title)}</h2><ol>${items}</ol></section>`;
+  return `<section class="sources" id="${escapeHtml(block.id)}"${node(ctx, base, "sources")}><h2${text(ctx, `${base}.title`)}>${escapeHtml(block.title)}</h2><ol>${items}</ol></section>`;
 }
 
-function renderEmbed(block: Extract<Block, { type: "embed" }>): string {
+function renderEmbed(ctx: Ctx, base: string, block: Extract<Block, { type: "embed" }>): string {
   const label = block.kind === "audio" ? "Audio" : "Video";
-  return `<p class="embed" id="${escapeHtml(block.id)}"><a href="${escapeHtml(safeHref(block.src))}">${escapeHtml(label)}: ${escapeHtml(block.title)}</a>${block.caption ? ` — ${escapeHtml(block.caption)}` : ""}</p>`;
+  const video = block.kind === "video" ? parseVideoUrl(block.src) : null;
+  const caption = block.caption ? ` — ${renderMarks(block.caption, "links")}` : "";
+  if (video) {
+    const refs = ctx.annotate
+      ? ` data-twilda-ref="${escapeHtml(`${base}.src`)}" data-twilda-type="video" data-twilda-alt-ref="${escapeHtml(`${base}.title`)}"`
+      : "";
+    return `<figure class="embed embed-video" id="${escapeHtml(block.id)}"${node(ctx, base, "embed")}>
+    <div class="embed-frame"${refs}><iframe src="${escapeHtml(video.embedUrl)}" title="${escapeHtml(block.title)}" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation"></iframe></div>
+    <figcaption><a href="${escapeHtml(video.watchUrl)}" rel="noopener noreferrer nofollow">${escapeHtml(label)}: ${escapeHtml(block.title)}</a>${caption}</figcaption>
+  </figure>`;
+  }
+  return `<p class="embed" id="${escapeHtml(block.id)}"${node(ctx, base, "embed")}><a href="${escapeHtml(safeHref(block.src))}">${escapeHtml(label)}: ${escapeHtml(block.title)}</a>${caption}</p>`;
 }
 
 function renderDownload(ctx: Ctx, base: string, block: Extract<Block, { type: "download" }>): string {
-  return `<p class="download" id="${escapeHtml(block.id)}"><a href="${escapeHtml(safeHref(block.href))}"${text(ctx, `${base}.label`)}>${escapeHtml(block.label)}</a>${block.description ? ` — ${escapeHtml(block.description)}` : ""}</p>`;
+  return `<p class="download" id="${escapeHtml(block.id)}"${node(ctx, base, "download")}><a href="${escapeHtml(safeHref(block.href))}"${text(ctx, `${base}.label`)}>${escapeHtml(block.label)}</a>${block.description ? ` — ${escapeHtml(block.description)}` : ""}</p>`;
 }
 
 function renderBlock(ctx: Ctx, block: Block, index: number): string {
@@ -258,7 +283,7 @@ function renderBlock(ctx: Ctx, block: Block, index: number): string {
     case "image":
       return renderImage(ctx, base, block);
     case "embed":
-      return renderEmbed(block);
+      return renderEmbed(ctx, base, block);
     case "download":
       return renderDownload(ctx, base, block);
     default: {
@@ -292,7 +317,7 @@ function renderPage(ctx: Ctx, doc: Extract<TwildaDocument, { kind: "page" }>): s
   return `<header class="issue-intro">
     <p class="kicker"${text(ctx, "kicker")}>${escapeHtml(doc.kicker)}</p>
     <h1${text(ctx, "title")}>${escapeHtml(doc.title)}</h1>
-    <p class="lede"${text(ctx, "dek")}>${escapeHtml(doc.dek)}</p>
+    <p class="lede"${text(ctx, "dek", "text", "links")}>${renderMarks(doc.dek, "links")}</p>
   </header>
   ${doc.sections.map((section, index) => renderSection(ctx, section, index)).join("\n")}`;
 }
@@ -302,7 +327,7 @@ function renderArticle(ctx: Ctx, doc: Extract<TwildaDocument, { kind: "article" 
     <header class="article-head">
       <p class="kicker"${text(ctx, "kicker")}>${escapeHtml(doc.kicker)}</p>
       <h1${text(ctx, "title")}>${escapeHtml(doc.title)}</h1>
-      <p class="lede"${text(ctx, "dek")}>${escapeHtml(doc.dek)}</p>
+      <p class="lede"${text(ctx, "dek", "text", "links")}>${renderMarks(doc.dek, "links")}</p>
       <p class="byline"${text(ctx, "byline")}>${escapeHtml(doc.byline)}</p>
     </header>
     <div class="article-body">

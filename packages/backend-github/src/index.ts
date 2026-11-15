@@ -10,7 +10,7 @@ import type {
   StorageListItem,
 } from "../../core/src/storage";
 import { contentDigest, parseDocument } from "../../core/src/serialize";
-import { BASE_BRANCH, DRAFT_BRANCH_PREFIX } from "../../core/src/paths";
+import { BASE_BRANCH, DRAFT_BRANCH_PREFIX, draftPath, publishedPath } from "../../core/src/paths";
 
 /**
  * GitHub REST backend. No server of ours.
@@ -225,29 +225,27 @@ export class GitHubBackend implements StorageBackend {
       const id = name.slice(DRAFT_BRANCH_PREFIX.length);
       const view = this.at(name);
       const main = this.at(this.baseBranch);
-      for (const filePath of [`content/articles/${id}.json`, `content/pages/${id}.json`]) {
+      try {
+        const file = await view.read(draftPath(id));
+        const doc = parseDocument(file.text);
+        let hasUnpublishedChanges = true;
         try {
-          const file = await view.read(filePath);
-          const doc = parseDocument(file.text);
-          let hasUnpublishedChanges = true;
-          try {
-            const published = parseDocument((await main.read(filePath)).text);
-            hasUnpublishedChanges = contentDigest(published) !== contentDigest(doc);
-          } catch (error) {
-            if (!(error instanceof TwildaError) || error.code !== "not-found") throw error;
-          }
-          records.push({
-            id: doc.id,
-            kind: doc.kind,
-            title: doc.title,
-            slug: doc.slug,
-            branch: name,
-            updatedAt: doc.updatedAt,
-            hasUnpublishedChanges,
-          });
+          const published = parseDocument((await main.read(publishedPath(id))).text);
+          hasUnpublishedChanges = contentDigest(published) !== contentDigest(doc);
         } catch (error) {
           if (!(error instanceof TwildaError) || error.code !== "not-found") throw error;
         }
+        records.push({
+          id: doc.id,
+          kind: doc.kind,
+          title: doc.title,
+          slug: doc.slug,
+          branch: name,
+          updatedAt: doc.updatedAt,
+          hasUnpublishedChanges,
+        });
+      } catch (error) {
+        if (!(error instanceof TwildaError) || error.code !== "not-found") throw error;
       }
     }
     return records.sort((a, b) => a.title.localeCompare(b.title));

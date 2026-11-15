@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { unsafeLinkTargets } from "./marks";
 
 /**
  * Contract v1 content model.
@@ -23,6 +24,12 @@ const documentId = z
 
 const shortText = (max: number) => z.string().max(max);
 const requiredText = (max: number) => z.string().trim().min(1).max(max);
+
+const MARK_LINK_MESSAGE = "A link target must be an https:// or http:// address, a mailto: address, or a site path.";
+const marksOk = (value: string) => unsafeLinkTargets(value).length === 0;
+/** Text that may carry `**bold**`, `*italic*`, and `[links](https://...)`. A link with an unsafe target is refused. */
+const markText = (max: number) => requiredText(max).refine(marksOk, MARK_LINK_MESSAGE);
+const shortMarkText = (max: number) => shortText(max).refine(marksOk, MARK_LINK_MESSAGE);
 
 /** Site path (`/articles/franchise`) or absolute http(s) URL. */
 export const hrefSchema = z
@@ -60,7 +67,7 @@ export const headingBlockSchema = z.object({
 export const paragraphBlockSchema = z.object({
   id,
   type: z.literal("paragraph"),
-  text: requiredText(4000),
+  text: markText(4000),
 });
 
 export const keyFindingsBlockSchema = z.object({
@@ -99,7 +106,7 @@ export const calloutBlockSchema = z.object({
   id,
   type: z.literal("callout"),
   title: requiredText(140),
-  text: requiredText(800),
+  text: markText(800),
 });
 
 export const sourceItemSchema = z.object({
@@ -120,7 +127,7 @@ export const imageBlockSchema = z.object({
   type: z.literal("image"),
   src: imageSrcSchema,
   alt: requiredText(240),
-  caption: shortText(300),
+  caption: shortMarkText(300),
   role: z.enum(["banner", "figure"]),
 });
 
@@ -130,7 +137,7 @@ export const embedBlockSchema = z.object({
   kind: z.enum(["video", "audio"]),
   src: hrefSchema,
   title: requiredText(180),
-  caption: shortText(300),
+  caption: shortMarkText(300),
 });
 
 export const downloadBlockSchema = z.object({
@@ -169,7 +176,7 @@ export const carouselSlideSchema = z.object({
   id,
   kicker: shortText(80),
   title: requiredText(180),
-  dek: shortText(280),
+  dek: shortMarkText(280),
   href: hrefSchema,
   image: imageSrcSchema,
   imageAlt: requiredText(200),
@@ -186,7 +193,7 @@ export const storyCardSchema = z.object({
   id,
   kicker: shortText(80),
   title: requiredText(180),
-  dek: shortText(280),
+  dek: shortMarkText(280),
   href: hrefSchema,
   image: imageSrcSchema,
   imageAlt: requiredText(200),
@@ -227,7 +234,7 @@ const articleSchema = z.object({
   kind: z.literal("article"),
   title: requiredText(180),
   slug: documentId,
-  dek: shortText(500),
+  dek: shortMarkText(500),
   kicker: shortText(80),
   byline: shortText(160),
   status: z.enum(["draft", "published"]),
@@ -240,7 +247,7 @@ const pageSchema = z.object({
   kind: z.literal("page"),
   title: requiredText(180),
   slug: documentId,
-  dek: shortText(500),
+  dek: shortMarkText(500),
   kicker: shortText(80),
   status: z.enum(["draft", "published"]),
   updatedAt: z.string().datetime(),
