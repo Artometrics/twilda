@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 import vm from "node:vm";
@@ -37,12 +37,17 @@ async function bundle(entry: string, name: string) {
 }
 
 function runInBareContext(code: string, name: string): Record<string, unknown> {
-  // No process, require, Buffer, or fs: what a browser tab has.
-  const context = vm.createContext({ TextEncoder, TextDecoder });
+  // No process, require, Buffer, or fs: what a browser tab has. A tab has URL too, which link checks use.
+  const context = vm.createContext({ TextEncoder, TextDecoder, URL });
   vm.runInContext(code, context);
   return vm.runInContext(name, context) as Record<string, unknown>;
 }
 
+/**
+ * The golden files started as the output of the pre-Phase-1 site template. They were regenerated once, on
+ * purpose, when the older sections and blocks began to print an external http(s) link (they printed `#` for it)
+ * with rel="noopener noreferrer". Only anchors changed; every other byte is the same. See docs/phase1.md.
+ */
 describe("single renderer: parity with the pre-Phase-1 site template", () => {
   for (const { name, doc } of corpus()) {
     it(`${name}: production HTML is byte-identical to the golden file`, () => {
@@ -54,6 +59,14 @@ describe("single renderer: parity with the pre-Phase-1 site template", () => {
       });
     }
   }
+
+  it("no golden file links to a script, data, or protocol-relative address; an external link is a full https address with rel=noopener noreferrer", () => {
+    for (const file of readdirSync("tests/fixtures/renderer-golden")) {
+      const html = golden(file);
+      assert.doesNotMatch(html, /href="(?:\s*javascript:|\s*data:|\/\/)/i, file);
+      for (const [tag] of html.matchAll(/<a [^>]*href="https?:[^"]*"[^>]*>/g)) assert.match(tag, /rel="noopener noreferrer"/, `${file}: ${tag}`);
+    }
+  });
 
   it("the golden files were produced by the old renderer, not by this one (hostile text is escaped with &#39;)", () => {
     assert.match(golden("hostile-article.html"), /&#39;/);

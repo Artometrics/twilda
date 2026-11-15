@@ -148,7 +148,7 @@ cd packages/editor && npm test && npm run typecheck && npm run test:e2e
 
 - **No real form.** By design (see above). A lead-gen site needs an external form or booking link.
 - **No `tel:` links.** Only a bare `mailto:` is allowed besides web and site links.
-- **Existing sections still print an external link as `#`.** The old `safeHref` is site-path-only and was left alone so existing output stays byte-identical. Only the new sections use the wider link rule.
+- **Existing sections used to print an external link as `#`.** Fixed afterwards, on purpose: every section and block now prints a validated external link. See [CHANGELOG.md](CHANGELOG.md).
 - **Overlay editing is text only.** Click-to-edit changes strings. Booleans (a featured plan), lists (add or remove a person), and the one-per-line features list are edited in the desk's form.
 - **The older dev desk (`editor/`, port 5173) and the demo editor** show a hint to use the phone desk for the new parts. They do not have forms for them.
 - **A page that leads with a hero or cover story** prints that section's title as the `h1`. The document title, dek, and kicker are then metadata, so the desk copies them into the hero when a draft is created from a template.

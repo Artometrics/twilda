@@ -65,7 +65,7 @@ A page cannot contain article body blocks. An article cannot contain a page sect
 
 ## Links and images
 
-The renderer escapes text. Links must be site-relative paths such as `/articles/lumen-rail`. Other URLs, including `javascript:` and protocol-relative URLs, render as `#`. Images must be `/media/<name>.svg` files in `public/media`. The demo plates are original geometric drawings.
+The renderer escapes text. A link in any section or block may be a site path such as `/articles/lumen-rail` or an absolute `https://` or `http://` address with a host, no credentials, no spaces or quotes, and no look-alike (punycode) host. An external address prints as written with `rel="noopener noreferrer"`; a site path prints as written. Anything else, including `javascript:`, `data:`, protocol-relative (`//host`) and backslash tricks, renders as `#`. (Before the change recorded in [CHANGELOG.md](CHANGELOG.md), the older sections and blocks printed `#` for every external address; only the newer sections printed it.) Images must be `/media/<name>.svg` files in `public/media`. The demo plates are original geometric drawings.
 
 ## Site settings
 
