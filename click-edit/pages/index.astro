@@ -3,14 +3,14 @@ import fs from "node:fs";
 import path from "node:path";
 import Base from "../../src/layouts/Base.astro";
 import { readDraft } from "../../src/content/store";
-import { renderDocument, resolveChrome, serializeSite } from "@twilda/core";
+import { renderDocument, renderOptionsFor, serializeSite } from "@twilda/core";
 import { readSite } from "../../src/content/site";
 
 const doc = readDraft("home");
 if (doc.kind !== "page") throw new Error("content/home/draft.json must be a page.");
 
 const site = readSite();
-const html = renderDocument(doc, { annotate: true, chrome: resolveChrome(site, doc) });
+const html = renderDocument(doc, { annotate: true, ...renderOptionsFor(site, doc) });
 const media = fs
   .readdirSync(path.resolve("public/media"))
   .filter((name) => /^[a-z0-9-]+\.(svg|jpg|png|webp|gif)$/.test(name))

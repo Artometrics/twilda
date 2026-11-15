@@ -1,5 +1,18 @@
-import { DEFAULT_THEME, THEME_FONTS, THEME_FONT_IDS, contrastRatio, type SiteSettings, type Theme } from "@twilda/core";
-import { useId } from "react";
+import {
+  DEFAULT_THEME,
+  PRESETS,
+  PRESET_IDS,
+  THEME_FONTS,
+  THEME_FONT_IDS,
+  applyPreset,
+  chromeIsPristine,
+  contrastRatio,
+  modeOf,
+  type PresetId,
+  type SiteSettings,
+  type Theme,
+} from "@twilda/core";
+import { useId, useState } from "react";
 
 const COLOR_LABELS: Array<[keyof Theme["colors"], string]> = [
   ["paper", "Paper (page background)"],
@@ -78,6 +91,46 @@ function RangeField({
 }
 
 /**
+ * Choose a mode: a section library, theme tokens, and a default masthead, in one click. Applying
+ * one replaces the theme with that mode's, and the masthead too unless it was edited. Pages are never changed, and every
+ * token can still be edited below.
+ */
+function ModePicker({ site, busy, onChange }: { site: SiteSettings; busy: boolean; onChange: (site: SiteSettings) => void }) {
+  const current = modeOf(site);
+  const [pending, setPending] = useState<PresetId>(current);
+  const preset = PRESETS[pending];
+  return (
+    <fieldset className="mode-picker" data-testid="mode-picker">
+      <legend>Mode</legend>
+      <p className="hint" data-testid="mode-current">
+        This site is in <strong>{PRESETS[current].label}</strong> mode.
+      </p>
+      <div className="template-grid" role="radiogroup" aria-label="Mode">
+        {PRESET_IDS.map((id) => (
+          <label key={id} className={id === pending ? "template is-chosen" : "template"}>
+            <input type="radio" name="mode" value={id} data-testid={`mode-${id}`} checked={id === pending} onChange={() => setPending(id)} />
+            <span className="template-name">{PRESETS[id].label}</span>
+            <span className="template-hint">{PRESETS[id].tagline}</span>
+          </label>
+        ))}
+      </div>
+      <p className="hint" data-testid="mode-library">
+        Offers: {preset.sections.join(", ")}.
+      </p>
+      <button
+        type="button"
+        className="btn"
+        data-testid="mode-apply"
+        disabled={busy || pending === current}
+        onClick={() => onChange(applyPreset(site, pending))}
+      >
+        {pending === current ? "Current mode" : chromeIsPristine(site) ? `Switch to ${preset.label}: replace theme and masthead` : `Switch to ${preset.label}: replace theme, keep my masthead`}
+      </button>
+    </fieldset>
+  );
+}
+
+/**
  * Theme tokens and the masthead. Every control writes one value from a closed list or a
  * bounded range, and the page beside it repaints as you drag. Nothing typed here reaches a
  * stylesheet as free text. The settings are one file in git, `content/site.json`.
@@ -111,6 +164,7 @@ export function ThemePanel({
         <p>Colors, fonts, type scale, and spacing for every page. The page shows the change as you make it. Publishing opens a pull request that changes one file, content/site.json.</p>
       </header>
       <div className="theme-body">
+        <ModePicker site={site} busy={busy} onChange={onChange} />
         <h3>Colors</h3>
         {COLOR_LABELS.map(([key, label]) => (
           <ColorField key={key} label={label} value={theme.colors[key]} testId={`theme-color-${key}`} onChange={(value) => setColor(key, value)} />

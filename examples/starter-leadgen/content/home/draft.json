@@ -1,0 +1,119 @@
+{
+  "id": "home",
+  "kind": "page",
+  "title": "Launchpad: get your first ten customers",
+  "slug": "home",
+  "dek": "A free two-week program for founders who have a product and no customers yet.",
+  "kicker": "Home",
+  "status": "draft",
+  "updatedAt": "2026-11-15T00:00:00.000Z",
+  "sections": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "kicker": "Free two-week program",
+      "title": "Get your first ten customers in fourteen days",
+      "dek": "A daily email and one short call a week. No slides, no upsell. Starts the first Monday of every month.",
+      "primaryLabel": "Save my seat",
+      "primaryHref": "/#start",
+      "secondaryLabel": "See the results",
+      "secondaryHref": "/#proof",
+      "image": "/media/plate-carriage.svg",
+      "imageAlt": "Geometric plate: a carriage on a rail"
+    },
+    {
+      "id": "benefits",
+      "type": "feature-grid",
+      "kicker": "Why it works",
+      "heading": "Three things you get",
+      "intro": "",
+      "items": [
+        {
+          "id": "b1",
+          "label": "Daily",
+          "title": "One task a day",
+          "text": "A single email each morning with one task that takes under an hour."
+        },
+        {
+          "id": "b2",
+          "label": "Weekly",
+          "title": "A short call",
+          "text": "Twenty minutes with a founder who has done it, to unstick the week."
+        },
+        {
+          "id": "b3",
+          "label": "Always",
+          "title": "A private group",
+          "text": "Forty founders at your stage, sharing what worked."
+        }
+      ]
+    },
+    {
+      "id": "proof",
+      "type": "social-proof",
+      "kicker": "Results",
+      "heading": "What past cohorts did",
+      "intro": "Numbers from the last four cohorts, self-reported by founders.",
+      "stats": [
+        {
+          "id": "s1",
+          "value": "312",
+          "label": "founders took part"
+        },
+        {
+          "id": "s2",
+          "value": "74%",
+          "label": "reached ten customers"
+        },
+        {
+          "id": "s3",
+          "value": "14",
+          "label": "days, start to finish"
+        }
+      ],
+      "brands": [
+        "Kettle & Oar",
+        "Northline",
+        "Paper Mile",
+        "Fieldnote",
+        "Harbor Labs"
+      ]
+    },
+    {
+      "id": "voices",
+      "type": "testimonials",
+      "kicker": "In their words",
+      "heading": "Founders on the program",
+      "intro": "",
+      "items": [
+        {
+          "id": "v1",
+          "quote": "I had been stuck for six months. By day nine I had four paying customers.",
+          "name": "Amara Neal",
+          "role": "Founder, Paper Mile"
+        },
+        {
+          "id": "v2",
+          "quote": "The daily task was small enough that I never skipped a day.",
+          "name": "Leo Brandt",
+          "role": "Founder, Fieldnote"
+        }
+      ]
+    },
+    {
+      "id": "start",
+      "type": "cta",
+      "kicker": "Next cohort",
+      "heading": "Save your seat for the next cohort",
+      "text": "Seats are free and limited to forty. Tell us where to send the first email.",
+      "buttonLabel": "Join the waitlist",
+      "buttonHref": "https://forms.example.com/launchpad",
+      "asks": [
+        "Your name",
+        "Your email",
+        "What you are building"
+      ],
+      "note": "No spam. One email a day for fourteen days, then nothing unless you ask."
+    }
+  ]
+}

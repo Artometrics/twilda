@@ -7,6 +7,7 @@ import siteText from "virtual:twilda-site";
 import {
   SITE_PATH,
   defaultSite,
+  modeOf,
   parseSite,
   serializeSite,
   type MergeChoice,
@@ -464,6 +465,7 @@ export function App({
         {draft.kind === "article" ? (
           <BlockEditor
             doc={draft}
+            mode={modeOf(site)}
             media={state.media}
             onChange={(block) => dispatch({ type: "update-block", block })}
             onAdd={(block) => dispatch({ type: "add-block", block })}
@@ -474,6 +476,7 @@ export function App({
         ) : (
           <SectionEditor
             doc={draft}
+            mode={modeOf(site)}
             onChange={(section) => dispatch({ type: "update-section", section })}
             onAdd={(section) => dispatch({ type: "add-section", section })}
             onRemove={(id) => dispatch({ type: "remove-section", id })}
@@ -658,7 +661,7 @@ export function App({
         />
       ) : null}
 
-      {creating ? <NewDraftSheet onCreate={(values) => void createNew(values)} onClose={closeCreating} /> : null}
+      {creating ? <NewDraftSheet mode={modeOf(site)} onCreate={(values) => void createNew(values)} onClose={closeCreating} /> : null}
 
       {state.confirm ? (
         <Modal title={confirmTitle(state.confirm)} testId="confirm-dialog" onClose={dismissConfirm}>

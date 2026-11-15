@@ -1,0 +1,16 @@
+---
+import Base from "../layouts/Base.astro";
+import { loadSite } from "twilda:content";
+
+const site = loadSite();
+---
+
+<Base title={`Not found · ${site.chrome.name}`} description="That page does not exist.">
+  <div class="magazine">
+    <header class="issue-intro">
+      <p class="kicker">404</p>
+      <h1>Page not found</h1>
+      <p><a class="more" href="/">Back to the home page</a></p>
+    </header>
+  </div>
+</Base>

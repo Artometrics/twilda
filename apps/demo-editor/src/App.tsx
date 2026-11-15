@@ -6,6 +6,7 @@ import type { TwildaEditorApi } from "../../../packages/core/src/editor-api";
 import { TwildaError } from "../../../packages/core/src/errors";
 import { BLOCK_LABELS, BLOCK_TYPES, SECTION_LABELS, type Block, type BlockType, type PageSection, type PageSectionType, type TwildaDocument } from "../../../packages/core/src/schema";
 import { openBrowserDemo } from "../../../packages/core/src/browser-demo";
+import { createBlock, createSection } from "../../../packages/core/src/library";
 
 type View = "edit" | "media" | "preview" | "publish";
 
@@ -40,10 +41,8 @@ function blankBlock(type: BlockType): Block {
       return { id: nid("embed"), type, kind: "audio", src: "https://artometrics.com/franchise", title: "Audio", caption: "" };
     case "download":
       return { id: nid("download"), type, href: "/data/franchise-revenue-mix.csv", label: "Download", description: "" };
-    default: {
-      const exhaustive: never = type;
-      throw new Error(exhaustive);
-    }
+    default:
+      return createBlock(type);
   }
 }
 
@@ -85,12 +84,15 @@ function blankSection(type: PageSectionType): PageSection {
       ],
     };
   }
-  return {
-    id: nid("shelf"),
-    type: "menu-shelf",
-    heading: "Menu",
-    items: [{ id: nid("item"), label: "Arts", href: "/topics/arts", dek: "" }],
-  };
+  if (type === "menu-shelf") {
+    return {
+      id: nid("shelf"),
+      type,
+      heading: "Menu",
+      items: [{ id: nid("item"), label: "Arts", href: "/topics/arts", dek: "" }],
+    };
+  }
+  return createSection(type);
 }
 
 function messageOf(error: unknown): string {
@@ -570,6 +572,9 @@ function BlockFields({ block, onChange }: { block: Block; onChange: (block: Bloc
       </>
     );
   }
+  if (block.type === "fast-facts" || block.type === "pull-quote" || block.type === "bar-chart") {
+    return <p className="hint">This block is edited in the desk.</p>;
+  }
   if (block.type === "sources") {
     return (
       <>
@@ -609,6 +614,7 @@ function SectionFields({ section, onChange }: { section: PageSection; onChange: 
       </>
     );
   }
+  if (section.type !== "menu-shelf") return <p className="hint">This section is edited in the desk.</p>;
   return (
     <>
       <input value={section.heading} onChange={(event) => onChange({ ...section, heading: event.target.value })} />

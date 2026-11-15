@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "mode": "leadgen",
+  "chrome": {
+    "name": "Launchpad",
+    "issueLabel": "",
+    "note": "",
+    "nav": [
+      {
+        "label": "Benefits",
+        "href": "/#benefits"
+      },
+      {
+        "label": "Results",
+        "href": "/#proof"
+      },
+      {
+        "label": "Get started",
+        "href": "/#start"
+      }
+    ],
+    "colophon": "Launchpad is a fictional offer. This demo landing page ships with Twilda CMS so it can be tried without touching a live campaign."
+  },
+  "templates": {},
+  "documents": {},
+  "theme": {
+    "colors": {
+      "paper": "#fff8ee",
+      "ink": "#1b1b1f",
+      "muted": "#4b4b55",
+      "hair": "#eadfce",
+      "kicker": "#b93a0b",
+      "plate": "#5b1e08"
+    },
+    "fonts": {
+      "heading": "humanist",
+      "body": "system-sans"
+    },
+    "baseSize": 17.5,
+    "headingScale": 0.9,
+    "spacing": 1.2
+  }
+}

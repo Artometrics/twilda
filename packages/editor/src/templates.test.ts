@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { documentSchema, renderDocument } from "@twilda/core";
-import { DRAFT_TEMPLATES, createFromTemplate, templatesFor } from "./templates";
+import { DRAFT_TEMPLATES, createFromTemplate, templatesFor, templatesForMode } from "./templates";
 
 describe("draft templates", () => {
   for (const template of DRAFT_TEMPLATES) {
@@ -43,5 +43,28 @@ describe("draft templates", () => {
     assert.ok(templatesFor("article").length >= 3);
     assert.ok(templatesFor("page").length >= 2);
     assert.throws(() => createFromTemplate({ templateId: "nope", title: "x" }), /Unknown template/);
+  });
+
+  it("a page that opens with a hero puts the typed title, kicker, and dek in the hero, which carries the h1", () => {
+    const doc = createFromTemplate({ templateId: "landing-page", title: "Ship It", kicker: "New", dek: "A short pitch." });
+    if (doc.kind !== "page") throw new Error("page expected");
+    const lead = doc.sections[0];
+    assert.equal(lead?.type, "hero");
+    if (lead?.type === "hero") assert.deepEqual([lead.title, lead.kicker, lead.dek], ["Ship It", "New", "A short pitch."]);
+    assert.equal((renderDocument(doc).match(/<h1[ >]/g) ?? []).length, 1);
+  });
+
+  it("each mode offers its own starting points, and every template belongs to at least one mode", () => {
+    const ids = (mode: "corporate" | "magazine" | "leadgen", kind: "article" | "page") => templatesForMode(mode).filter((template) => template.kind === kind).map((template) => template.id);
+    assert.ok(ids("corporate", "page").includes("company-home"));
+    assert.ok(ids("leadgen", "page").includes("landing-page"));
+    assert.ok(ids("magazine", "page").includes("cover-front"));
+    assert.equal(ids("corporate", "page").includes("front-page"), false);
+    for (const template of DRAFT_TEMPLATES) {
+      assert.ok((["corporate", "magazine", "leadgen"] as const).some((mode) => ids(mode, template.kind).includes(template.id)), template.id);
+    }
+    for (const mode of ["corporate", "magazine", "leadgen"] as const) {
+      for (const kind of ["article", "page"] as const) assert.ok(ids(mode, kind).length >= 1, `${mode} ${kind}`);
+    }
   });
 });

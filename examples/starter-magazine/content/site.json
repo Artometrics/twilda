@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "mode": "magazine",
+  "chrome": {
+    "name": "The Harrow Ledger",
+    "issueLabel": "Issue 01",
+    "note": "A fictional newsroom that ships with Twilda CMS so the editor can be tried without touching a live publication.",
+    "nav": [
+      {
+        "label": "Home",
+        "href": "/"
+      },
+      {
+        "label": "Cover story",
+        "href": "/articles/parking-tickets"
+      }
+    ],
+    "colophon": "The Harrow Ledger is a fictional publication. Its stories and numbers are made up for this demo."
+  },
+  "templates": {},
+  "documents": {},
+  "theme": {
+    "colors": {
+      "paper": "#f3efe4",
+      "ink": "#1a1714",
+      "muted": "#5c564c",
+      "hair": "#d4cbb8",
+      "kicker": "#9d2b1f",
+      "plate": "#243126"
+    },
+    "fonts": {
+      "heading": "newsreader",
+      "body": "public-sans"
+    },
+    "baseSize": 17,
+    "headingScale": 1,
+    "spacing": 1
+  }
+}

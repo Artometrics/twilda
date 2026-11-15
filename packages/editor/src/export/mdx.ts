@@ -232,6 +232,27 @@ function renderBlock(ctx: Context, block: Block): string {
       const link = href ? `[${escapeText(label)}](${encodeDestination(href)})` : escapeText(label);
       return `**Download:** ${link}${description ? ` — ${escapeText(description)}` : ""}`;
     }
+    case "fast-facts": {
+      const facts = block.facts.filter((fact) => fact.value.trim() || fact.label.trim());
+      if (facts.length === 0) return "";
+      const head = block.title.trim() ? `### ${escapeText(oneLine(block.title))}\n\n` : "";
+      return `${head}${facts.map((fact) => `- **${escapeText(oneLine(fact.value))}** ${escapeText(oneLine(fact.label))}`).join("\n")}`;
+    }
+    case "pull-quote": {
+      const quote = oneLine(block.quote);
+      if (!quote) return "";
+      const who = oneLine(block.attribution);
+      return who ? `> ${escapeText(quote)}\n>\n> — ${escapeText(who)}` : `> ${escapeText(quote)}`;
+    }
+    case "bar-chart": {
+      const bars = block.bars.filter((bar) => bar.label.trim());
+      if (bars.length === 0) return "";
+      const unit = oneLine(block.unit);
+      const head = `**${escapeText(oneLine(block.title) || "Chart")}.** ${escapeText(oneLine(block.alt))}`.trim();
+      const table = ["| Label | Value |", "| --- | --- |", ...bars.map((bar) => `| ${escapeText(oneLine(bar.label))} | ${escapeText(oneLine(bar.value))}${unit ? ` ${escapeText(unit)}` : ""} |`)];
+      const caption = oneLine(block.caption);
+      return [head, table.join("\n"), caption ? `*${escapeText(caption)}*` : ""].filter(Boolean).join("\n\n");
+    }
     default: {
       const exhaustive: never = block;
       throw new Error(`Unknown block ${String(exhaustive)}`);

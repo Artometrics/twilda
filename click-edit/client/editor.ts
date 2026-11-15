@@ -6,7 +6,7 @@ import {
   emptyHistory,
   recordChange,
   redo,
-  resolveChrome,
+  renderOptionsFor,
   undo,
   type History,
   type MergeChoice,
@@ -78,7 +78,7 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
     h("div", { class: "twilda-actions" }, undoButton, redoButton, structureButton, outlinesButton, resetButton, publishButton),
   );
 
-  const chromeFor = (value: TwildaDocument) => ({ chrome: resolveChrome(site, value) });
+  const chromeFor = (value: TwildaDocument) => renderOptionsFor(site, value);
 
   function showUploads(scope: HTMLElement) {
     for (const img of scope.querySelectorAll<HTMLImageElement>("img[src^='/media/']")) {

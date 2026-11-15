@@ -8,7 +8,7 @@ export { renderDocument, renderPreviewPage } from "@twilda/core";
 
 export interface TwildaOptions {
   /**
-   * Directory of `articles/*.json` and `pages/*.json`.
+   * Directory of `<id>/published.json` documents and `site.json`.
    * Absolute, or relative to the Astro project root. Default: `content`.
    */
   contentDir?: string;
@@ -19,7 +19,8 @@ export interface TwildaOptions {
  *
  * - Refuses any output other than `static`, so the editor cannot ride along on SSR.
  * - Resolves the content directory and exposes it as `__TWILDA_CONTENT__`.
- * - Adds the `twilda:content` module: `loadPublished()` and `renderDocument`.
+ * - Adds the `twilda:content` module: `loadPublished()`, `loadSite()`, `renderDocument`,
+ *   `renderOptionsFor`, and `themeCss`.
  *
  * Pages stay responsible for HTML. This does not add an adapter or a route.
  */
@@ -62,13 +63,16 @@ function contentModule(contentDir: string): Plugin {
     load(id) {
       if (id !== resolved) return null;
       return `
-        import { renderDocument } from "@twilda/core";
-        import { loadContentTree } from "@twilda/core/node";
+        import { renderDocument, renderOptionsFor, themeCss } from "@twilda/core";
+        import { loadContentTree, readSiteFile } from "@twilda/core/node";
         export const contentDir = ${JSON.stringify(contentDir)};
         export function loadPublished() {
           return loadContentTree(contentDir);
         }
-        export { renderDocument };
+        export function loadSite() {
+          return readSiteFile(contentDir);
+        }
+        export { renderDocument, renderOptionsFor, themeCss };
       `;
     },
   };
