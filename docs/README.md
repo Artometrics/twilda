@@ -20,6 +20,7 @@ Twilda has two editors. They do not share a process.
 | [forms-and-crm.md](forms-and-crm.md) | Setting a form up and sending it to Formspree, Basin, Netlify, Zapier, Make, HubSpot, Airtable, or Sheets |
 | [phase4.md](phase4.md) | Modes and presets (corporate, magazine, lead generation), eleven new prepared sections, three new article blocks, starters, `create-twilda`, and what was checked |
 | [choose-a-mode.md](choose-a-mode.md) | Which mode to pick, what each includes, and how to switch in the desk |
+| [CHANGELOG.md](CHANGELOG.md) | Deliberate changes to rendered output, with the reason |
 | [security.md](security.md) | Architecture, trust boundaries, token handling, what Twilda does and does not protect, remaining risks |
 
 The production site is still `npm run build`. Output is `dist/`. The phone demo is `npm run build:demo`. Output is `demo-dist/`. Do not point either build at an existing Artometrics or Twilda hosting project.

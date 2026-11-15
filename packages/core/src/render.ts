@@ -107,7 +107,7 @@ function renderCarousel(ctx: Ctx, base: string, section: Extract<PageSection, { 
   const slides = section.slides
     .map((slide, i) => {
       const at = `${base}.slides.${i}`;
-      return `<a class="slide" href="${escapeHtml(safeHref(slide.href))}">
+      return `<a class="slide" href="${escapeHtml(linkHref(slide.href))}"${linkRel(slide.href)}>
         ${plate(ctx, `${at}.image`, `${at}.imageAlt`, slide.image, slide.imageAlt)}
         <p class="kicker"${text(ctx, `${at}.kicker`)}>${escapeHtml(slide.kicker)}</p>
         <h2${text(ctx, `${at}.title`)}>${escapeHtml(slide.title)}</h2>
@@ -126,7 +126,7 @@ function renderStoryGrid(ctx: Ctx, base: string, section: Extract<PageSection, {
     .map((story, i) => {
       const at = `${base}.stories.${i + 1}`;
       return `<li>
-        <a href="${escapeHtml(safeHref(story.href))}">
+        <a href="${escapeHtml(linkHref(story.href))}"${linkRel(story.href)}>
           ${plate(ctx, `${at}.image`, `${at}.imageAlt`, story.image, story.imageAlt)}
           <p class="kicker"${text(ctx, `${at}.kicker`)}>${escapeHtml(story.kicker)}</p>
           <h3${text(ctx, `${at}.title`)}>${escapeHtml(story.title)}</h3>
@@ -140,7 +140,7 @@ function renderStoryGrid(ctx: Ctx, base: string, section: Extract<PageSection, {
     <p class="kicker"${text(ctx, `${base}.kicker`)}>${escapeHtml(section.kicker)}</p>
     <h2${text(ctx, `${base}.heading`)}>${escapeHtml(section.heading)}</h2>
     <div class="story-grid">
-      <a class="lead" href="${escapeHtml(safeHref(lead.href))}">
+      <a class="lead" href="${escapeHtml(linkHref(lead.href))}"${linkRel(lead.href)}>
         ${plate(ctx, `${leadAt}.image`, `${leadAt}.imageAlt`, lead.image, lead.imageAlt)}
         <p class="kicker"${text(ctx, `${leadAt}.kicker`)}>${escapeHtml(lead.kicker)}</p>
         <h2${text(ctx, `${leadAt}.title`)}>${escapeHtml(lead.title)}</h2>
@@ -155,7 +155,7 @@ function renderMenu(ctx: Ctx, base: string, section: Extract<PageSection, { type
   const items = section.items
     .map(
       (item, i) => `<li>
-        <a href="${escapeHtml(safeHref(item.href))}">
+        <a href="${escapeHtml(linkHref(item.href))}"${linkRel(item.href)}>
           <span class="fact-label"${text(ctx, `${base}.items.${i}.label`)}>${escapeHtml(item.label)}</span>
           <span class="fact-value"${text(ctx, `${base}.items.${i}.dek`)}>${escapeHtml(item.dek)}</span>
         </a>
@@ -166,6 +166,23 @@ function renderMenu(ctx: Ctx, base: string, section: Extract<PageSection, { type
     <h2${text(ctx, `${base}.heading`)}>${escapeHtml(section.heading)}</h2>
     <ol class="facts">${items}</ol>
   </section>`;
+}
+
+/**
+ * Target for a link in the older sections and blocks (slides, stories, lists, sources, downloads, embeds,
+ * the chart data link). A site path or an http(s) address, which is what `hrefSchema` allows and what the
+ * newer sections already print; anything else prints `#`. Site-path links print exactly as before.
+ */
+function linkHref(raw: string): string {
+  const site = safeHref(raw);
+  if (site !== "#") return site;
+  const trimmed = raw.trim();
+  return isWebUrl(trimmed) ? trimmed : "#";
+}
+
+/** An external address opens with no referrer and no opener; a site path needs neither. */
+function linkRel(raw: string): string {
+  return /^https?:/i.test(linkHref(raw)) ? ' rel="noopener noreferrer"' : "";
 }
 
 /** `href` text for a button or contact line, or null. Site paths, http(s) addresses, and bare `mailto:` only. */
@@ -644,8 +661,8 @@ function renderImage(ctx: Ctx, base: string, block: Extract<Block, { type: "imag
 }
 
 function renderChart(ctx: Ctx, base: string, block: Extract<Block, { type: "chart" }>): string {
-  const href = block.dataPath.startsWith("http://") || block.dataPath.startsWith("https://") ? safeHref(block.dataPath) : "";
-  const link = href ? `<p><a href="${escapeHtml(href)}">Open the chart</a></p>` : `<p class="dek">${escapeHtml(block.dataPath)}</p>`;
+  const href = block.dataPath.startsWith("http://") || block.dataPath.startsWith("https://") ? linkHref(block.dataPath) : "";
+  const link = href ? `<p><a href="${escapeHtml(href)}"${linkRel(href)}>Open the chart</a></p>` : `<p class="dek">${escapeHtml(block.dataPath)}</p>`;
   const csv = ctx.dataFiles[block.dataPath];
   const table = csv ? csvTable(csv) : "";
   return `<figure class="figure chart" id="${escapeHtml(block.id)}"${node(ctx, base, "chart")}>
@@ -660,7 +677,7 @@ function renderSources(ctx: Ctx, base: string, block: Extract<Block, { type: "so
   const items = block.items
     .map(
       (item, i) =>
-        `<li><a href="${escapeHtml(safeHref(item.href))}"${text(ctx, `${base}.items.${i}.label`)}>${escapeHtml(item.label)}</a></li>`,
+        `<li><a href="${escapeHtml(linkHref(item.href))}"${linkRel(item.href)}${text(ctx, `${base}.items.${i}.label`)}>${escapeHtml(item.label)}</a></li>`,
     )
     .join("");
   return `<section class="sources" id="${escapeHtml(block.id)}"${node(ctx, base, "sources")}><h2${text(ctx, `${base}.title`)}>${escapeHtml(block.title)}</h2><ol>${items}</ol></section>`;
@@ -683,11 +700,11 @@ function renderEmbed(ctx: Ctx, base: string, block: Extract<Block, { type: "embe
     ctx.annotate && block.kind === "video"
       ? ` data-twilda-ref="${escapeHtml(`${base}.src`)}" data-twilda-type="video" data-twilda-alt-ref="${escapeHtml(`${base}.title`)}"`
       : "";
-  return `<p class="embed" id="${escapeHtml(block.id)}"${node(ctx, base, "embed")}${slot}><a href="${escapeHtml(safeHref(block.src))}">${escapeHtml(label)}: ${escapeHtml(block.title)}</a>${caption}</p>`;
+  return `<p class="embed" id="${escapeHtml(block.id)}"${node(ctx, base, "embed")}${slot}><a href="${escapeHtml(linkHref(block.src))}"${linkRel(block.src)}>${escapeHtml(label)}: ${escapeHtml(block.title)}</a>${caption}</p>`;
 }
 
 function renderDownload(ctx: Ctx, base: string, block: Extract<Block, { type: "download" }>): string {
-  return `<p class="download" id="${escapeHtml(block.id)}"${node(ctx, base, "download")}><a href="${escapeHtml(safeHref(block.href))}"${text(ctx, `${base}.label`)}>${escapeHtml(block.label)}</a>${block.description ? ` — ${escapeHtml(block.description)}` : ""}</p>`;
+  return `<p class="download" id="${escapeHtml(block.id)}"${node(ctx, base, "download")}><a href="${escapeHtml(linkHref(block.href))}"${linkRel(block.href)}${text(ctx, `${base}.label`)}>${escapeHtml(block.label)}</a>${block.description ? ` — ${escapeHtml(block.description)}` : ""}</p>`;
 }
 
 function renderBlock(ctx: Ctx, block: Block, index: number): string {
