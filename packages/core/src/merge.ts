@@ -77,8 +77,9 @@ function describe(key: string, ours: Json, theirs: Json): string {
 }
 
 function conflict(ctx: Ctx, key: string, base: Json, ours: Json, theirs: Json): Json {
-  ctx.conflicts.push({ key, label: describe(key, ctx.ours, ctx.theirs), base, ours, theirs });
-  return ctx.decisions[key] === "theirs" ? theirs : ours;
+  const decision = ctx.decisions[key];
+  if (!decision) ctx.conflicts.push({ key, label: describe(key, ctx.ours, ctx.theirs), base, ours, theirs });
+  return decision === "theirs" ? theirs : ours;
 }
 
 function mergeOrder(ctx: Ctx, key: string, base: string[], ours: string[], theirs: string[], hasBase: boolean): string[] {
