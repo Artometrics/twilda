@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/*.test.ts src/*/*.test.ts",
     "test:e2e": "playwright test",
+    "test:e2e:csp": "playwright test --config playwright.csp.config.ts",
     "icons": "node scripts/icons.mjs"
   },
   "dependencies": {

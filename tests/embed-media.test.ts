@@ -86,12 +86,12 @@ describe("video allowlist", () => {
     const config = JSON.parse(readFileSync("firebase.json", "utf8")) as { hosting: Array<{ site?: string; target?: string; headers: Array<{ headers: Array<{ key: string; value: string }> }> }> };
     for (const entry of config.hosting.filter((item) => item.site === "twilda-510519" || item.target === "twilda-desk")) {
       const csp = entry.headers[0]?.headers.find((header) => header.key === "Content-Security-Policy")?.value ?? "";
-      const frame = /frame-src ([^;]+)/.exec(csp)?.[1]?.split(" ").sort();
+      const frame = /frame-src ([^;]+)/.exec(csp)?.[1]?.split(" ").filter((source) => source !== "'self'").sort();
       assert.deepEqual(frame, [...EMBED_FRAME_HOSTS].sort(), entry.site ?? entry.target);
       assert.doesNotMatch(csp, /frame-src[^;]*\*/);
     }
     const www = config.hosting.find((item) => item.target === "www");
-    assert.doesNotMatch(JSON.stringify(www), /frame-src/);
+    assert.match(JSON.stringify(www), /frame-src 'none'/);
   });
 
   it("applyVideoChoice stores the rebuilt watch address, not the pasted text", () => {

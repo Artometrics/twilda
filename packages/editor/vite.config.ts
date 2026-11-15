@@ -55,6 +55,29 @@ function twildaSite(): Plugin {
   };
 }
 
+const FIREBASE_JSON = fileURLToPath(new URL("../../firebase.json", import.meta.url));
+
+/**
+ * The headers Firebase Hosting sends for the desk (`firebase.json`, target `twilda-desk`), so
+ * `vite preview` and the CSP browser test run under the policy that is deployed. `vite dev`
+ * is not given the policy: its hot-reload client injects inline script.
+ */
+export function deskHeaders(): Record<string, string> {
+  const config = JSON.parse(readFileSync(FIREBASE_JSON, "utf8")) as {
+    hosting: Array<{ target?: string; headers?: Array<{ source: string; headers: Array<{ key: string; value: string }> }> }>;
+  };
+  const desk = config.hosting.find((entry) => entry.target === "twilda-desk");
+  const all = desk?.headers?.find((entry) => entry.source === "**");
+  // `upgrade-insecure-requests` would make WebKit try https for a local http server, so it is the one directive left out.
+  const local = (header: { key: string; value: string }) =>
+    header.key === "Content-Security-Policy" ? header.value.replace(/;\s*upgrade-insecure-requests/, "") : header.value;
+  return Object.fromEntries(
+    (all?.headers ?? [])
+      .filter((header) => header.key !== "Cache-Control" && header.key !== "Strict-Transport-Security")
+      .map((header) => [header.key, local(header)]),
+  );
+}
+
 /**
  * Standalone desk. `astro build` does not load this config, and the Astro
  * site never imports this package, so the production `dist/` stays the
@@ -74,6 +97,7 @@ export default defineConfig({
     host: "127.0.0.1",
     port: 5174,
     strictPort: true,
+    headers: deskHeaders(),
   },
   build: {
     outDir: "dist",
