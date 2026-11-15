@@ -5,6 +5,7 @@ import { renderMarks, type MarksLevel } from "./marks";
 import { parseVideoUrl } from "./embed";
 import { isMailto, isSafeHref, isSitePath, isWebUrl } from "./url";
 import type { PresetId } from "./modes";
+import { FORM_FIELD_MAX, formFieldNames, isFormEndpoint, type FormFieldKind, type FormsConfig } from "./forms";
 
 export { escapeHtml, safeHref, safeMedia } from "./escape";
 
@@ -49,9 +50,15 @@ export interface RenderOptions {
    * print the same markup, so a site that never chose a mode renders exactly as before.
    */
   mode?: PresetId;
+  /**
+   * The site's form settings (`forms` in `site.json`). A form section is a working form only when this
+   * is present, valid, and `annotate` is off. Otherwise the same markup prints inert: fields disabled,
+   * no `action`, and no script, so a preview or an unconnected site can never post anywhere.
+   */
+  forms?: FormsConfig;
 }
 
-type Ctx = { annotate: boolean; dataFiles: Record<string, string> };
+type Ctx = { annotate: boolean; dataFiles: Record<string, string>; forms: FormsConfig | null };
 
 type FieldType = "text" | "multiline";
 
@@ -329,6 +336,111 @@ function renderCta(ctx: Ctx, base: string, section: Extract<PageSection, { type:
   </section>`;
 }
 
+const INPUT_TYPE: Record<FormFieldKind, { type: string; autocomplete: string; inputmode?: string }> = {
+  name: { type: "text", autocomplete: "name" },
+  email: { type: "email", autocomplete: "email", inputmode: "email" },
+  phone: { type: "tel", autocomplete: "tel", inputmode: "tel" },
+  company: { type: "text", autocomplete: "organization" },
+  message: { type: "text", autocomplete: "off" },
+  text: { type: "text", autocomplete: "off" },
+  consent: { type: "checkbox", autocomplete: "off" },
+};
+
+/** The script a connected form loads. One external file served by the site itself, never inline. */
+export const FORMS_SCRIPT_PATH = "/twilda-forms.js";
+
+function renderFormField(ctx: Ctx, base: string, section: Extract<PageSection, { type: "form" }>, index: number, name: string): string {
+  const field = section.fields[index];
+  if (!field) return "";
+  const at = `${base}.fields.${index}`;
+  const fieldId = `${section.id}-${field.id}`;
+  const hintId = `${fieldId}-hint`;
+  const errId = `${fieldId}-err`;
+  const showHint = field.hint !== "" || ctx.annotate;
+  const describedBy = `${showHint ? `${hintId} ` : ""}${errId}`;
+  const req = field.required ? ' required aria-required="true"' : "";
+  const mark = field.required ? '<span class="form-req" aria-hidden="true"> *</span>' : "";
+  const label = `<label class="form-label" for="${escapeHtml(fieldId)}"><span${text(ctx, `${at}.label`)}>${escapeHtml(field.label)}</span>${mark}</label>`;
+  const hint = showHint ? `<p class="form-hint" id="${escapeHtml(hintId)}"${text(ctx, `${at}.hint`)}>${escapeHtml(field.hint)}</p>` : "";
+  const error = `<p class="form-error" id="${escapeHtml(errId)}" hidden></p>`;
+  const max = FORM_FIELD_MAX[field.kind];
+  const common = `id="${escapeHtml(fieldId)}" name="${name}" data-tf-kind="${field.kind}" maxlength="${max}" aria-describedby="${escapeHtml(describedBy)}"`;
+  if (field.kind === "consent") {
+    return `<div class="form-row form-row-consent">
+        <input class="form-check" type="checkbox" id="${escapeHtml(fieldId)}" name="${name}" value="yes" data-tf-kind="consent" aria-describedby="${escapeHtml(describedBy)}"${req} />
+        ${label}
+        ${hint}${error}
+      </div>`;
+  }
+  const control =
+    field.kind === "message"
+      ? `<textarea class="form-input form-textarea" ${common} rows="5" autocomplete="off"${req}></textarea>`
+      : `<input class="form-input" type="${INPUT_TYPE[field.kind].type}" ${common} autocomplete="${INPUT_TYPE[field.kind].autocomplete}"${INPUT_TYPE[field.kind].inputmode ? ` inputmode="${INPUT_TYPE[field.kind].inputmode}"` : ""}${req} />`;
+  return `<div class="form-row form-row-${field.kind}">
+        ${label}
+        ${hint}
+        ${control}
+        ${error}
+      </div>`;
+}
+
+/**
+ * A form. Integrate-only: when the site has a valid `forms.endpoint` the form posts there and nowhere
+ * else, and Twilda keeps nothing. Without one (or while editing) it prints inert, so it cannot post.
+ * Every string is escaped, every name and id is derived from validated data, and there is no inline
+ * script, handler, or style. The honeypot (`_hp`) and the time trap (`_elapsed_ms`, added by the page's
+ * script) are the spam checks; the receiver should repeat both.
+ */
+function renderForm(ctx: Ctx, base: string, section: Extract<PageSection, { type: "form" }>): string {
+  const live = ctx.forms !== null && !ctx.annotate;
+  const names = formFieldNames(section.fields);
+  const fields = section.fields.map((_, index) => renderFormField(ctx, base, section, index, names[index] as string)).join("\n      ");
+  const hiddenFields = live
+    ? Object.entries((ctx.forms as FormsConfig).hidden)
+        .map(([key, value]) => `<input type="hidden" name="${escapeHtml(key)}" value="${escapeHtml(value)}" />`)
+        .join("")
+    : "";
+  const trap = `<div class="form-trap" aria-hidden="true"><label>Leave this field empty<input type="text" name="_hp" tabindex="-1" autocomplete="off" value="" /></label></div>`;
+  const attrs = live
+    ? ` method="post" action="${escapeHtml((ctx.forms as FormsConfig).endpoint)}" accept-charset="utf-8" data-tf data-tf-mode="${(ctx.forms as FormsConfig).mode}" data-tf-format="${(ctx.forms as FormsConfig).format}"`
+    : "";
+  const notice =
+    live || ctx.annotate ? "" : '<p class="form-note" role="note">This form is not connected yet. Add your form address to content/site.json.</p>';
+  const privacy = section.privacy
+    ? `<p class="form-privacy"${text(ctx, `${base}.privacy`, "text", "links")}>${renderMarks(section.privacy, "links")}</p>`
+    : ctx.annotate
+      ? `<p class="form-privacy"${text(ctx, `${base}.privacy`, "text", "links")}></p>`
+      : "";
+  const script = live ? `<script src="${FORMS_SCRIPT_PATH}" defer></script>` : "";
+  const hiddenAttr = ctx.annotate ? "" : " hidden";
+  return `<section class="section form-section form-${section.variant}" id="${escapeHtml(section.id)}"${node(ctx, base, "form")}>
+    ${sectionHead(ctx, base, section)}
+    <div class="form-card">
+      ${notice}
+      <form class="lead-form"${attrs}>
+        <fieldset class="form-fields"${live ? "" : " disabled"}>
+          <legend class="form-legend">${escapeHtml(section.heading)}</legend>
+          ${fields}
+          <input type="hidden" name="_form" value="${escapeHtml(section.id)}" />
+          ${hiddenFields}
+          ${trap}
+          <button class="btn btn-primary form-submit" type="submit"${text(ctx, `${base}.submitLabel`)}>${escapeHtml(section.submitLabel)}</button>
+        </fieldset>
+      </form>
+      <p class="form-error form-summary" role="alert" hidden></p>
+      ${privacy}
+      <div class="form-status form-success" role="status" tabindex="-1"${hiddenAttr}>
+        <h3${text(ctx, `${base}.successTitle`)}>${escapeHtml(section.successTitle)}</h3>
+        <p${text(ctx, `${base}.successText`)}>${escapeHtml(section.successText)}</p>
+      </div>
+      <div class="form-status form-failure" role="alert" tabindex="-1"${hiddenAttr}>
+        <p${text(ctx, `${base}.errorText`)}>${escapeHtml(section.errorText)}</p>
+      </div>
+      ${script}
+    </div>
+  </section>`;
+}
+
 function renderCoverStory(ctx: Ctx, base: string, section: Extract<PageSection, { type: "cover-story" }>, leads: boolean): string {
   const tag = leads ? "h1" : "h2";
   const target = actionTarget(section.href);
@@ -461,6 +573,8 @@ function renderSection(ctx: Ctx, section: PageSection, index: number, leads = fa
       return renderCategoryGrid(ctx, base, section);
     case "fast-facts":
       return renderFastFactsSection(ctx, base, section);
+    case "form":
+      return renderForm(ctx, base, section);
     default: {
       const exhaustive: never = section;
       return exhaustive;
@@ -659,7 +773,8 @@ function renderArticle(ctx: Ctx, doc: Extract<TwildaDocument, { kind: "article" 
  * document and options, and it does not touch Node, so it bundles for a browser.
  */
 export function renderDocument(doc: TwildaDocument, options: RenderOptions = {}): string {
-  const ctx: Ctx = { annotate: options.annotate === true, dataFiles: options.dataFiles ?? {} };
+  const forms = options.forms && isFormEndpoint(options.forms.endpoint) ? options.forms : null;
+  const ctx: Ctx = { annotate: options.annotate === true, dataFiles: options.dataFiles ?? {}, forms };
   const chrome = options.chrome ?? DEFAULT_CHROME;
   const body = doc.kind === "article" ? renderArticle(ctx, doc) : renderPage(ctx, doc);
   const mode = options.mode && options.mode !== "magazine" && /^[a-z]+$/.test(options.mode) ? ` mode-${options.mode}` : "";

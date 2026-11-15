@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TwildaError } from "./errors";
+import { formsConfigSchema, type FormsConfig } from "./forms";
 import { assertJsonBounds } from "./json-guard";
 import { PRESET_IDS, type PresetId } from "./modes";
 import { hrefSchema } from "./schema";
@@ -95,6 +96,12 @@ export const siteSchema = z.object({
    */
   mode: z.enum(PRESET_IDS).optional(),
   chrome: siteChromeSchema,
+  /**
+   * Where a form on the site sends what a visitor typed. Optional: a site with no `forms` has no form
+   * endpoint, and its Content-Security-Policy keeps `form-action`, `connect-src`, and `script-src` shut
+   * (see `siteCsp`). Twilda stores nothing a visitor submits.
+   */
+  forms: formsConfigSchema.optional(),
   /** Per-template overrides: `article` pages and `page` pages can say a different issue label, note, or nav. */
   templates: z.object({ article: chromeOverrideSchema.optional(), page: chromeOverrideSchema.optional() }).default({}),
   /** Per-document overrides keyed by document id. Applied after the template override. */
@@ -103,6 +110,7 @@ export const siteSchema = z.object({
 });
 
 export type SiteSettings = z.infer<typeof siteSchema>;
+export type { FormsConfig };
 export type ChromeOverride = z.infer<typeof chromeOverrideSchema>;
 
 export function defaultSite(): SiteSettings {
@@ -151,9 +159,15 @@ export function resolveChrome(site: SiteSettings, doc: { id: string; kind: "arti
 }
 
 /** Render options that depend on the site: the masthead for this document and the site's mode. */
-export function renderOptionsFor(site: SiteSettings, doc: { id: string; kind: "article" | "page" }): { chrome: SiteChrome; mode?: PresetId } {
+export function renderOptionsFor(
+  site: SiteSettings,
+  doc: { id: string; kind: "article" | "page" },
+): { chrome: SiteChrome; mode?: PresetId; forms?: FormsConfig } {
   const chrome = resolveChrome(site, doc);
-  return site.mode ? { chrome, mode: site.mode } : { chrome };
+  const options: { chrome: SiteChrome; mode?: PresetId; forms?: FormsConfig } = { chrome };
+  if (site.mode) options.mode = site.mode;
+  if (site.forms) options.forms = site.forms;
+  return options;
 }
 
 const HEX = /^#[0-9a-fA-F]{6}$/;

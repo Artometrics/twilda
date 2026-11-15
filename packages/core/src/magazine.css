@@ -977,6 +977,182 @@
   }
 }
 
+/* ---- Forms: one card, one column, big tap targets, visible focus ---- */
+
+.form-card {
+  max-width: 40rem;
+  padding: clamp(1.1rem, 4vw, 2rem);
+  border: 1px solid var(--hair);
+  background: var(--paper);
+}
+
+.form-section [hidden] {
+  display: none !important;
+}
+
+.form-fields {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form-legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.form-row {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.form-req {
+  color: var(--kicker);
+}
+
+.form-hint,
+.form-privacy {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.form-hint:empty,
+.form-privacy:empty {
+  display: none;
+}
+
+.form-input {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid var(--ink);
+  border-radius: 2px;
+  background: #ffffff;
+  color: #1a1714;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.form-textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.form-input:focus-visible,
+.form-check:focus-visible,
+.form-submit:focus-visible {
+  outline: 3px solid var(--kicker);
+  outline-offset: 2px;
+}
+
+.form-input[aria-invalid="true"],
+.form-check[aria-invalid="true"] {
+  border-color: #b3261e;
+}
+
+.form-error {
+  margin: 0;
+  color: #b3261e;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.form-row-consent {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 0.7rem;
+}
+
+.form-check {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0.1rem 0 0;
+  accent-color: var(--kicker);
+}
+
+.form-row-consent .form-hint,
+.form-row-consent .form-error {
+  grid-column: 2;
+}
+
+.form-submit {
+  width: 100%;
+  min-height: 3rem;
+  cursor: pointer;
+}
+
+.form-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-fields:disabled .form-input {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.form-summary {
+  margin-top: 0.9rem;
+}
+
+.form-privacy {
+  margin-top: 0.9rem;
+}
+
+.form-note {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px dashed var(--muted);
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.form-trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.form-status {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border-left: 4px solid var(--kicker);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.form-status:focus {
+  outline: 3px solid var(--kicker);
+  outline-offset: 2px;
+}
+
+.form-status h3 {
+  font-size: 1.3rem;
+}
+
+.form-status p {
+  margin: 0.3rem 0 0;
+}
+
+.form-failure {
+  border-left-color: #b3261e;
+}
+
 /* ---- Mode chrome: corporate and lead-gen turn the masthead into a plain top bar ---- */
 
 .mode-corporate .mast,

@@ -16,7 +16,7 @@ import {
 
 export type { ArticleDocument, Block, BlockType, PageDocument, PageSection, PageSectionType };
 
-export { BLOCK_CATALOG, SECTION_CATALOG, createBlock, createId, createSection } from "../../core/src/library";
+export { BLOCK_CATALOG, SECTION_CATALOG, createBlock, createFormSection, createId, createSection } from "../../core/src/library";
 
 export type ArticleDoc = ArticleDocument;
 export type PageDoc = PageDocument;
@@ -75,6 +75,7 @@ export function sectionSummary(section: PageSection): string {
     case "cta":
     case "category-grid":
     case "fast-facts":
+    case "form":
       return section.heading;
     case "hero":
     case "cover-story":

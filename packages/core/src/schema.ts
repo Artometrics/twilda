@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FORM_FIELD_KINDS, FORM_VARIANTS, MAX_FORM_FIELDS } from "./forms";
 import { unsafeLinkTargets } from "./marks";
 import { isActionHref, isSafeHref, isSitePath, isWebUrl } from "./url";
 
@@ -430,6 +431,45 @@ export const fastFactsSectionSchema = z.object({
   facts: z.array(factSchema).min(1).max(8),
 });
 
+export const formFieldSchema = z.object({
+  id,
+  kind: z.enum(FORM_FIELD_KINDS),
+  label: requiredText(80),
+  required: z.boolean(),
+  hint: shortText(120),
+});
+
+/**
+ * A form on a page. Which field kinds exist and how a value is checked is fixed in `forms.ts`; the
+ * author chooses a variant, relabels, reorders, adds, and removes fields. Where the submission goes is
+ * the site-wide `forms.endpoint` in `site.json`, never a field of the section.
+ */
+export const formSectionSchema = z.object({
+  id,
+  type: z.literal("form"),
+  ...intro,
+  variant: z.enum(FORM_VARIANTS),
+  fields: z.array(formFieldSchema).min(1).max(MAX_FORM_FIELDS),
+  submitLabel: requiredText(40),
+  successTitle: requiredText(80),
+  successText: shortText(300),
+  errorText: requiredText(200),
+  privacy: shortMarkText(300),
+});
+
+/** Rules across a form's fields that a single field cannot state. Run by the document schema (a discriminated union cannot hold a refined object). */
+function formIssues(section: z.infer<typeof formSectionSchema>, path: Array<string | number>, ctx: z.RefinementCtx): void {
+  const seen = new Set<string>();
+  section.fields.forEach((field, index) => {
+    if (seen.has(field.id)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [...path, "fields", index, "id"], message: `Duplicate id "${field.id}".` });
+    seen.add(field.id);
+  });
+  // A lead nobody can answer is not a lead: one required field has to be a way to reach the person.
+  if (!section.fields.some((field) => field.required && (field.kind === "email" || field.kind === "phone"))) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [...path, "fields"], message: "Include a required email or phone field so a submission can be answered." });
+  }
+}
+
 export const pageSectionSchema = z.discriminatedUnion("type", [
   carouselSectionSchema,
   storyGridSectionSchema,
@@ -445,6 +485,7 @@ export const pageSectionSchema = z.discriminatedUnion("type", [
   coverStorySectionSchema,
   categoryGridSectionSchema,
   fastFactsSectionSchema,
+  formSectionSchema,
 ]);
 
 export const PAGE_SECTION_TYPES = [
@@ -462,6 +503,7 @@ export const PAGE_SECTION_TYPES = [
   "cover-story",
   "category-grid",
   "fast-facts",
+  "form",
 ] as const;
 
 const articleSchema = z.object({
@@ -497,6 +539,11 @@ export const documentSchema = z
         code: z.ZodIssueCode.custom,
         path: ["slug"],
         message: "slug must match id.",
+      });
+    }
+    if (doc.kind === "page") {
+      doc.sections.forEach((section, index) => {
+        if (section.type === "form") formIssues(section, ["sections", index], ctx);
       });
     }
     const ids = doc.kind === "article" ? doc.blocks.map((block) => block.id) : doc.sections.map((section) => section.id);
@@ -541,6 +588,7 @@ export type CtaSection = z.infer<typeof ctaSectionSchema>;
 export type CoverStorySection = z.infer<typeof coverStorySectionSchema>;
 export type CategoryGridSection = z.infer<typeof categoryGridSectionSchema>;
 export type FastFactsSection = z.infer<typeof fastFactsSectionSchema>;
+export type FormSection = z.infer<typeof formSectionSchema>;
 export type PageSection = z.infer<typeof pageSectionSchema>;
 export type PageSectionType = PageSection["type"];
 export type ArticleDocument = z.infer<typeof articleSchema>;
@@ -578,4 +626,5 @@ export const SECTION_LABELS: Record<PageSectionType, string> = {
   "cover-story": "Cover story",
   "category-grid": "Category grid",
   "fast-facts": "Fast facts",
+  form: "Form",
 };
