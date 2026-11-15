@@ -1,0 +1,291 @@
+/* Edit chrome only. The page itself is styled by the production template CSS. */
+:root {
+  --tw-ink: #1a1714;
+  --tw-paper: #fffdf8;
+  --tw-accent: #1a5fb4;
+  --tw-hair: #cfc6b3;
+}
+
+body {
+  padding-bottom: 6.5rem;
+}
+
+body.twilda-typing .twilda-bar {
+  display: none;
+}
+
+#twilda-root [data-twilda-ref] {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#twilda-root.twilda-outlines [data-twilda-ref] {
+  outline: 1.5px dashed rgba(26, 95, 180, 0.65);
+  outline-offset: 2px;
+}
+
+#twilda-root [data-twilda-ref][data-twilda-type="text"]:empty::before {
+  content: "Add " attr(data-twilda-label);
+  color: #8a8478;
+  font-style: italic;
+}
+
+#twilda-root [data-twilda-ref][data-twilda-type="image"]:focus-visible {
+  outline: 3px solid var(--tw-accent);
+  outline-offset: 2px;
+}
+
+#twilda-root [data-twilda-editing="true"] {
+  outline: 2px solid var(--tw-accent);
+  outline-offset: 3px;
+  background: rgba(26, 95, 180, 0.08);
+  cursor: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.twilda-overlay {
+  position: absolute;
+  z-index: 40;
+  pointer-events: none;
+  outline: 2px solid var(--tw-accent);
+  outline-offset: 2px;
+  background: rgba(26, 95, 180, 0.07);
+}
+
+.twilda-overlay[hidden] {
+  display: none;
+}
+
+.twilda-chip {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  margin-bottom: 4px;
+  padding: 0.15rem 0.45rem;
+  background: var(--tw-accent);
+  color: #fff;
+  font: 600 0.72rem/1.3 "Public Sans", system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+.twilda-flip .twilda-chip {
+  bottom: auto;
+  top: 100%;
+  margin: 4px 0 0;
+}
+
+.twilda-bar {
+  position: fixed;
+  z-index: 50;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.6rem 0.75rem calc(0.6rem + env(safe-area-inset-bottom));
+  background: var(--tw-ink);
+  color: #f3efe4;
+  font: 0.85rem/1.3 "Public Sans", system-ui, sans-serif;
+}
+
+.twilda-status {
+  margin: 0 0 0.5rem;
+}
+
+.twilda-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.twilda-btn {
+  flex: 1;
+  min-height: 44px;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: 600 0.9rem "Public Sans", system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.twilda-btn[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.twilda-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.twilda-primary {
+  background: #f3efe4;
+  color: var(--tw-ink);
+  border-color: #f3efe4;
+}
+
+.twilda-toast {
+  position: fixed;
+  z-index: 70;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 7rem;
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  background: #7a1c12;
+  color: #fff;
+  border-radius: 6px;
+  font: 0.9rem/1.35 "Public Sans", system-ui, sans-serif;
+}
+
+.twilda-toast[hidden] {
+  display: none;
+}
+
+.twilda-sheet {
+  position: fixed;
+  z-index: 60;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  background: var(--tw-paper);
+  color: var(--tw-ink);
+  border-top: 2px solid var(--tw-ink);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.25);
+  font: 0.95rem/1.45 "Public Sans", system-ui, sans-serif;
+}
+
+.twilda-sheet[hidden] {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .twilda-sheet {
+    left: auto;
+    right: 1rem;
+    bottom: 5.5rem;
+    width: 28rem;
+    border: 2px solid var(--tw-ink);
+    border-radius: 8px;
+  }
+}
+
+.twilda-sheet *,
+.twilda-sheet *::before,
+.twilda-sheet *::after {
+  box-sizing: border-box;
+}
+
+.twilda-sheet h2 {
+  margin: 0;
+  font: 500 1.4rem "Newsreader", Georgia, serif;
+}
+
+.twilda-sheet .twilda-btn {
+  flex: none;
+  border-color: var(--tw-ink);
+}
+
+.twilda-sheet .twilda-primary {
+  width: 100%;
+  background: var(--tw-ink);
+  color: #f3efe4;
+  margin-top: 0.75rem;
+}
+
+.twilda-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.twilda-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.twilda-thumb {
+  padding: 0;
+  border: 2px solid var(--tw-hair);
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 1;
+}
+
+.twilda-thumb[aria-selected="true"] {
+  border-color: var(--tw-accent);
+  box-shadow: 0 0 0 2px var(--tw-accent);
+}
+
+.twilda-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.twilda-field {
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.twilda-field span {
+  display: block;
+  font-size: 0.8rem;
+  color: #5c564c;
+}
+
+.twilda-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.twilda-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--tw-hair);
+  border-radius: 6px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.twilda-hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+  color: #5c564c;
+}
+
+.twilda-changes {
+  margin: 0.25rem 0 0.75rem;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+}
+
+.twilda-code {
+  font: 700 1.3rem ui-monospace, monospace;
+  letter-spacing: 0.12em;
+}
+
+.twilda-details {
+  margin-top: 0.5rem;
+}
+
+.twilda-result[data-state="error"] {
+  color: #7a1c12;
+}
+
+.twilda-result[data-state="ok"] {
+  color: #1d5a2a;
+}

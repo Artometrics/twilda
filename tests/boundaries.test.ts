@@ -107,6 +107,11 @@ describe("repository boundaries", () => {
     assert.deepEqual(hits, []);
   });
 
+  it("keeps the click-to-edit target out of the Astro source", () => {
+    const hits = walk("src").filter((file) => /click-edit|twilda:click-edit/.test(readFileSync(file, "utf8")));
+    assert.deepEqual(hits, []);
+  });
+
   it("mentions the previous product only as history, not as a live target", () => {
     const history = readFileSync("HISTORY.md", "utf8");
     assert.match(history, /106b96f/);

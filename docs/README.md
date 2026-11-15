@@ -10,5 +10,8 @@ Twilda has two editors. They do not share a process.
 | [phone-drafting-audit.md](phone-drafting-audit.md) | Audit of drafting an article from a phone, what was added, and the export format |
 | [editor.md](editor.md) | The phone desk in `packages/editor` |
 | [demo-hosting.md](demo-hosting.md) | How to build `demo-dist/` and host it on a new static site |
+| [phase0-click-edit.md](phase0-click-edit.md) | Phase 0 click-on-the-page prototype: how it works, how to run it, `renderDocument` in the browser, blockers |
+| [phase0-bakeoff.md](phase0-bakeoff.md) | Twilda against EmDash, TinaCMS, and CloudCannon |
+| [phase0-decision.md](phase0-decision.md) | Go, narrow, or switch, and why |
 
 The production site is still `npm run build`. Output is `dist/`. The phone demo is `npm run build:demo`. Output is `demo-dist/`. Do not point either build at an existing Artometrics or Twilda hosting project.

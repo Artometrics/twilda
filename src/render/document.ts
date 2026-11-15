@@ -1,13 +1,31 @@
 import type { Block, PageSection, TwildaDocument } from "@twilda/core";
 import { escapeHtml, safeHref, safeMedia } from "./escape";
 
-function plate(src: string, alt: string): string {
+export interface RenderOptions {
+  /**
+   * Add `data-twilda-ref` attributes so the click-to-edit build can find fields.
+   * Off by default: production output carries no editing hooks.
+   */
+  annotate?: boolean;
+}
+
+type Ctx = { annotate: boolean };
+
+/** `data-twilda-ref` is a dotted path into the document JSON, e.g. `sections.0.slides.2.title`. */
+function text(ctx: Ctx, path: string): string {
+  return ctx.annotate ? ` data-twilda-ref="${escapeHtml(path)}" data-twilda-type="text"` : "";
+}
+
+function plate(ctx: Ctx, path: string, src: string, alt: string): string {
   const media = safeMedia(src);
   const safeAlt = escapeHtml(alt);
+  const ref = ctx.annotate
+    ? ` data-twilda-ref="${escapeHtml(`${path}.image`)}" data-twilda-type="image" data-twilda-alt-ref="${escapeHtml(`${path}.imageAlt`)}"`
+    : "";
   if (!media) {
-    return `<div class="plate plate-missing" role="img" aria-label="${safeAlt}"><span>Plate unavailable</span></div>`;
+    return `<div class="plate plate-missing" role="img" aria-label="${safeAlt}"${ref}><span>Plate unavailable</span></div>`;
   }
-  return `<img class="plate" src="${escapeHtml(media)}" alt="${safeAlt}" />`;
+  return `<img class="plate" src="${escapeHtml(media)}" alt="${safeAlt}"${ref} />`;
 }
 
 function paragraphs(text: string): string {
@@ -19,76 +37,80 @@ function paragraphs(text: string): string {
     .join("");
 }
 
-function renderCarousel(section: Extract<PageSection, { type: "carousel" }>): string {
+function renderCarousel(ctx: Ctx, base: string, section: Extract<PageSection, { type: "carousel" }>): string {
   const slides = section.slides
-    .map(
-      (slide) => `<a class="slide" href="${escapeHtml(safeHref(slide.href))}">
-        ${plate(slide.image, slide.imageAlt)}
-        <p class="kicker">${escapeHtml(slide.kicker)}</p>
-        <h2>${escapeHtml(slide.title)}</h2>
-        <p class="dek">${escapeHtml(slide.dek)}</p>
-      </a>`,
-    )
+    .map((slide, i) => {
+      const at = `${base}.slides.${i}`;
+      return `<a class="slide" href="${escapeHtml(safeHref(slide.href))}">
+        ${plate(ctx, at, slide.image, slide.imageAlt)}
+        <p class="kicker"${text(ctx, `${at}.kicker`)}>${escapeHtml(slide.kicker)}</p>
+        <h2${text(ctx, `${at}.title`)}>${escapeHtml(slide.title)}</h2>
+        <p class="dek"${text(ctx, `${at}.dek`)}>${escapeHtml(slide.dek)}</p>
+      </a>`;
+    })
     .join("");
-  const label = section.label ? `<p class="kicker">${escapeHtml(section.label)}</p>` : "";
+  const label = section.label ? `<p class="kicker"${text(ctx, `${base}.label`)}>${escapeHtml(section.label)}</p>` : "";
   return `<section class="section carousel" id="${escapeHtml(section.id)}" aria-label="${escapeHtml(section.label || "Carousel")}">${label}<div class="carousel-track">${slides}</div></section>`;
 }
 
-function renderStoryGrid(section: Extract<PageSection, { type: "story-grid" }>): string {
+function renderStoryGrid(ctx: Ctx, base: string, section: Extract<PageSection, { type: "story-grid" }>): string {
   const [lead, ...rest] = section.stories;
   if (!lead) return "";
   const stories = rest
-    .map(
-      (story) => `<li>
+    .map((story, i) => {
+      const at = `${base}.stories.${i + 1}`;
+      return `<li>
         <a href="${escapeHtml(safeHref(story.href))}">
-          ${plate(story.image, story.imageAlt)}
-          <p class="kicker">${escapeHtml(story.kicker)}</p>
-          <h3>${escapeHtml(story.title)}</h3>
-          <p class="dek">${escapeHtml(story.dek)}</p>
+          ${plate(ctx, at, story.image, story.imageAlt)}
+          <p class="kicker"${text(ctx, `${at}.kicker`)}>${escapeHtml(story.kicker)}</p>
+          <h3${text(ctx, `${at}.title`)}>${escapeHtml(story.title)}</h3>
+          <p class="dek"${text(ctx, `${at}.dek`)}>${escapeHtml(story.dek)}</p>
         </a>
-      </li>`,
-    )
+      </li>`;
+    })
     .join("");
+  const leadAt = `${base}.stories.0`;
   return `<section class="section story-grid-section" id="${escapeHtml(section.id)}">
-    <p class="kicker">${escapeHtml(section.kicker)}</p>
-    <h2>${escapeHtml(section.heading)}</h2>
+    <p class="kicker"${text(ctx, `${base}.kicker`)}>${escapeHtml(section.kicker)}</p>
+    <h2${text(ctx, `${base}.heading`)}>${escapeHtml(section.heading)}</h2>
     <div class="story-grid">
       <a class="lead" href="${escapeHtml(safeHref(lead.href))}">
-        ${plate(lead.image, lead.imageAlt)}
-        <p class="kicker">${escapeHtml(lead.kicker)}</p>
-        <h2>${escapeHtml(lead.title)}</h2>
-        <p class="dek">${escapeHtml(lead.dek)}</p>
+        ${plate(ctx, leadAt, lead.image, lead.imageAlt)}
+        <p class="kicker"${text(ctx, `${leadAt}.kicker`)}>${escapeHtml(lead.kicker)}</p>
+        <h2${text(ctx, `${leadAt}.title`)}>${escapeHtml(lead.title)}</h2>
+        <p class="dek"${text(ctx, `${leadAt}.dek`)}>${escapeHtml(lead.dek)}</p>
       </a>
       <ol class="shorts">${stories}</ol>
     </div>
   </section>`;
 }
 
-function renderMenu(section: Extract<PageSection, { type: "menu-shelf" }>): string {
+function renderMenu(ctx: Ctx, base: string, section: Extract<PageSection, { type: "menu-shelf" }>): string {
   const items = section.items
     .map(
-      (item) => `<li>
+      (item, i) => `<li>
         <a href="${escapeHtml(safeHref(item.href))}">
-          <span class="fact-label">${escapeHtml(item.label)}</span>
-          <span class="fact-value">${escapeHtml(item.dek)}</span>
+          <span class="fact-label"${text(ctx, `${base}.items.${i}.label`)}>${escapeHtml(item.label)}</span>
+          <span class="fact-value"${text(ctx, `${base}.items.${i}.dek`)}>${escapeHtml(item.dek)}</span>
         </a>
       </li>`,
     )
     .join("");
   return `<section class="section shelf-section" id="${escapeHtml(section.id)}">
-    <h2>${escapeHtml(section.heading)}</h2>
+    <h2${text(ctx, `${base}.heading`)}>${escapeHtml(section.heading)}</h2>
     <ol class="facts">${items}</ol>
   </section>`;
 }
 
-function renderSection(section: PageSection): string {
+function renderSection(ctx: Ctx, section: PageSection, index: number): string {
+  const base = `sections.${index}`;
   switch (section.type) {
     case "carousel":
-      return renderCarousel(section);
+      return renderCarousel(ctx, base, section);
     case "story-grid":
-      return renderStoryGrid(section);
+      return renderStoryGrid(ctx, base, section);
     case "menu-shelf":
-      return renderMenu(section);
+      return renderMenu(ctx, base, section);
     default: {
       const exhaustive: never = section;
       return exhaustive;
@@ -132,7 +154,7 @@ function renderCallout(block: Extract<Block, { type: "callout" }>): string {
 
 function renderImage(block: Extract<Block, { type: "image" }>): string {
   const caption = block.caption ? `<figcaption>${escapeHtml(block.caption)}</figcaption>` : "";
-  return `<figure class="figure" id="${escapeHtml(block.id)}">${plate(block.src, block.alt)}${caption}</figure>`;
+  return `<figure class="figure" id="${escapeHtml(block.id)}">${plate({ annotate: false }, "", block.src, block.alt)}${caption}</figure>`;
 }
 
 function renderChart(block: Extract<Block, { type: "chart" }>): string {
@@ -209,13 +231,13 @@ function renderFooter(): string {
   </footer>`;
 }
 
-function renderPage(doc: Extract<TwildaDocument, { kind: "page" }>): string {
+function renderPage(ctx: Ctx, doc: Extract<TwildaDocument, { kind: "page" }>): string {
   return `<header class="issue-intro">
-    <p class="kicker">${escapeHtml(doc.kicker)}</p>
-    <h1>${escapeHtml(doc.title)}</h1>
-    <p class="lede">${escapeHtml(doc.dek)}</p>
+    <p class="kicker"${text(ctx, "kicker")}>${escapeHtml(doc.kicker)}</p>
+    <h1${text(ctx, "title")}>${escapeHtml(doc.title)}</h1>
+    <p class="lede"${text(ctx, "dek")}>${escapeHtml(doc.dek)}</p>
   </header>
-  ${doc.sections.map(renderSection).join("\n")}`;
+  ${doc.sections.map((section, index) => renderSection(ctx, section, index)).join("\n")}`;
 }
 
 function renderArticle(doc: Extract<TwildaDocument, { kind: "article" }>): string {
@@ -233,7 +255,8 @@ function renderArticle(doc: Extract<TwildaDocument, { kind: "article" }>): strin
 }
 
 /** Full document HTML shared by the static site and the editor proof. */
-export function renderDocument(doc: TwildaDocument): string {
-  const body = doc.kind === "article" ? renderArticle(doc) : renderPage(doc);
+export function renderDocument(doc: TwildaDocument, options: RenderOptions = {}): string {
+  const ctx: Ctx = { annotate: options.annotate === true };
+  const body = doc.kind === "article" ? renderArticle(doc) : renderPage(ctx, doc);
   return `<div class="magazine">${renderMast()}${body}${renderFooter()}</div>`;
 }

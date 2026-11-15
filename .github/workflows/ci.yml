@@ -48,6 +48,9 @@ jobs:
       - name: Phone browser tests
         run: npm run test:e2e
 
+      - name: Click-to-edit prototype (390px and desktop)
+        run: npm run test:e2e:edit
+
   desk:
     runs-on: ubuntu-latest
     timeout-minutes: 20

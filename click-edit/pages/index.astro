@@ -1,0 +1,27 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import Base from "../../src/layouts/Base.astro";
+import { readDraft } from "../../src/content/store";
+import { renderDocument } from "../../src/render/document";
+
+const doc = readDraft("home");
+if (doc.kind !== "page") throw new Error("content/home/draft.json must be a page.");
+
+const html = renderDocument(doc, { annotate: true });
+const media = fs
+  .readdirSync(path.resolve("public/media"))
+  .filter((name) => /^[a-z0-9-]+\.svg$/.test(name))
+  .sort()
+  .map((name) => `/media/${name}`);
+const json = (value: unknown) => JSON.stringify(value).replaceAll("<", "\\u003c");
+---
+
+<Base title={`Edit: ${doc.title}`} description="Twilda click-to-edit prototype. Not the published site.">
+  <div id="twilda-root" set:html={html} />
+  <script is:inline type="application/json" id="twilda-doc" set:html={json(doc)} />
+  <script is:inline type="application/json" id="twilda-media" set:html={json(media)} />
+  <script>
+    import "../client/main";
+  </script>
+</Base>

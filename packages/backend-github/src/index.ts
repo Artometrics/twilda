@@ -70,7 +70,8 @@ export class GitHubBackend implements StorageBackend {
     this.token = options.token;
     this.baseBranch = options.baseBranch ?? BASE_BRANCH;
     this.apiBase = options.apiBase ?? "https://api.github.com";
-    this.fetchImpl = options.fetch ?? fetch;
+    // A bare `fetch` stored on the instance throws "Illegal invocation" in browsers when called as a method.
+    this.fetchImpl = options.fetch ?? ((input, init) => fetch(input, init));
     this.ref = options.ref ?? this.baseBranch;
   }
 
@@ -300,6 +301,10 @@ function toPr(pr: {
   };
 }
 
+function trimBase(baseUrl: string | undefined): string {
+  return (baseUrl?.trim() || GITHUB_WEB_BASE).replace(/\/+$/, "");
+}
+
 export interface DeviceFlowStart {
   deviceCode: string;
   userCode: string;
@@ -309,12 +314,24 @@ export interface DeviceFlowStart {
 }
 
 /** Device flow needs a GitHub OAuth App client id that Kyle creates. This repo does not contain one. */
-export async function startDeviceFlow(input: { clientId: string; fetchImpl?: typeof fetch; scope?: string }): Promise<DeviceFlowStart> {
+export const GITHUB_WEB_BASE = "https://github.com";
+
+/**
+ * github.com's device-flow endpoints send no CORS headers, so a browser cannot call them directly.
+ * `baseUrl` points at a pass-through proxy that forwards `/login/device/code` and
+ * `/login/oauth/access_token` and adds CORS headers. The default is github.com itself.
+ */
+export async function startDeviceFlow(input: {
+  clientId: string;
+  fetchImpl?: typeof fetch;
+  scope?: string;
+  baseUrl?: string;
+}): Promise<DeviceFlowStart> {
   if (!input.clientId.trim()) {
     throw new TwildaError("Set a GitHub OAuth app client id before starting device sign-in. Do not commit it.", "github-config");
   }
   const fetchImpl = input.fetchImpl ?? fetch;
-  const response = await fetchImpl("https://github.com/login/device/code", {
+  const response = await fetchImpl(`${trimBase(input.baseUrl)}/login/device/code`, {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({ client_id: input.clientId, scope: input.scope ?? "repo" }),
@@ -340,10 +357,11 @@ export async function pollDeviceFlow(input: {
   clientId: string;
   deviceCode: string;
   fetchImpl?: typeof fetch;
+  baseUrl?: string;
 }): Promise<{ status: "pending" | "ready"; accessToken?: string }> {
   if (!input.clientId.trim()) throw new TwildaError("GitHub client id is missing.", "github-config");
   const fetchImpl = input.fetchImpl ?? fetch;
-  const response = await fetchImpl("https://github.com/login/oauth/access_token", {
+  const response = await fetchImpl(`${trimBase(input.baseUrl)}/login/oauth/access_token`, {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({

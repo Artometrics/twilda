@@ -17,9 +17,12 @@
   },
   "include": [
     "astro.config.ts",
+    "astro.edit.config.ts",
+    "playwright.click-edit.config.ts",
     "playwright.config.ts",
     "scripts/export-sample.ts",
     "src/**/*.ts",
+    "click-edit/**/*.ts",
     "editor/**/*.ts",
     "editor/**/*.tsx",
     "packages/**/*.ts",
