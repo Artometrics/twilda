@@ -116,6 +116,7 @@ GitHub Actions runs those four commands on pull requests and on this branch. Tha
 | `public/media/` | Demo plates (original SVG). |
 | `docs/architecture.md` | Static contract, the one renderer, phone editor, drafts, and open questions. |
 | `docs/phase1.md` | Phase 1: single renderer, drafting dashboard, design refresh, auth scope limits. |
+| `docs/phase2.md` | Phase 2: live visual editor on prepared sections (marks, images, uploads, video, theme, sections, undo, moved main). |
 | `docs/content-model.md` | Localhost desk section types. |
 | `docs/franchise-slice.md` | Franchise article mapped onto blocks. |
 | `docs/demo-hosting.md` | Build and host the phone demo separately. |

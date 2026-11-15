@@ -54,7 +54,7 @@ Screenshots are in `docs/screenshots/` (`phase1-*-390.png` and `phase1-*-desktop
 - **The page is the draft.** The Page view renders the draft through `renderDocument` and edits it in place with the Phase 0 overlay (`mountOverlay`): tap text to edit it where it sits, tap an image to pick a plate, one field at a time, each checked against the schema. A refused value is turned back and says why. `[VERIFY ...]` notes are highlighted. Outlines show which parts are editable (on by default on touch screens).
 - **Form and page stay in sync.** The Blocks panel edits the same document: add, remove, and reorder blocks or sections, and fields the page does not show.
 - **Drafts save locally, instantly.** Edits are written to the device 250 ms after the last change (IndexedDB, then localStorage). Save draft is still there as an explicit action.
-- **Publish is unchanged in shape.** Publish asks first, writes the published copy on this device, and if a GitHub token was pasted, also opens a pull request into `main` through `GitHubBackend` (branch `twilda/draft/<id>`, file `content/articles|pages/<slug>.json`). Merging that pull request is the publish decision.
+- **Publish is unchanged in shape.** Publish asks first, writes the published copy on this device, and if a GitHub token was pasted, also opens a pull request into `main` through `GitHubBackend` (branch `twilda/draft/<id>`, files `content/<id>/draft.json` and `published.json` since Phase 2). Merging that pull request is the publish decision.
 
 The desk reads plates from the repo's `public/media` through a desk-only Vite plugin (`packages/editor/vite.config.ts`): a virtual module for the picker, the files served in dev and preview, and copied into the desk build. The Astro site and its `dist/` are not affected.
 
@@ -72,18 +72,15 @@ Scope limits to know about:
 
 - The token can do what its scope allows. The desk only creates a branch, writes one file, and opens a pull request, but a stolen token is not limited to that. XSS in the desk page could read the token from memory. Use a fine-grained token limited to one repository and an expiry.
 - Only people who can push to the repository can publish. There is no fork-and-pull-request path for people without push access.
-- The pull request is built from the draft the desk holds. If `main` moved since, GitHub shows the conflict. The desk does not rebase or merge for you.
-- Images: the template only prints repo plates under `/media/<name>.svg`. Uploaded images and `https:` images are kept in the draft but the page shows "Plate unavailable" for them, and the desk says how many. Uploading an image file to the repository through the pull request is not built.
-- The desk and the click-to-edit prototype use different file layouts. The desk writes the contract layout (`content/articles/<slug>.json`, `content/pages/<slug>.json`). The click-to-edit prototype and the Field Desk site read and write `content/<id>/draft.json` beside `published.json`. Pull requests from the desk are not read by the Field Desk site build until that is reconciled.
+- Phase 1 limit, lifted in Phase 2: the desk now checks whether `main` moved, merges silently when nothing overlaps, and shows a conflict sheet when it does ([phase2.md](phase2.md)).
+- Images: the template only prints repo plates under `/media/<name>.svg`. `https:` images are still kept in the draft but show "Plate unavailable". Uploaded photos are shown from the device and committed to `public/media` in the pull request since Phase 2.
+- Phase 1 limit, lifted in Phase 2: the desk and the click-to-edit page now share one layout, `content/<id>/draft.json` beside `published.json`.
 - Not verified on a real iPhone or Android phone, or against real GitHub. Tests use WebKit with the iPhone 14 profile, Chromium, and a mocked GitHub API.
 
 ## What is not done
 
 - Real-device and real-GitHub verification.
-- Image upload through the pull request.
-- Reconciling the two content layouts.
 - A GitHub App (owner decision pending).
-- Per-site masthead and colophon for the desk page. The desk page uses `DEFAULT_CHROME` (Field Desk). `renderDocument` already takes a `chrome` option.
 
 ## Checks
 

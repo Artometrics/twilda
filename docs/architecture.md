@@ -20,8 +20,10 @@ Package entries: `@twilda/core` (schema, storage contract, renderer, escape help
 The new contract, used by the demo and by `examples/studio`, is JSON:
 
 ```text
-content/articles/<slug>.json
-content/pages/<slug>.json
+content/<id>/draft.json            the working copy (status "draft")
+content/<id>/published.json        what the static build reads
+content/site.json                  masthead (chrome) and theme tokens for the whole site
+public/media/<name>.jpg            photos uploaded from a phone, committed in the same pull request
 content/data/<name>.csv
 content/media/<name>.json          uploads only, as JSON bytes
 content/.twilda/history/<id>/<stamp>.json
@@ -45,7 +47,7 @@ Page sections: `carousel` (the sample home page has 5 slides; the schema allows 
 
 `id` and `slug` match. Links are site paths or `http(s)` URLs. `javascript:` is rejected.
 
-The localhost Field Desk and the phone desk both use `packages/core/src/schema.ts`. Field Desk still stores one folder per document (`content/<id>/draft.json` and `published.json`). The phone contract's file layout (`content/articles/<slug>.json` and `content/pages/<slug>.json`) is unchanged. Older Field Desk section names were migrated into these blocks and sections.
+The localhost Field Desk, the click-to-edit page and the phone desk all use `packages/core/src/schema.ts` and one storage layout: a folder per document with `draft.json` beside `published.json` (Phase 2, [phase2.md](phase2.md)). The retired `content/articles/<slug>.json` and `content/pages/<slug>.json` layout is read only by `npm run migrate:content`. Older Field Desk section names were migrated into these blocks and sections.
 
 ## Draft, preview, publish
 
