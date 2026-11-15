@@ -114,7 +114,7 @@ The only credential Twilda touches is a GitHub token the person pastes or obtain
 | Route | What to grant | Notes |
 | --- | --- | --- |
 | Fine-grained personal access token (recommended) | One repository. **Contents: read and write**, **Pull requests: read and write**. Nothing else. Set an expiry of days or weeks. | This is what the desk needs to create a branch, write files, and open a pull request. It cannot reach other repositories. |
-| Device flow with an OAuth App | Classic `repo` scope, or `public_repo` for a public repository. | `repo` reads and writes **every** repository the person can access. Prefer the fine-grained token until the GitHub App route exists. |
+| Device flow with an OAuth App | Classic `repo` scope, or `public_repo` for a public repository. The scope is set by whoever hosts the device-flow proxy (`scope` in `examples/device-flow-proxy/worker.ts`, default `repo`), not by the desk or the visitor. | `repo` reads and writes **every** repository the person can access. `public_repo` reaches public repositories only, which is enough for a public site repository, so set it there. For a private repository there is no narrower classic scope: use the fine-grained token until the GitHub App route exists. See [choosing a scope](../examples/device-flow-proxy/README.md#choosing-a-scope). |
 | GitHub App (not built; owner item) | Install on one repository with Contents and Pull requests only. User-to-server tokens expire in hours. | The right long-term answer. It needs an owner-created App, so it is listed below and not done here. |
 | No token | Nothing | Drafts and exports stay on the device. |
 

@@ -65,7 +65,7 @@ Token paste is the default and works with nothing deployed. The optional statele
 | Path | What it needs | Notes |
 | --- | --- | --- |
 | Paste a token (default) | A fine-grained personal access token for the repository with Contents: read and write and Pull requests: read and write. | Held in this tab's memory only. Not saved to storage and not in the repo. The Playwright test asserts it is not in `localStorage` or `sessionStorage`. Closing the tab forgets it. |
-| Device flow (optional) | `PUBLIC_TWILDA_GITHUB_CLIENT_ID` (an OAuth App client id, public) and `PUBLIC_TWILDA_DEVICE_FLOW_PROXY` (a stateless pass-through to github.com's device endpoints). | github.com's device endpoints send no CORS headers, so a browser cannot call them directly. The button appears only when both variables are set. An OAuth App with `repo` scope is broader than a fine-grained token. |
+| Device flow (optional) | `PUBLIC_TWILDA_GITHUB_CLIENT_ID` (an OAuth App client id, public) and `PUBLIC_TWILDA_DEVICE_FLOW_PROXY` (a stateless pass-through to github.com's device endpoints). | github.com's device endpoints send no CORS headers, so a browser cannot call them directly. The button appears only when both variables are set. An OAuth App with `repo` scope is broader than a fine-grained token. For a public site repository, set the proxy's `scope` to `public_repo` ([how](../examples/device-flow-proxy/README.md#choosing-a-scope)). |
 | No token | Nothing. | Publishing stays on this device. The desk says so. |
 
 Scope limits to know about:
