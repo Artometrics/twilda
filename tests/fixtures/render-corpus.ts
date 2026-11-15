@@ -105,11 +105,12 @@ export function corpus(): CorpusEntry[] {
       if (existsSync(full)) out.push({ name: `content-${dir}-${file.replace(".json", "")}`, doc: read(full) });
     }
   }
-  for (const kind of ["articles", "pages"]) {
-    const dir = path.join("examples/studio/content", kind);
-    for (const file of readdirSync(dir).sort()) {
-      if (file.endsWith(".json")) out.push({ name: `studio-${kind}-${file.replace(".json", "")}`, doc: read(path.join(dir, file)) });
-    }
+  const studio = "examples/studio/content";
+  for (const id of readdirSync(studio).sort()) {
+    const full = path.join(studio, id, "published.json");
+    if (!existsSync(full)) continue;
+    const doc = read(full);
+    out.push({ name: `studio-${doc.kind === "page" ? "pages" : "articles"}-${id}`, doc });
   }
   out.push({ name: "hostile-article", doc: HOSTILE_ARTICLE }, { name: "hostile-page", doc: HOSTILE_PAGE });
   return out;

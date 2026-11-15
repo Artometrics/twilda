@@ -1,6 +1,6 @@
 /* The Phase 0 page bar. Overlay styles come from @twilda/core/edit.css. */
 body {
-  padding-bottom: 6.5rem;
+  padding-bottom: 9rem;
 }
 
 body.twilda-typing .twilda-bar {
@@ -25,6 +25,37 @@ body.twilda-typing .twilda-bar {
 
 .twilda-actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.twilda-actions .twilda-btn {
+  min-height: 2.75rem;
+}
+
+.twilda-actions .twilda-btn:disabled {
+  opacity: 0.45;
+}
+
+.twilda-conflicts[hidden] {
+  display: none;
+}
+
+.twilda-conflict {
+  margin: 0.6rem 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--tw-hair, #cfc8b8);
+}
+
+.twilda-choice {
+  display: flex;
+  align-items: flex-start;
   gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.35rem 0;
+}
+
+.twilda-choice q {
+  overflow-wrap: anywhere;
 }
 

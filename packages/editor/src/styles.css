@@ -597,6 +597,29 @@ mark.verify, .verify { background: var(--verify); color: var(--text); padding: 0
 .template-name { font-weight: 600; font-size: 14.5px; }
 .template-hint { font-size: 12.5px; color: var(--text-2); line-height: 1.3; }
 
+.page-bar { flex-wrap: wrap; }
+.page-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.page-tools .btn { min-height: var(--touch); padding: 6px 12px; }
+
+.pane-theme .theme-body { padding: 4px 16px 24px; }
+.pane-theme h3 { margin: 18px 0 8px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); }
+.color-row { display: grid; grid-template-columns: var(--touch) 1fr; gap: 8px; align-items: center; }
+.color-row input[type="color"] { width: var(--touch); height: var(--touch); padding: 2px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); }
+.field-error { color: var(--danger); font-size: 13px; }
+.field input[type="range"] { width: 100%; min-height: var(--touch); accent-color: var(--accent); }
+.hint.ok { color: var(--ok); }
+.hint.warn { color: var(--warn); }
+.theme-actions { position: sticky; bottom: 0; padding: 12px 0; background: linear-gradient(to top, var(--bg) 70%, transparent); justify-content: space-between; }
+
+.conflicts { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 14px; }
+.conflicts li { padding: 10px 12px; background: var(--bg); border-radius: var(--radius-sm); }
+.conflicts fieldset { border: 0; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.choice { display: grid; grid-template-columns: 24px 1fr; gap: 8px; align-items: start; min-height: var(--touch); padding: 8px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); cursor: pointer; }
+.choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.choice input { margin: 4px 0 0; width: 20px; height: 20px; }
+.choice em { display: block; font-style: normal; font-weight: 600; font-size: 13px; }
+.choice q { display: block; font-size: 14px; overflow-wrap: anywhere; quotes: none; white-space: pre-wrap; }
+
 @media (max-width: 959px) {
   .sheet { width: 100vw; max-width: 100vw; margin: auto 0 0; border-radius: 20px 20px 0 0; max-height: 92dvh; }
 }

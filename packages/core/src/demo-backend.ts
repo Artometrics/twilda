@@ -1,5 +1,5 @@
 import { TwildaError } from "./errors";
-import { BASE_BRANCH, DRAFT_BRANCH_PREFIX, assertSafePath, documentPath } from "./paths";
+import { BASE_BRANCH, DRAFT_BRANCH_PREFIX, assertSafePath, draftPath, publishedPath } from "./paths";
 import { contentDigest, parseDocument } from "./serialize";
 import type { TwildaDocument } from "./schema";
 import type {
@@ -78,7 +78,9 @@ export function seedDemoState(input: DemoSeedInput): DemoState {
   for (const doc of input.published) {
     const text = `${JSON.stringify(doc, null, 2)}\n`;
     parseDocument(text);
-    main.files[documentPath(doc.kind, doc.slug)] = { text, updatedAt: doc.updatedAt };
+    main.files[publishedPath(doc.id)] = { text, updatedAt: doc.updatedAt };
+    const draftText = `${JSON.stringify({ ...doc, status: "draft" }, null, 2)}\n`;
+    main.files[draftPath(doc.id)] = { text: draftText, updatedAt: doc.updatedAt };
   }
   for (const [path, text] of Object.entries(input.files ?? {})) {
     assertSafePath(path);
@@ -96,7 +98,7 @@ export function seedDemoState(input: DemoSeedInput): DemoState {
     };
     const text = `${JSON.stringify(doc, null, 2)}\n`;
     parseDocument(text);
-    state.branches[name].files[documentPath(doc.kind, doc.slug)] = { text, updatedAt: doc.updatedAt };
+    state.branches[name].files[draftPath(doc.id)] = { text, updatedAt: doc.updatedAt };
   }
   return state;
 }
@@ -254,10 +256,8 @@ export class DemoBackend implements StorageBackend {
     for (const branch of Object.values(this.state.branches)) {
       if (!branch.name.startsWith(DRAFT_BRANCH_PREFIX)) continue;
       const id = branch.name.slice(DRAFT_BRANCH_PREFIX.length);
-      const match = Object.keys(branch.files).find(
-        (path) => path === `content/articles/${id}.json` || path === `content/pages/${id}.json`,
-      );
-      if (!match) continue;
+      const match = draftPath(id);
+      if (!branch.files[match]) continue;
       const file = branch.files[match];
       if (!file) continue;
       let doc: TwildaDocument;
@@ -266,7 +266,7 @@ export class DemoBackend implements StorageBackend {
       } catch {
         continue;
       }
-      const published = main.files[match];
+      const published = main.files[publishedPath(id)];
       let hasUnpublishedChanges = true;
       if (published) {
         try {

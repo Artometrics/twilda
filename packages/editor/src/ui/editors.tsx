@@ -438,7 +438,7 @@ function BlockFields({
         </>
       );
     case "image": {
-      const isUpload = media.some((item) => item.path === block.src);
+      const isUpload = media.some((item) => `/${item.path}` === block.src || item.path === block.src);
       return (
         <>
           <label className="field btn file-btn">
@@ -452,7 +452,7 @@ function BlockFields({
                 event.target.value = "";
                 if (!file) return;
                 void onUploadImage(file).then((asset) => {
-                  if (asset) onChange({ ...block, src: asset.path, role: block.role });
+                  if (asset) onChange({ ...block, src: `/${asset.path}`, role: block.role });
                 });
               }}
             />
@@ -461,14 +461,14 @@ function BlockFields({
             <label className="field">
               <span>Or pick an earlier upload</span>
               <select
-                value={isUpload ? block.src : ""}
+                value={isUpload ? (block.src.startsWith("/") ? block.src : `/${block.src}`) : ""}
                 onChange={(event) => {
                   if (event.target.value) onChange({ ...block, src: event.target.value });
                 }}
               >
                 <option value="">None selected</option>
                 {media.map((item) => (
-                  <option key={item.path} value={item.path}>
+                  <option key={item.path} value={`/${item.path}`}>
                     {item.name}
                   </option>
                 ))}

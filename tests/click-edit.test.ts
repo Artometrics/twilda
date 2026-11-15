@@ -44,7 +44,7 @@ describe("data-twilda-ref annotation", () => {
   });
 
   it("only adds attributes: stripping them gives the production HTML byte for byte", () => {
-    const strip = (html: string) => html.replace(/ data-twilda-(?:ref|type|alt-ref)="[^"]*"/g, "");
+    const strip = (html: string) => html.replace(/ data-twilda-[a-z-]+="[^"]*"/g, "");
     for (const id of ["home", "lumen-rail"]) {
       const doc = load(id);
       assert.equal(strip(renderDocument(doc, { annotate: true })), renderDocument(doc), id);

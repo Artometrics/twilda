@@ -23,31 +23,31 @@ test("round trip keeps every franchise block", () => {
 
 test("save, publish, and rollback stay on the demo main branch", async () => {
   const { api, backend } = openMemoryDemo();
-  const homeBefore = (await backend.at("main").read("content/pages/home.json")).text;
+  const homeBefore = (await backend.at("main").read("content/home/published.json")).text;
   const draft = await api.readDocument("franchise", "draft");
   if (draft.kind !== "article") throw new Error("expected article");
   draft.blocks = draft.blocks.map((block) =>
     block.type === "paragraph" && block.id === "p-ledger" ? { ...block, text: "EDITED LEDGER SENTENCE" } : block,
   );
   await api.saveDraft(draft);
-  const stillPublished = parseDocument((await backend.at("main").read("content/articles/franchise.json")).text);
+  const stillPublished = parseDocument((await backend.at("main").read("content/franchise/published.json")).text);
   if (stillPublished.kind !== "article") throw new Error("expected article");
   assert.equal(stillPublished.blocks.some((block) => block.type === "paragraph" && block.text.includes("EDITED")), false);
 
   const published = await api.publish("franchise");
   assert.match(published.pullRequest.url, /^demo:\/\/pull\//);
   assert.equal(published.pullRequest.state, "merged");
-  const onMain = parseDocument((await backend.at("main").read("content/articles/franchise.json")).text);
+  const onMain = parseDocument((await backend.at("main").read("content/franchise/published.json")).text);
   if (onMain.kind !== "article") throw new Error("expected article");
   assert.ok(onMain.blocks.some((block) => block.type === "paragraph" && block.text.includes("EDITED LEDGER SENTENCE")));
-  assert.equal((await backend.at("main").read("content/pages/home.json")).text, homeBefore);
+  assert.equal((await backend.at("main").read("content/home/published.json")).text, homeBefore);
 
   const preview = await api.previewHtml("franchise", "published");
   assert.match(preview, /EDITED LEDGER SENTENCE/);
   assert.doesNotMatch(preview, /<script/i);
 
   await api.rollback("franchise");
-  const restored = parseDocument((await backend.at("main").read("content/articles/franchise.json")).text);
+  const restored = parseDocument((await backend.at("main").read("content/franchise/published.json")).text);
   if (restored.kind !== "article") throw new Error("expected article");
   assert.equal(restored.blocks.some((block) => block.type === "paragraph" && block.text.includes("EDITED")), false);
   assert.equal((await api.listHistory("franchise")).length, 0);
@@ -81,4 +81,15 @@ test("homepage fixture is a five-slide carousel plus a square grid", () => {
   assert.match(html, /55\.8/);
   assert.match(html, /Merchandise Owns the Ledger/);
   assert.doesNotMatch(html, /<script/i);
+});
+
+test("listing documents works for ones that have no draft branch yet", async () => {
+  const { api, backend } = openMemoryDemo();
+  const listed = await api.listDocuments();
+  const withBranch = (await backend.listDrafts()).map((draft) => draft.id);
+  assert.ok(listed.length > withBranch.length, "some sample documents have no draft branch");
+  for (const doc of listed) {
+    const read = await api.readDocument(doc.id, "draft");
+    assert.equal(read.id, doc.id);
+  }
 });

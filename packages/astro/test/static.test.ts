@@ -15,7 +15,7 @@ test("static loader keeps the franchise draft note out of published files", () =
   assert.ok(franchise);
   assert.equal(franchise.blocks.some((block) => block.id === "demo-draft-note"), false);
   assert.equal(loaded.pages.find((page) => page.slug === "home")?.sections.some((section) => section.type === "carousel" && section.slides.length === 5), true);
-  const raw = fs.readFileSync(path.join(root, "articles/franchise.json"), "utf8");
+  const raw = fs.readFileSync(path.join(root, "franchise/published.json"), "utf8");
   assert.equal(raw.includes("Demo draft note"), false);
 });
 

@@ -1,8 +1,24 @@
-import { contentDigest, type TwildaDocument } from "@twilda/core";
-import { changedRefs, mountOverlay } from "@twilda/core/edit";
+import {
+  canRedo,
+  canUndo,
+  contentDigest,
+  defaultSite,
+  emptyHistory,
+  recordChange,
+  redo,
+  resolveChrome,
+  undo,
+  type History,
+  type MergeChoice,
+  type MergeConflict,
+  type SiteSettings,
+  type TwildaDocument,
+} from "@twilda/core";
+import { changedRefs, mountOverlay, prepareImage } from "@twilda/core/edit";
 import type { ClickEditConfig } from "./config";
 import { clearLocalDraft, saveLocalDraft, type StorageLike } from "./draft-store";
-import { beginDeviceFlow, checkDeviceFlow, describeAuthError, publishToGithub } from "./publish";
+import { beginDeviceFlow, checkDeviceFlow, describeAuthError, PublishConflict, publishToGithub } from "./publish";
+import { loadSync, loadUpload, saveSync, saveUpload } from "./sync-store";
 
 export interface EditorDeps {
   root: HTMLElement;
@@ -10,6 +26,8 @@ export interface EditorDeps {
   /** Starting document: the build's document, or a local draft layered over it. */
   initial: TwildaDocument;
   media: string[];
+  /** Masthead and theme from `content/site.json`, so the editor shows the page the site prints. */
+  site?: SiteSettings;
   storage: StorageLike;
   config: ClickEditConfig;
   fetchImpl?: typeof fetch;
@@ -34,12 +52,18 @@ function h<K extends keyof HTMLElementTagNameMap>(
 
 export function mountEditor(deps: EditorDeps): EditorHandle {
   const { root, base, media, storage, config } = deps;
+  const site = deps.site ?? defaultSite();
   let doc = deps.initial;
   let token = "";
+  let history: History<TwildaDocument> = emptyHistory<TwildaDocument>();
+  const uploads = new Map<string, { dataUrl: string; base64: string }>();
   let pollTimer: number | undefined;
 
   const status = h("p", { class: "twilda-status", role: "status", "aria-live": "polite", "data-testid": "status" });
 
+  const undoButton = h("button", { type: "button", class: "twilda-btn", "data-testid": "undo", disabled: "" }, "Undo");
+  const redoButton = h("button", { type: "button", class: "twilda-btn", "data-testid": "redo", disabled: "" }, "Redo");
+  const structureButton = h("button", { type: "button", class: "twilda-btn", "data-testid": "structure", "aria-pressed": "false" }, "Sections");
   const outlinesButton = h("button", { type: "button", class: "twilda-btn", "data-testid": "outlines", "aria-pressed": "false" }, "Outlines");
   const resetButton = h("button", { type: "button", class: "twilda-btn", "data-testid": "reset" }, "Reset");
   const publishButton = h("button", { type: "button", class: "twilda-btn twilda-primary", "data-testid": "publish-open" }, "Publish");
@@ -47,15 +71,40 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
     "div",
     { class: "twilda-bar", "data-testid": "bar" },
     status,
-    h("div", { class: "twilda-actions" }, outlinesButton, resetButton, publishButton),
+    h("div", { class: "twilda-actions" }, undoButton, redoButton, structureButton, outlinesButton, resetButton, publishButton),
   );
+
+  const chromeFor = (value: TwildaDocument) => ({ chrome: resolveChrome(site, value) });
+
+  function showUploads(scope: HTMLElement) {
+    for (const img of scope.querySelectorAll<HTMLImageElement>("img[src^='/media/']")) {
+      const name = (img.getAttribute("src") ?? "").slice("/media/".length);
+      const local = uploads.get(name)?.dataUrl;
+      if (local) img.setAttribute("src", local);
+    }
+  }
+
+  for (const name of printedUploads(doc)) {
+    const stored = loadUpload(storage, name);
+    if (stored) uploads.set(name, { dataUrl: stored, base64: stored.slice(stored.indexOf(",") + 1) });
+  }
 
   const overlay = mountOverlay({
     root,
     doc,
     media,
-    renderOnMount: contentDigest(doc) !== contentDigest(base),
-    onChange(next) {
+    render: chromeFor(doc),
+    renderOnMount: contentDigest(doc) !== contentDigest(base) || uploads.size > 0,
+    onUploadImage: async (file) => {
+      const taken = [...media.map((src) => src.replace("/media/", "")), ...uploads.keys()];
+      const prepared = await prepareImage(file, { taken });
+      uploads.set(prepared.name, { dataUrl: prepared.dataUrl, base64: prepared.base64 });
+      saveUpload(storage, prepared.name, prepared.dataUrl);
+      return { src: prepared.src, thumb: prepared.dataUrl };
+    },
+    onRender: showUploads,
+    onChange(next, change) {
+      history = recordChange(history, doc, { key: change.kind === "field" ? change.ref : null });
       doc = next;
       persist();
     },
@@ -71,7 +120,13 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
     return changedRefs(base, doc).length;
   }
 
+  function refreshHistory() {
+    undoButton.disabled = !canUndo(history);
+    redoButton.disabled = !canRedo(history);
+  }
+
   function refreshStatus(saved: boolean) {
+    refreshHistory();
     const count = editedCount();
     if (count === 0) {
       say("No edits yet. Tap any outlined text or image.");
@@ -109,6 +164,7 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
     const useToken = h("button", { type: "button", class: "twilda-btn", "data-testid": "token-use" }, "Use token");
     const submit = h("button", { type: "button", class: "twilda-btn twilda-primary", "data-testid": "publish-submit" }, "Open pull request");
     const result = h("p", { class: "twilda-result", role: "status", "aria-live": "polite", "data-testid": "publish-result" });
+    const conflictBox = h("div", { class: "twilda-conflicts", "data-testid": "conflicts", hidden: "" });
     const close = h("button", { type: "button", class: "twilda-btn", "data-testid": "publish-close" }, "Close");
     const el = h(
       "section",
@@ -127,6 +183,7 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
         useToken,
       ),
       submit,
+      conflictBox,
       result,
       h("p", { class: "twilda-hint" }, "Your draft stays on this device. Publishing opens a pull request into main. Nothing goes live until it is merged. The token stays in this tab's memory."),
     );
@@ -194,28 +251,70 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
       renderAuth();
     });
 
-    submit.addEventListener("click", async () => {
+    function showConflicts(conflicts: MergeConflict[]) {
+      const decisions: Record<string, MergeChoice> = {};
+      const rows = conflicts.map((item, index) => {
+        decisions[item.key] = "ours";
+        const pick = (choice: MergeChoice, text: unknown) => {
+          const input = h("input", { type: "radio", name: `conflict-${index}`, value: choice, "data-testid": `conflict-${index}-${choice}` });
+          if (choice === "ours") input.checked = true;
+          input.addEventListener("change", () => {
+            decisions[item.key] = choice;
+          });
+          return h("label", { class: "twilda-choice" }, input, h("span", {}, choice === "ours" ? "Mine: " : "On main: "), h("q", {}, preview(text)));
+        };
+        return h("fieldset", { class: "twilda-conflict", "data-testid": `conflict-${index}` }, h("legend", {}, item.label), pick("ours", item.ours), pick("theirs", item.theirs));
+      });
+      const apply = h("button", { type: "button", class: "twilda-btn twilda-primary", "data-testid": "conflict-apply" }, "Publish with these choices");
+      apply.addEventListener("click", () => void run(decisions));
+      conflictBox.replaceChildren(h("p", {}, `main changed ${conflicts.length} thing${conflicts.length === 1 ? "" : "s"} you also edited. Choose which to keep.`), ...rows, apply);
+      conflictBox.hidden = false;
+    }
+
+    async function run(decisions?: Record<string, MergeChoice>) {
       result.dataset.state = "";
       result.textContent = "Opening pull request...";
+      conflictBox.hidden = true;
       submit.disabled = true;
+      const sync = loadSync(storage, base.id);
       try {
         const pr = await publishToGithub({
           token,
           owner: owner.value.trim(),
           repo: repo.value.trim(),
-          base,
+          base: sync.base ?? base,
           doc,
+          media: uploadPayload(),
+          decisions,
+          known: sync.sent,
           fetchImpl: deps.fetchImpl,
         });
-        result.replaceChildren("Pull request opened: ", h("a", { href: pr.url, target: "_blank", rel: "noopener noreferrer", "data-testid": "pr-link" }, `#${pr.number}`));
+        saveSync(storage, base.id, { base: pr.seen ?? sync.base ?? base, sent: [...sync.sent, pr.doc] });
+        if (pr.rebased) {
+          doc = pr.doc;
+          overlay.setDoc(doc);
+          persist();
+        }
+        result.replaceChildren(
+          pr.rebased ? "main had moved, so your edits were merged with it. " : "",
+          "Pull request opened: ",
+          h("a", { href: pr.url, target: "_blank", rel: "noopener noreferrer", "data-testid": "pr-link" }, `#${pr.number}`),
+        );
         result.dataset.state = "ok";
       } catch (error) {
-        result.textContent = error instanceof Error ? error.message : "Publish failed.";
-        result.dataset.state = "error";
+        if (error instanceof PublishConflict) {
+          result.textContent = "";
+          showConflicts(error.conflicts);
+        } else {
+          result.textContent = error instanceof Error ? error.message : "Publish failed.";
+          result.dataset.state = "error";
+        }
       } finally {
         submit.disabled = false;
       }
-    });
+    }
+
+    submit.addEventListener("click", () => void run());
 
     close.addEventListener("click", () => {
       window.clearTimeout(pollTimer);
@@ -233,11 +332,47 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
         if (changed.length > 8) list.append(h("li", {}, `and ${changed.length - 8} more`));
         submit.disabled = changed.length === 0;
         result.textContent = "";
+        conflictBox.hidden = true;
         renderAuth();
         el.hidden = false;
       },
     };
   }
+
+  function uploadPayload(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const name of printedUploads(doc)) {
+      const upload = uploads.get(name);
+      if (upload) out[name] = upload.base64;
+    }
+    return out;
+  }
+
+  undoButton.addEventListener("click", () => {
+    overlay.commit();
+    const step = undo(history, doc);
+    if (!step) return;
+    history = step.history;
+    doc = step.value;
+    overlay.setDoc(doc);
+    persist();
+  });
+
+  redoButton.addEventListener("click", () => {
+    overlay.commit();
+    const step = redo(history, doc);
+    if (!step) return;
+    history = step.history;
+    doc = step.value;
+    overlay.setDoc(doc);
+    persist();
+  });
+
+  structureButton.addEventListener("click", () => {
+    overlay.commit();
+    overlay.setStructure(!overlay.hasStructure());
+    structureButton.setAttribute("aria-pressed", String(overlay.hasStructure()));
+  });
 
   outlinesButton.addEventListener("click", () => {
     overlay.setOutlines(!overlay.hasOutlines());
@@ -248,6 +383,7 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
     overlay.commit();
     if (!window.confirm("Discard all local edits and go back to the built page?")) return;
     clearLocalDraft(storage, base.id);
+    history = emptyHistory<TwildaDocument>();
     doc = base;
     overlay.setDoc(base);
     refreshStatus(false);
@@ -266,4 +402,17 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
   refreshStatus(false);
 
   return { getDoc: () => doc };
+}
+
+function preview(value: unknown): string {
+  if (value === undefined) return "(removed)";
+  const text = typeof value === "string" ? value : JSON.stringify(value);
+  return text.length > 120 ? `${text.slice(0, 117)}...` : text;
+}
+
+/** File names of repo-media images a document prints. */
+function printedUploads(doc: TwildaDocument): string[] {
+  const names = new Set<string>();
+  for (const match of JSON.stringify(doc).matchAll(/\/media\/([a-z0-9][a-z0-9-]{0,60}\.jpg)/g)) names.add(match[1] as string);
+  return [...names];
 }

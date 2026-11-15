@@ -266,3 +266,257 @@
   white-space: pre-wrap;
   min-height: 3rem;
 }
+
+.twilda-live .embed-frame iframe {
+  pointer-events: none;
+}
+
+.twilda-live [data-twilda-ref][data-twilda-type="video"] {
+  cursor: pointer;
+}
+
+.twilda-live p.embed[data-twilda-type="video"] {
+  min-height: 3rem;
+  padding: 0.9rem 1rem;
+  border: 2px dashed var(--tw-accent);
+}
+
+.twilda-live [data-twilda-ref][data-twilda-type="video"]:focus-visible {
+  outline: 3px solid var(--tw-accent);
+  outline-offset: 2px;
+}
+
+.twilda-live [data-twilda-editing="true"] a {
+  text-decoration: underline;
+  text-decoration-color: var(--tw-accent);
+}
+
+.twilda-live a[data-twilda-href] {
+  cursor: pointer;
+}
+
+.twilda-marks {
+  position: fixed;
+  z-index: 65;
+  left: 0;
+  right: 0;
+  bottom: var(--twilda-kb, 0px);
+  padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom));
+  background: var(--tw-ink);
+  color: #f3efe4;
+  font: 0.95rem/1.4 "Public Sans", system-ui, sans-serif;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.twilda-marks[hidden],
+.twilda-link-form[hidden] {
+  display: none;
+}
+
+.twilda-marks *,
+.twilda-marks *::before,
+.twilda-marks *::after {
+  box-sizing: border-box;
+}
+
+.twilda-marks-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.twilda-mark {
+  flex: 1;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: 600 1rem "Public Sans", system-ui, sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.twilda-mark-bold {
+  font-weight: 900;
+}
+
+.twilda-mark-italic {
+  font-family: "Newsreader", Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.twilda-mark[aria-pressed="true"] {
+  background: #f3efe4;
+  color: var(--tw-ink);
+}
+
+.twilda-mark[hidden] {
+  display: none;
+}
+
+.twilda-link-form {
+  margin-top: 0.5rem;
+}
+
+.twilda-link-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.twilda-marks .twilda-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+.twilda-marks .twilda-hint {
+  color: #d8d0bd;
+}
+
+.twilda-upload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 0.6rem;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.twilda-file {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0;
+}
+
+.twilda-sheet .twilda-hint[data-state="error"] {
+  color: #7a1c12;
+}
+
+.twilda-sheet .twilda-hint[data-state="ok"] {
+  color: #1d5a2a;
+}
+
+.twilda-live.twilda-structure [data-twilda-node] {
+  outline: 1px dashed rgba(26, 95, 180, 0.55);
+  outline-offset: -1px;
+}
+
+.twilda-node-bar,
+.twilda-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: 600 0.8rem/1.2 "Public Sans", system-ui, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.twilda-node-bar {
+  flex-wrap: wrap;
+  padding: 0.35rem 0.5rem;
+  background: var(--tw-ink);
+  color: #f3efe4;
+}
+
+.twilda-node-name {
+  flex: 1 1 8rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.twilda-node-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 0.6rem;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.twilda-node-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.twilda-add-row {
+  justify-content: center;
+  padding: 0.35rem 0.5rem;
+  background: rgba(26, 95, 180, 0.08);
+}
+
+.twilda-add {
+  min-height: 44px;
+  width: 100%;
+  max-width: 24rem;
+  border: 1.5px dashed var(--tw-accent);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tw-accent);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.twilda-library {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.twilda-library-item {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem;
+  border: 1.5px solid var(--tw-hair);
+  border-radius: 6px;
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.twilda-library-item:hover,
+.twilda-library-item:focus-visible {
+  border-color: var(--tw-accent);
+}
+
+.twilda-library-name {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 700;
+}
+
+.twilda-preview {
+  max-height: 7.5rem;
+  overflow: hidden;
+  pointer-events: none;
+  font-size: 0.6rem;
+  zoom: 0.5;
+  border-top: 1px solid var(--tw-hair);
+  -webkit-mask-image: linear-gradient(#000 70%, transparent);
+  mask-image: linear-gradient(#000 70%, transparent);
+}
+
+body.twilda-typing .twilda-overlay {
+  display: none;
+}

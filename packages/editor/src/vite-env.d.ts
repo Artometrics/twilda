@@ -26,3 +26,9 @@ declare module "virtual:twilda-plates" {
   const plates: string[];
   export default plates;
 }
+
+declare module "virtual:twilda-site" {
+  /** The repo's `content/site.json` text, or null when the repo has none. */
+  const site: string | null;
+  export default site;
+}

@@ -34,7 +34,8 @@
     "test": "tsx --test tests/*.test.ts packages/core/test/*.test.ts packages/astro/test/*.test.ts packages/backend-fs/test/*.test.ts packages/backend-github/test/*.test.ts",
     "test:e2e": "playwright test",
     "test:e2e:edit": "playwright test --config playwright.click-edit.config.ts",
-    "check:static": "node scripts/check-static.mjs"
+    "check:static": "node scripts/check-static.mjs",
+    "migrate:content": "tsx scripts/migrate-content-layout.ts"
   },
   "dependencies": {
     "@fontsource/newsreader": "^5.2.8",

@@ -3,15 +3,17 @@ import fs from "node:fs";
 import path from "node:path";
 import Base from "../../src/layouts/Base.astro";
 import { readDraft } from "../../src/content/store";
-import { renderDocument } from "@twilda/core";
+import { renderDocument, resolveChrome, serializeSite } from "@twilda/core";
+import { readSite } from "../../src/content/site";
 
 const doc = readDraft("home");
 if (doc.kind !== "page") throw new Error("content/home/draft.json must be a page.");
 
-const html = renderDocument(doc, { annotate: true });
+const site = readSite();
+const html = renderDocument(doc, { annotate: true, chrome: resolveChrome(site, doc) });
 const media = fs
   .readdirSync(path.resolve("public/media"))
-  .filter((name) => /^[a-z0-9-]+\.svg$/.test(name))
+  .filter((name) => /^[a-z0-9-]+\.(svg|jpg|png|webp|gif)$/.test(name))
   .sort()
   .map((name) => `/media/${name}`);
 const json = (value: unknown) => JSON.stringify(value).replaceAll("<", "\\u003c");
@@ -21,6 +23,7 @@ const json = (value: unknown) => JSON.stringify(value).replaceAll("<", "\\u003c"
   <div id="twilda-root" set:html={html} />
   <script is:inline type="application/json" id="twilda-doc" set:html={json(doc)} />
   <script is:inline type="application/json" id="twilda-media" set:html={json(media)} />
+  <script is:inline type="application/json" id="twilda-site" set:html={json(JSON.parse(serializeSite(site)))} />
   <script>
     import "../client/main";
   </script>

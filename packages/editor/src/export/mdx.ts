@@ -114,7 +114,7 @@ interface Context {
 
 function resolveImage(ctx: Context, src: string): string {
   if (!src) return "";
-  const asset = ctx.media.find((item) => item.path === src);
+  const asset = ctx.media.find((item) => item.path === src || `/${item.path}` === src);
   if (asset) {
     const existing = ctx.images.find((image) => image.dataUrl === asset.dataUrl);
     if (existing) return existing.ref;

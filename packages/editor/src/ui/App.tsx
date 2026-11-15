@@ -3,12 +3,22 @@ import type { StorageBackend } from "../contract";
 import type { KeyValueStore } from "../backend/persistent";
 import { seedArtometrics } from "../backend/artometrics";
 import platesList from "virtual:twilda-plates";
+import siteText from "virtual:twilda-site";
+import {
+  SITE_PATH,
+  defaultSite,
+  parseSite,
+  serializeSite,
+  type MergeChoice,
+  type MergeConflict,
+  type SiteSettings,
+} from "@twilda/core";
+import { prepareImage } from "@twilda/core/edit";
 import { parseDocJson, uniqueSlug } from "../doc";
 import { createFromTemplate } from "../templates";
-import { downscaleImage } from "../media/downscale";
 import { docByline, fingerprint, type MediaAsset, type MetaPatch } from "../model";
 import { CmsError, createCms } from "../backend/service";
-import { FAILURE_LABEL, editorReducer, initialState, isDirty, type DeskView } from "../state/reducer";
+import { FAILURE_LABEL, canRedoDraft, canUndoDraft, editorReducer, initialState, isDirty, type DeskView } from "../state/reducer";
 import { Dashboard } from "./Dashboard";
 import { BlockEditor, SectionEditor } from "./editors";
 import { ExportPanel } from "./ExportPanel";
@@ -18,8 +28,16 @@ import { NewDraftSheet, type NewDraftValues } from "./NewDraftSheet";
 import { PagePane } from "./PagePane";
 import { Field } from "./Field";
 import { githubOwner, githubRepo } from "../github/config";
-import { openGithubPullRequest } from "../github/publish";
+import {
+  GithubConflict,
+  GithubSiteConflict,
+  openGithubPullRequest,
+  openSitePullRequest,
+} from "../github/publish";
+import { afterPublish, loadSiteSync, loadSync, mediaPayload, saveSiteSync, saveSync } from "../github/sync";
+import { ConflictSheet } from "./ConflictSheet";
 import { GithubPanel } from "./GithubPanel";
+import { ThemePanel } from "./ThemePanel";
 
 const AUTOSAVE_MS = 250;
 
@@ -37,6 +55,16 @@ export function App({
   const [githubOwnerName, setGithubOwnerName] = useState(githubOwner);
   const [githubRepoName, setGithubRepoName] = useState(githubRepo);
   const [panelOpen, setPanelOpen] = useState(false);
+  const repoSite = useMemo(() => {
+    try {
+      return siteText ? parseSite(siteText) : defaultSite();
+    } catch {
+      return defaultSite();
+    }
+  }, []);
+  const [site, setSite] = useState<SiteSettings>(repoSite);
+  const [conflict, setConflict] = useState<{ kind: "doc" | "site"; conflicts: MergeConflict[] } | null>(null);
+  const siteTimer = useRef<number | undefined>(undefined);
   const desktop = useDesktop();
   const dismissConfirm = useCallback(() => dispatch({ type: "dismiss-confirm" }), []);
   const closeCreating = useCallback(() => setCreating(false), []);
@@ -67,6 +95,65 @@ export function App({
       cancel = true;
     };
   }, [cms]);
+
+  useEffect(() => {
+    let cancel = false;
+    backend
+      .read(SITE_PATH)
+      .then((text) => {
+        const stored = parseSite(text);
+        if (!cancel) setSite(stored);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancel = true;
+    };
+  }, [backend]);
+
+  async function writeSite(next: SiteSettings, announce: boolean) {
+    let text: string;
+    try {
+      text = serializeSite(next);
+    } catch {
+      return;
+    }
+    try {
+      await backend.write(SITE_PATH, text);
+      if (announce) dispatch({ type: "notice", message: "Theme saved on this device. The live site is unchanged until you publish it." });
+    } catch (error) {
+      dispatch(failure("save", error, "The theme could not be written."));
+    }
+  }
+
+  function changeSite(next: SiteSettings) {
+    setSite(next);
+    window.clearTimeout(siteTimer.current);
+    siteTimer.current = window.setTimeout(() => void writeSite(next, true), AUTOSAVE_MS);
+  }
+
+  function settleSite(next: SiteSettings) {
+    setSite(next);
+    window.clearTimeout(siteTimer.current);
+    void writeSite(next, false);
+  }
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest("input, textarea, select, [contenteditable]")) return;
+      const key = event.key.toLowerCase();
+      if (key === "z" && !event.shiftKey) {
+        event.preventDefault();
+        dispatch({ type: "undo" });
+      } else if ((key === "z" && event.shiftKey) || key === "y") {
+        event.preventDefault();
+        dispatch({ type: "redo" });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     document.title = draft ? `${draft.title} · Twilda` : "Twilda desk";
@@ -185,35 +272,85 @@ export function App({
     }
   }
 
-  async function publishDocument() {
+  async function publishDocument(decisions?: Record<string, MergeChoice>) {
     if (!draft) return;
+    setConflict(null);
     dispatch({ type: "busy", label: "Publishing" });
     try {
-      const published = await cms.publish(draft);
-      const documents = await cms.listDocuments();
+      let published = await cms.publish(draft);
       let notice: string | undefined;
       if (!githubToken.trim()) {
         notice = "Published on this device. No GitHub token was pasted, so no pull request was opened.";
       } else {
         try {
-          const pr = await openGithubPullRequest({
+          const sync = await loadSync(backend, published.id);
+          const result = await openGithubPullRequest({
             token: githubToken,
             owner: githubOwnerName,
             repo: githubRepoName,
             doc: published,
+            base: sync.base,
+            known: sync.sent,
+            media: mediaPayload(published, state.media),
+            decisions,
           });
-          notice = `Published on this device. GitHub pull request: ${pr.url}`;
+          if (result.doc !== published) published = await cms.publish(result.doc);
+          await saveSync(backend, published.id, afterPublish(sync, published, result.seen));
+          notice = result.rebased
+            ? `main had moved. Your edits were merged with it, then published on this device. GitHub pull request: ${result.url}`
+            : `Published on this device. GitHub pull request: ${result.url}`;
         } catch (error) {
-          const detail = error instanceof Error ? error.message : "GitHub publish failed.";
-          notice = `Published on this device. GitHub pull request was not opened. ${detail}`;
+          if (error instanceof GithubConflict) {
+            setConflict({ kind: "doc", conflicts: error.conflicts });
+            notice = "Published on this device. main changed things you also edited. Choose which to keep to open the pull request.";
+          } else {
+            const detail = error instanceof Error ? error.message : "GitHub publish failed.";
+            notice = `Published on this device. GitHub pull request was not opened. ${detail}`;
+          }
         }
       }
+      const documents = await cms.listDocuments();
       dispatch({ type: "published", draft: published, published, documents, notice });
     } catch (error) {
       const phase = error instanceof CmsError ? error.phase : "publish";
       const extra =
         phase === "build" ? " The draft was saved. The published file was not updated." : "";
       dispatch(failure(phase, error, "Publish failed.", extra));
+    }
+  }
+
+  async function publishTheme(decisions?: Record<string, MergeChoice>) {
+    setConflict(null);
+    if (!githubToken.trim()) {
+      dispatch({ type: "failed", phase: "publish", message: "Paste a GitHub token to publish the theme. It is saved on this device already." });
+      return;
+    }
+    dispatch({ type: "busy", label: "Publishing theme" });
+    settleSite(site);
+    try {
+      const sync = await loadSiteSync(backend);
+      const result = await openSitePullRequest({
+        token: githubToken,
+        owner: githubOwnerName,
+        repo: githubRepoName,
+        site,
+        base: sync.base,
+        known: sync.sent,
+        decisions,
+      });
+      if (result.rebased) settleSite(result.site);
+      await saveSiteSync(backend, { base: result.seen ?? sync.base, sent: [...sync.sent, result.site] });
+      dispatch({
+        type: "notice",
+        message: `${result.rebased ? "main had moved, so the theme was merged with it. " : ""}Theme pull request: ${result.url}`,
+      });
+    } catch (error) {
+      if (error instanceof GithubSiteConflict) {
+        setConflict({ kind: "site", conflicts: error.conflicts });
+        dispatch({ type: "notice", message: "main changed theme settings you also changed. Choose which to keep." });
+      } else {
+        dispatch(failure("publish", error, "The theme could not be published."));
+      }
     }
   }
 
@@ -231,18 +368,19 @@ export function App({
   }
 
   async function upload(file: File): Promise<MediaAsset | null> {
-    dispatch({ type: "busy", label: "Scaling image" });
+    dispatch({ type: "busy", label: "Resizing image" });
     try {
-      const scaled = await downscaleImage(file);
+      const taken = [...state.media.map((item) => item.name), ...platesList.map((src) => src.replace("/media/", ""))];
+      const prepared = await prepareImage(file, { taken });
       const asset: MediaAsset = {
-        name: scaled.name,
-        path: `media/${scaled.name}`,
-        dataUrl: scaled.dataUrl,
-        width: scaled.width,
-        height: scaled.height,
-        scaled: scaled.scaled,
-        originalWidth: scaled.originalWidth,
-        originalHeight: scaled.originalHeight,
+        name: prepared.name,
+        path: `media/${prepared.name}`,
+        dataUrl: prepared.dataUrl,
+        width: prepared.width,
+        height: prepared.height,
+        scaled: prepared.scaled,
+        originalWidth: prepared.originalWidth,
+        originalHeight: prepared.originalHeight,
       };
       const stored = await cms.upload(asset);
       dispatch({ type: "uploaded", asset: stored });
@@ -267,15 +405,16 @@ export function App({
   }
 
   const view = state.view;
-  const sideView: "edit" | "media" | "export" = view === "media" || view === "export" ? view : "edit";
+  const sideView: "edit" | "media" | "export" | "theme" = view === "media" || view === "export" || view === "theme" ? view : "edit";
   const showList = desktop || view === "list" || !draft;
   const showPage = Boolean(draft) && (desktop || view === "page");
   const showSide = desktop ? Boolean(draft) && panelOpen : false;
   const showEditor = Boolean(draft) && (desktop ? showSide && sideView === "edit" : view === "edit");
   const showMedia = desktop ? showSide && sideView === "media" : view === "media";
   const showExport = Boolean(draft) && (desktop ? showSide && sideView === "export" : view === "export");
+  const showTheme = Boolean(draft) && (desktop ? showSide && sideView === "theme" : view === "theme");
   const selectTab = (next: DeskView) => {
-    if (desktop && (next === "edit" || next === "media" || next === "export")) setPanelOpen(true);
+    if (desktop && (next === "edit" || next === "media" || next === "export" || next === "theme")) setPanelOpen(true);
     dispatch({ type: "view", view: next });
   };
 
@@ -336,6 +475,18 @@ export function App({
     return <MediaPanel media={state.media} busy={busy} onUpload={(file) => void upload(file)} onRemove={(path) => void removeMedia(path)} />;
   }
 
+  function themePane() {
+    return (
+      <ThemePanel
+        site={site}
+        busy={busy}
+        canPublish={Boolean(githubToken.trim())}
+        onChange={changeSite}
+        onPublish={() => dispatch({ type: "ask-confirm", confirm: "theme" })}
+      />
+    );
+  }
+
   function exportPane() {
     if (!draft) return null;
     return (
@@ -380,6 +531,7 @@ export function App({
       {desktop ? null : <Tab id="list" label="Drafts" current={view} onSelect={selectTab} />}
       {desktop ? null : <Tab id="page" label="Page" current={view} onSelect={selectTab} />}
       <Tab id="edit" label="Blocks" current={desktop ? (showSide ? sideView : "page") : view} onSelect={selectTab} />
+      <Tab id="theme" label="Theme" current={desktop ? (showSide ? sideView : "page") : view} onSelect={selectTab} />
       <Tab id="export" label="Export" current={desktop ? (showSide ? sideView : "page") : view} onSelect={selectTab} />
       <Tab id="media" label="Media" current={desktop ? (showSide ? sideView : "page") : view} onSelect={selectTab} />
     </nav>
@@ -452,8 +604,15 @@ export function App({
           <PagePane
             doc={draft}
             plates={platesList}
+            media={state.media}
+            site={site}
             previewUrl={state.previewUrl}
+            canUndo={canUndoDraft(state)}
+            canRedo={canRedoDraft(state)}
+            onUndo={() => dispatch({ type: "undo" })}
+            onRedo={() => dispatch({ type: "redo" })}
             onEdit={(next) => dispatch({ type: "replace-draft", draft: next })}
+            onUploadImage={upload}
           />
         ) : null}
         {desktop && showSide ? (
@@ -463,16 +622,28 @@ export function App({
             </button>
             {showEditor ? editorPane() : null}
             {showMedia ? mediaPane() : null}
+            {showTheme ? themePane() : null}
             {showExport ? exportPane() : null}
           </aside>
         ) : null}
         {!desktop && showEditor ? editorPane() : null}
         {!desktop && showMedia ? mediaPane() : null}
+        {!desktop && showTheme ? themePane() : null}
         {!desktop && showExport ? exportPane() : null}
       </main>
 
       {!desktop && draft && (view === "page" || view === "edit") ? actions : null}
       {desktop ? null : tabs}
+
+      {conflict ? (
+        <ConflictSheet
+          title={conflict.kind === "site" ? "Theme changed on main" : "Page changed on main"}
+          conflicts={conflict.conflicts}
+          busy={busy}
+          onApply={(decisions) => void (conflict.kind === "site" ? publishTheme(decisions) : publishDocument(decisions))}
+          onClose={() => setConflict(null)}
+        />
+      ) : null}
 
       {creating ? <NewDraftSheet onCreate={(values) => void createNew(values)} onClose={closeCreating} /> : null}
 
@@ -484,6 +655,21 @@ export function App({
                 Publishing writes the copy you are looking at, including unsaved edits, to the published file on this
                 device. Saving a draft does not do this. With a GitHub token it also opens a pull request. Nothing goes
                 live until that pull request is merged and the site is rebuilt.
+              </p>
+              <GithubPanel
+                owner={githubOwnerName}
+                repo={githubRepoName}
+                onOwner={setGithubOwnerName}
+                onRepo={setGithubRepoName}
+                token={githubToken}
+                onToken={setGithubToken}
+              />
+            </>
+          ) : state.confirm === "theme" ? (
+            <>
+              <p>
+                This opens a pull request that changes one file, <code>content/site.json</code>: the masthead and theme tokens for every
+                page. Nothing goes live until it is merged and the site is rebuilt.
               </p>
               <GithubPanel
                 owner={githubOwnerName}
@@ -510,6 +696,10 @@ export function App({
               <button type="button" className="btn btn-primary" data-testid="confirm-publish" onClick={() => void publishDocument()}>
                 Publish
               </button>
+            ) : state.confirm === "theme" ? (
+              <button type="button" className="btn btn-primary" data-testid="confirm-publish-theme" onClick={() => void publishTheme()}>
+                Open pull request
+              </button>
             ) : state.confirm === "delete" ? (
               <button type="button" className="btn btn-danger" data-testid="confirm-delete" onClick={() => void deleteDocument()}>
                 Delete
@@ -526,8 +716,9 @@ export function App({
   );
 }
 
-function confirmTitle(confirm: "publish" | "revert" | "delete"): string {
+function confirmTitle(confirm: "publish" | "revert" | "delete" | "theme"): string {
   if (confirm === "publish") return "Publish this document?";
+  if (confirm === "theme") return "Publish the theme?";
   if (confirm === "delete") return "Delete this document?";
   return "Revert the draft?";
 }

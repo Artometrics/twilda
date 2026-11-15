@@ -16,7 +16,7 @@ function encode(text: string): string {
 
 function createFake() {
   const branches = new Map<string, Map<string, FakeFile>>([
-    ["main", new Map([["content/articles/franchise.json", { text: serializeDocument(sampleArticles.franchise), sha: "sha-main" }]])],
+    ["main", new Map([["content/franchise/published.json", { text: serializeDocument(sampleArticles.franchise), sha: "sha-main" }]])],
   ]);
   const branchSha = new Map<string, string>([["main", "commit-main"]]);
   const pulls: Array<{ number: number; title: string; head: string; base: string; state: "open" | "closed"; merged: boolean }> = [];
@@ -154,14 +154,13 @@ test("GitHub client creates a branch, writes, and merges against a fake API", as
   assert.equal(fake.sawAuth(), true);
   const branch = await github.createBranch("twilda/draft/franchise");
   assert.equal(branch.name, "twilda/draft/franchise");
-  await github.at(branch.name).write(
-    "content/articles/franchise.json",
-    serializeDocument(sampleArticles.franchise).replace("Merchandise Owns the Ledger", "Merchandise Owns the Ledger draft"),
-  );
+  const edited = serializeDocument(sampleArticles.franchise).replace("Merchandise Owns the Ledger", "Merchandise Owns the Ledger draft");
+  await github.at(branch.name).write("content/franchise/draft.json", edited);
+  await github.at(branch.name).write("content/franchise/published.json", edited);
   const pr = await github.openPullRequest({ title: "Publish franchise", head: branch.name, base: "main" });
   const merged = await github.mergePullRequest(pr.number);
   assert.equal(merged.state, "merged");
-  assert.match((await github.read("content/articles/franchise.json")).text, /Ledger draft/);
+  assert.match((await github.read("content/franchise/published.json")).text, /Ledger draft/);
   const drafts = await github.listDrafts();
   assert.equal(drafts.length, 1);
   assert.equal(drafts[0]?.hasUnpublishedChanges, false);
