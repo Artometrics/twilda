@@ -41,6 +41,6 @@
     "astro": "^5"
   },
   "devDependencies": {
-    "vite": "^6.4.1"
+    "vite": "^8.3.8"
   }
 }
