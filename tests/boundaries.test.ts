@@ -39,7 +39,7 @@ describe("repository boundaries", () => {
     const config = JSON.parse(readFileSync("firebase.json", "utf8")) as { hosting: HostingSite[] };
     assert.equal(Array.isArray(config.hosting), true);
     const magazine = config.hosting.find((site) => site.site === "twilda-510519");
-    const desk = config.hosting.find((site) => site.site === "twilda-desk-510519");
+    const desk = config.hosting.find((site) => site.target === "twilda-desk");
     const landing = config.hosting.find((site) => site.target === "www");
     assert.ok(magazine, "magazine hosting site is missing");
     assert.ok(desk, "desk hosting site is missing");
@@ -48,7 +48,7 @@ describe("repository boundaries", () => {
     assert.deepEqual(magazine.ignore, ["firebase.json", "**/node_modules/**"]);
     assert.equal(magazine.cleanUrls, true);
     assert.equal(magazine.trailingSlash, false);
-    assert.ok(magazine.redirects?.some((row) => row.source === "/desk" && row.destination === "https://twilda-desk-510519.web.app/"));
+    assert.ok(magazine.redirects?.some((row) => row.source === "/desk" && row.destination === "https://twilda-desk.web.app/"));
     const bySource = new Map(magazine.headers.map((entry) => [entry.source, entry.headers]));
     const common = new Map(bySource.get("**")?.map((header) => [header.key, header.value]));
     assert.equal(common.get("X-Robots-Tag"), "noindex, nofollow, noarchive");

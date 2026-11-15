@@ -1,9 +1,9 @@
 name: Deploy Twilda desk to Firebase Hosting
 
 # Builds packages/editor and deploys it to the phone-desk site.
-# The site id is twilda-desk-510519 in project twilda-510519.
+# The site id is twilda-desk in project twilda-510519.
 # Create that Hosting site in the Firebase console before this job can succeed.
-# Until the site exists, the deploy fails and https://twilda-desk-510519.web.app/ stays "Site Not Found".
+# Until the site exists, the deploy fails and https://twilda-desk.web.app/ stays "Site Not Found".
 
 on:
   push:
@@ -65,7 +65,7 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ steps.wif.outputs.json }}
           projectId: twilda-510519
-          target: twilda-desk-510519
+          target: twilda-desk
           expires: 7d
 
   build_and_deploy:
@@ -110,5 +110,5 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ steps.wif.outputs.json }}
           projectId: twilda-510519
-          target: twilda-desk-510519
+          target: twilda-desk
           channelId: live

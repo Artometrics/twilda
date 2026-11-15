@@ -18,7 +18,7 @@ This repository previously held a different product, an Expo novel workspace. Th
 - Not a hosted CMS, and not a paid plan. Nothing here asks you to create an account.
 - Not a freeform page builder. Sections are prepared types, not a canvas.
 - Not part of the production site. The editor never runs inside `astro build`, and the build does not enable SSR to carry it.
-- Not wired to artometrics.com. There is no `npm run deploy`. GitHub Actions deploy three noindex Firebase Hosting sites when a commit lands on `main`: the Field Desk magazine (`twilda-510519`), the marketing site (`twilda-landing`), and the phone desk (`twilda-desk-510519`). See [examples/hosting/README.md](examples/hosting/README.md).
+- Not wired to artometrics.com. There is no `npm run deploy`. GitHub Actions deploy three noindex Firebase Hosting sites when a commit lands on `main`: the Field Desk magazine (`twilda-510519`), the marketing site (`twilda-landing`), and the phone desk (`twilda-desk`). See [examples/hosting/README.md](examples/hosting/README.md).
 - Not the previous Expo app. Do not look for Supabase, React Native, or the novel workspace on this branch.
 
 ## Demo
@@ -111,7 +111,7 @@ GitHub Actions runs those four commands on pull requests and on this branch. Tha
 | `packages/core/` | `@twilda/core`. Article blocks, page sections, storage interface. |
 | `packages/astro/` | `@twilda/astro`. The `twilda()` integration. |
 | `editor/` | Vite + React desk. Dev only. |
-| `packages/editor/` | The phone-first desk: new, edit, save, preview, export to Astro MDX or Markdown. Own `package.json`. Hosted on site `twilda-desk-510519`. `/desk` on the magazine site redirects there. |
+| `packages/editor/` | The phone-first desk: new, edit, save, preview, export to Astro MDX or Markdown. Own `package.json`. Hosted on site `twilda-desk`. `/desk` on the magazine site redirects there. |
 | `drafts/artometrics/` | Three DRAFT sample articles (real public facts, cited, `[VERIFY]` notes) that the phone desk seeds on first visit. Not in `content/`. |
 | `public/media/` | Demo plates (original SVG). |
 | `docs/architecture.md` | Static contract, phone editor, drafts, and open questions. |

@@ -9,7 +9,7 @@ demo-dist/preview/            published sample site (no script tags)
 
 The editor's published-preview button renders from the browser store. `demo-dist/preview` is the sample as built. Tapping Publish does not rebuild that folder.
 
-`npm run build:demo` is the in-repo demo bundle. The hosted phone desk is a separate build of `packages/editor`, deployed by `.github/workflows/firebase-deploy-desk.yml` to site `twilda-desk-510519`. Do not deploy either bundle to `artometrics-510519` or artometrics.com. The magazine entry in `firebase.json` still serves `dist/` with `script-src 'none'`. There is no npm deploy script.
+`npm run build:demo` is the in-repo demo bundle. The hosted phone desk is a separate build of `packages/editor`, deployed by `.github/workflows/firebase-deploy-desk.yml` to site `twilda-desk`. Do not deploy either bundle to `artometrics-510519` or artometrics.com. The magazine entry in `firebase.json` still serves `dist/` with `script-src 'none'`. There is no npm deploy script.
 
 Firebase Hosting can serve the demo folder from a project you create for it. The Spark tier is a no-cost option; look up the current quota in the Firebase console before relying on it. This note does not record a quota. Set the public directory to `demo-dist`. Do not add that new project id to this repository.
 

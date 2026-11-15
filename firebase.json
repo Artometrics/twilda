@@ -9,12 +9,12 @@
       "redirects": [
         {
           "source": "/desk",
-          "destination": "https://twilda-desk-510519.web.app/",
+          "destination": "https://twilda-desk.web.app/",
           "type": 302
         },
         {
           "source": "/desk/**",
-          "destination": "https://twilda-desk-510519.web.app/",
+          "destination": "https://twilda-desk.web.app/",
           "type": 302
         }
       ],
@@ -64,7 +64,7 @@
       ]
     },
     {
-      "site": "twilda-desk-510519",
+      "target": "twilda-desk",
       "public": "packages/editor/dist",
       "ignore": ["firebase.json", "**/node_modules/**"],
       "cleanUrls": true,

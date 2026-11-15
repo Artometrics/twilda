@@ -7,6 +7,9 @@
       "hosting": {
         "www": [
           "twilda-landing"
+        ],
+        "twilda-desk": [
+          "twilda-desk"
         ]
       }
     }
