@@ -135,8 +135,25 @@ export function resolveChrome(site: SiteSettings, doc: { id: string; kind: "arti
   return { ...merged, nav: merged.nav.map((item) => ({ ...item })) };
 }
 
+const HEX = /^#[0-9a-fA-F]{6}$/;
+
+/** A theme that always passes the schema: invalid colors fall back to the default, and an invalid theme to the default. */
+function safeTheme(input: Theme): Theme {
+  const direct = themeSchema.safeParse(input);
+  if (direct.success) return direct.data;
+  const colors = { ...DEFAULT_THEME.colors };
+  const given = (input as { colors?: Record<string, unknown> } | null)?.colors;
+  for (const key of Object.keys(colors) as Array<keyof Theme["colors"]>) {
+    const value = given?.[key];
+    if (typeof value === "string" && HEX.test(value)) colors[key] = value;
+  }
+  const retry = themeSchema.safeParse({ ...(input as object), colors });
+  return retry.success ? retry.data : DEFAULT_THEME;
+}
+
 /** CSS custom properties for a theme, keyed by name. Values come only from the validated closed list. */
-export function themeVars(theme: Theme): Record<string, string> {
+export function themeVars(input: Theme): Record<string, string> {
+  const theme = safeTheme(input);
   const rem = (px: number) => `${Number((px / 16).toFixed(4))}rem`;
   return {
     "--site-paper": theme.colors.paper.toLowerCase(),

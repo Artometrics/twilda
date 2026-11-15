@@ -258,6 +258,12 @@ function renderEmbed(ctx: Ctx, base: string, block: Extract<Block, { type: "embe
     <figcaption><a href="${escapeHtml(video.watchUrl)}" rel="noopener noreferrer nofollow">${escapeHtml(label)}: ${escapeHtml(block.title)}</a>${caption}</figcaption>
   </figure>`;
   }
+  if (ctx.annotate && block.kind === "video") {
+    return `<figure class="embed embed-video embed-empty" id="${escapeHtml(block.id)}"${node(ctx, base, "embed")}>
+    <div class="embed-frame embed-slot" data-twilda-ref="${escapeHtml(`${base}.src`)}" data-twilda-type="video" data-twilda-alt-ref="${escapeHtml(`${base}.title`)}"><span>Tap to choose a video (YouTube or Vimeo)</span></div>
+    <figcaption>${escapeHtml(label)}: ${escapeHtml(block.title)}${caption}</figcaption>
+  </figure>`;
+  }
   return `<p class="embed" id="${escapeHtml(block.id)}"${node(ctx, base, "embed")}><a href="${escapeHtml(safeHref(block.src))}">${escapeHtml(label)}: ${escapeHtml(block.title)}</a>${caption}</p>`;
 }
 

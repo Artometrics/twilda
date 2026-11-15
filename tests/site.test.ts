@@ -123,3 +123,16 @@ describe("site settings: hostile and out-of-range values", () => {
     assert.ok(contrastRatio(DEFAULT_THEME.colors.ink, DEFAULT_THEME.colors.paper) > 7);
   });
 });
+
+describe("themeVars never emits an invalid value", () => {
+  it("falls back per color, then to the default theme", () => {
+    const hostile = { ...DEFAULT_THEME, colors: { ...DEFAULT_THEME.colors, paper: "red;}body{display:none", ink: "#abcdef" } } as never;
+    const vars = themeVars(hostile);
+    assert.equal(vars["--site-paper"], DEFAULT_THEME.colors.paper.toLowerCase());
+    assert.equal(vars["--site-ink"], "#abcdef");
+    const worse = themeVars({ ...(hostile as object), baseSize: 9999, fonts: { heading: "comic-sans", body: "x" } } as never);
+    assert.deepEqual(worse, themeVars(DEFAULT_THEME));
+    assert.deepEqual(themeVars(null as never), themeVars(DEFAULT_THEME));
+    for (const value of Object.values(vars)) assert.equal(/[;{}<>]/.test(value.replace(/,\s?/g, "")), false, value);
+  });
+});

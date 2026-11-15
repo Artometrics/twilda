@@ -110,18 +110,31 @@ export function App({
     };
   }, [backend]);
 
+  async function writeSite(next: SiteSettings, announce: boolean) {
+    let text: string;
+    try {
+      text = serializeSite(next);
+    } catch {
+      return;
+    }
+    try {
+      await backend.write(SITE_PATH, text);
+      if (announce) dispatch({ type: "notice", message: "Theme saved on this device. The live site is unchanged until you publish it." });
+    } catch (error) {
+      dispatch(failure("save", error, "The theme could not be written."));
+    }
+  }
+
   function changeSite(next: SiteSettings) {
     setSite(next);
     window.clearTimeout(siteTimer.current);
-    siteTimer.current = window.setTimeout(() => {
-      let text: string;
-      try {
-        text = serializeSite(next);
-      } catch {
-        return;
-      }
-      void backend.write(SITE_PATH, text).catch((error: unknown) => dispatch(failure("save", error, "The theme could not be written.")));
-    }, AUTOSAVE_MS);
+    siteTimer.current = window.setTimeout(() => void writeSite(next, true), AUTOSAVE_MS);
+  }
+
+  function settleSite(next: SiteSettings) {
+    setSite(next);
+    window.clearTimeout(siteTimer.current);
+    void writeSite(next, false);
   }
 
   useEffect(() => {
@@ -313,6 +326,7 @@ export function App({
       return;
     }
     dispatch({ type: "busy", label: "Publishing theme" });
+    settleSite(site);
     try {
       const sync = await loadSiteSync(backend);
       const result = await openSitePullRequest({
@@ -324,7 +338,7 @@ export function App({
         known: sync.sent,
         decisions,
       });
-      if (result.rebased) changeSite(result.site);
+      if (result.rebased) settleSite(result.site);
       await saveSiteSync(backend, { base: result.seen ?? sync.base, sent: [...sync.sent, result.site] });
       dispatch({
         type: "notice",
