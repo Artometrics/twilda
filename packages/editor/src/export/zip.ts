@@ -33,7 +33,16 @@ export function textBytes(text: string): Uint8Array {
   return new TextEncoder().encode(text);
 }
 
+/** A zip entry name that cannot write outside the folder it is unpacked into. */
+export function assertSafeEntryName(name: string): void {
+  // eslint-disable-next-line no-control-regex
+  if (!name || name.startsWith("/") || /[\\\u0000-\u001f:]/.test(name) || name.split("/").some((part) => part === "" || part === "." || part === "..")) {
+    throw new Error(`"${name.slice(0, 60)}" is not a safe file name for a zip.`);
+  }
+}
+
 export function createZip(entries: ZipEntry[], when = new Date()): Uint8Array {
+  for (const entry of entries) assertSafeEntryName(entry.name);
   const { time, day } = dosDateTime(when);
   const chunks: Uint8Array[] = [];
   const central: Uint8Array[] = [];

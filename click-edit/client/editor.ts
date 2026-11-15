@@ -20,6 +20,9 @@ import { clearLocalDraft, saveLocalDraft, type StorageLike } from "./draft-store
 import { beginDeviceFlow, checkDeviceFlow, describeAuthError, PublishConflict, publishToGithub } from "./publish";
 import { loadSync, loadUpload, saveSync, saveUpload } from "./sync-store";
 
+/** A pasted or signed-in token is forgotten after this long, and when the page is left. It is never written anywhere. */
+const TOKEN_LIFETIME_MS = 30 * 60 * 1000;
+
 export interface EditorDeps {
   root: HTMLElement;
   base: TwildaDocument;
@@ -58,6 +61,7 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
   let history: History<TwildaDocument> = emptyHistory<TwildaDocument>();
   const uploads = new Map<string, { dataUrl: string; base64: string }>();
   let pollTimer: number | undefined;
+  let tokenTimer: number | undefined;
 
   const status = h("p", { class: "twilda-status", role: "status", "aria-live": "polite", "data-testid": "status" });
 
@@ -191,7 +195,9 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
     function renderAuth() {
       auth.replaceChildren();
       if (token) {
-        auth.append(h("p", { "data-testid": "signed-in" }, "Signed in to GitHub for this tab."));
+        const signOut = h("button", { type: "button", class: "twilda-btn", "data-testid": "signout" }, "Sign out and forget the token");
+        signOut.addEventListener("click", forgetToken);
+        auth.append(h("p", { "data-testid": "signed-in" }, "Signed in to GitHub for this tab."), signOut);
         return;
       }
       if (!config.clientId) {
@@ -201,6 +207,14 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
       const start = h("button", { type: "button", class: "twilda-btn", "data-testid": "signin-start" }, "Sign in with GitHub");
       start.addEventListener("click", () => void beginSignIn());
       auth.append(start);
+    }
+
+    function forgetToken() {
+      token = "";
+      tokenInput.value = "";
+      window.clearTimeout(pollTimer);
+      result.textContent = "Signed out. The token was cleared from this tab.";
+      renderAuth();
     }
 
     async function beginSignIn() {
@@ -227,6 +241,8 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
             if (polled.status === "ready" && polled.accessToken) {
               token = polled.accessToken;
               renderAuth();
+              window.clearTimeout(tokenTimer);
+              tokenTimer = window.setTimeout(forgetToken, TOKEN_LIFETIME_MS);
               return;
             }
           } catch (error) {
@@ -249,6 +265,13 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
       token = value;
       tokenInput.value = "";
       renderAuth();
+      window.clearTimeout(tokenTimer);
+      tokenTimer = window.setTimeout(forgetToken, TOKEN_LIFETIME_MS);
+    });
+
+    window.addEventListener("pagehide", () => {
+      token = "";
+      tokenInput.value = "";
     });
 
     function showConflicts(conflicts: MergeConflict[]) {

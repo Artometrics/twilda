@@ -12,6 +12,8 @@ import {
 } from "./model";
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+/** An ISO-8601 UTC timestamp. Anything else, including text with a line break, is replaced by the current time. */
+const ISO_STAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
 
 export function slugify(input: string, max = 60): string {
   const slug = input
@@ -256,6 +258,7 @@ export function normalizeDoc(value: unknown): Doc {
   if (kind !== "article" && kind !== "page") throw new Error('The file has no "kind" of "article" or "page".');
   const title = need(value, "title", "The document");
   const slug = str(value.slug) || slugify(title);
+  if (!SLUG_PATTERN.test(slug)) throw new Error(`The slug "${slug.slice(0, 60)}" must be lowercase words joined by hyphens.`);
   const id = str(value.id) || slug;
   if (!SLUG_PATTERN.test(id)) throw new Error(`The id "${id}" must be lowercase words joined by hyphens.`);
   const base = {
@@ -265,7 +268,7 @@ export function normalizeDoc(value: unknown): Doc {
     kicker: str(value.kicker),
     dek: str(value.dek),
     status: value.status === "published" ? "published" : "draft",
-    updatedAt: str(value.updatedAt) || new Date().toISOString(),
+    updatedAt: ISO_STAMP.test(str(value.updatedAt)) ? str(value.updatedAt) : new Date().toISOString(),
   } as const;
   if (kind === "article") {
     if (!Array.isArray(value.blocks)) throw new Error('The article has no "blocks" list.');

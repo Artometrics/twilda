@@ -104,3 +104,8 @@ export { canRedo, canUndo, emptyHistory, recordChange, redo, undo } from "./hist
 export type { History } from "./history";
 export { mergeDocuments, mergeSites } from "./merge";
 export type { MergeChoice, MergeConflict, MergeResult, SiteMergeResult } from "./merge";
+export { DEFAULT_JSON_BOUNDS, assertJsonBounds } from "./json-guard";
+export type { JsonBounds } from "./json-guard";
+export { MAX_RASTER_BYTES, MEDIA_FILE_NAME, auditSvg, containsActiveContent, inspectUpload, sniffImage } from "./media-guard";
+export type { ImageKind } from "./media-guard";
+export { hasPunycodeHost, isSafeHref, isSitePath, isWebUrl, labelContradictsTarget } from "./url";

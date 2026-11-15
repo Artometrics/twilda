@@ -1,5 +1,6 @@
 import { TwildaError } from "../../core/src/errors";
 import { mergeDocuments, mergeSites, type MergeChoice, type MergeConflict } from "../../core/src/merge";
+import { inspectUpload } from "../../core/src/media-guard";
 import { SITE_BRANCH, SITE_PATH, draftBranchName, draftPath, mediaRepoPath, publishedPath } from "../../core/src/paths";
 import { documentSchema, type TwildaDocument } from "../../core/src/schema";
 import { contentDigest, formatDocumentError, parseDocument, serializeDocument } from "../../core/src/serialize";
@@ -198,8 +199,17 @@ export async function publishDocument(input: PublishInput): Promise<PublishResul
   for (const name of mediaNames(doc)) {
     const base64 = input.media?.[name];
     if (!base64) continue;
-    const bytes = fromBase64(base64);
+    // Base64 is 4 characters per 3 bytes: refuse before decoding something enormous.
+    if (base64.length > Math.ceil((MAX_MEDIA_BYTES * 4) / 3) + 8) throw new TwildaError(`${name} is too large to commit.`, "media-too-large");
+    let bytes: Uint8Array;
+    try {
+      bytes = fromBase64(base64);
+    } catch {
+      throw new TwildaError(`${name} is not valid image data.`, "media-rejected");
+    }
     if (bytes.length > MAX_MEDIA_BYTES) throw new TwildaError(`${name} is too large to commit (${bytes.length} bytes).`, "media-too-large");
+    const problem = inspectUpload(name, bytes);
+    if (problem) throw new TwildaError(problem, "media-rejected");
     let finalName = name;
     const blob = await gitBlobSha(bytes);
     for (let n = 2; n < 100; n += 1) {

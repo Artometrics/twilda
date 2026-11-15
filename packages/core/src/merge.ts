@@ -34,6 +34,10 @@ export interface MergeResult {
 }
 
 type Json = unknown;
+
+/** Keys that change an object's prototype or reach it. Merged input is parsed JSON, where `JSON.parse` makes `__proto__` an ordinary own key. */
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+const ownKeys = (value: Record<string, Json>) => Object.keys(value).filter((key) => !UNSAFE_KEYS.has(key));
 interface Ctx {
   conflicts: MergeConflict[];
   decisions: Record<string, MergeChoice>;
@@ -158,7 +162,7 @@ function merge(ctx: Ctx, key: string, base: Json, ours: Json, theirs: Json): Jso
   }
   if (isRecord(ours) && isRecord(theirs) && (base === undefined || isRecord(base))) {
     const out: Record<string, Json> = {};
-    const keys = [...new Set([...Object.keys(ours), ...Object.keys(theirs)])];
+    const keys = [...new Set([...ownKeys(ours), ...ownKeys(theirs)])];
     for (const field of keys) {
       const value = merge(ctx, key ? `${key}.${field}` : field, (base as Record<string, Json> | undefined)?.[field], ours[field], theirs[field]);
       if (value !== undefined) out[field] = value;
@@ -202,7 +206,7 @@ export function mergeDocuments(
 
 function leavesOf(value: Json, prefix: string, out: Map<string, Json>): void {
   if (isRecord(value)) {
-    for (const [key, child] of Object.entries(value)) leavesOf(child, prefix ? `${prefix}.${key}` : key, out);
+    for (const key of ownKeys(value)) leavesOf(value[key], prefix ? `${prefix}.${key}` : key, out);
     return;
   }
   out.set(prefix, value);
@@ -210,6 +214,7 @@ function leavesOf(value: Json, prefix: string, out: Map<string, Json>): void {
 
 function setLeaf(target: Record<string, Json>, path: string, value: Json | undefined): void {
   const keys = path.split(".");
+  if (keys.some((key) => UNSAFE_KEYS.has(key))) return;
   let node = target;
   for (const key of keys.slice(0, -1)) {
     if (!isRecord(node[key])) node[key] = {};

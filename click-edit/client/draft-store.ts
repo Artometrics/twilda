@@ -1,4 +1,4 @@
-import { documentSchema, type TwildaDocument } from "@twilda/core";
+import { assertJsonBounds, documentSchema, type TwildaDocument } from "@twilda/core";
 
 export interface StorageLike {
   getItem(key: string): string | null;
@@ -13,7 +13,9 @@ export function loadLocalDraft(storage: StorageLike, id: string): TwildaDocument
   const raw = storage.getItem(draftKey(id));
   if (!raw) return null;
   try {
-    const parsed = documentSchema.safeParse(JSON.parse(raw));
+    const value = JSON.parse(raw) as unknown;
+    assertJsonBounds(value);
+    const parsed = documentSchema.safeParse(value);
     return parsed.success && parsed.data.id === id ? parsed.data : null;
   } catch {
     return null;

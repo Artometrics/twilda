@@ -1,4 +1,4 @@
-import { documentSchema, type TwildaDocument } from "@twilda/core";
+import { assertJsonBounds, documentSchema, type TwildaDocument } from "@twilda/core";
 import type { StorageLike } from "./draft-store";
 
 /**
@@ -15,6 +15,11 @@ export const syncKey = (id: string) => `twilda:click-edit:sync:${id}`;
 export const mediaKey = (name: string) => `twilda:click-edit:media:${name}`;
 
 function parse(value: unknown, id: string): TwildaDocument | null {
+  try {
+    assertJsonBounds(value);
+  } catch {
+    return null;
+  }
   const result = documentSchema.safeParse(value);
   return result.success && result.data.id === id ? result.data : null;
 }

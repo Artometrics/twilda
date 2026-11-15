@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TwildaError } from "./errors";
+import { assertJsonBounds } from "./json-guard";
 import { hrefSchema } from "./schema";
 import type { SiteChrome } from "./render";
 import { DEFAULT_CHROME } from "./render";
@@ -107,13 +108,20 @@ export function defaultSite(): SiteSettings {
   };
 }
 
+/** Largest `content/site.json` Twilda will parse. The real file is about 1 KB. */
+export const MAX_SITE_CHARS = 200_000;
+
 export function parseSite(textValue: string): SiteSettings {
+  if (textValue.length > MAX_SITE_CHARS) {
+    throw new TwildaError("content/site.json is too large to read.", "invalid-site");
+  }
   let value: unknown;
   try {
     value = JSON.parse(textValue) as unknown;
   } catch {
     throw new TwildaError("content/site.json is not valid JSON.", "invalid-json");
   }
+  assertJsonBounds(value);
   const parsed = siteSchema.safeParse(value);
   if (!parsed.success) {
     const detail = parsed.error.issues.map((issue) => `${issue.path.join(".") || "site"}: ${issue.message}`).join("; ");

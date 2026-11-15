@@ -113,9 +113,12 @@ export function GithubPanel({
           data-testid="github-token"
           type="password"
           value={token}
+          name="twilda-github-token"
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}
+          data-lpignore="true"
+          data-1p-ignore="true"
           placeholder="github_pat_…"
           onChange={(event) => onToken(event.target.value.trim())}
         />
@@ -123,6 +126,20 @@ export function GithubPanel({
       <p className="hint" data-testid="github-state">
         {token ? "Token set for this tab. Publishing will also open a pull request into main." : "No token. Publishing stays on this device."}
       </p>
+      {token ? (
+        <button
+          type="button"
+          className="btn"
+          data-testid="github-signout"
+          onClick={() => {
+            setFlow(null);
+            setMessage("Signed out. The token was cleared from this tab.");
+            onToken("");
+          }}
+        >
+          Sign out and forget the token
+        </button>
+      ) : null}
       {deviceFlowAvailable() && !token ? (
         <div className="stack" data-testid="device-flow">
           {flow ? (
