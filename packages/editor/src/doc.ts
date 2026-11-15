@@ -1,3 +1,4 @@
+import { blockSchema, pageSectionSchema } from "../../core/src/schema";
 import {
   BLOCK_CATALOG,
   SECTION_CATALOG,
@@ -179,6 +180,10 @@ function normalizeBlock(value: unknown, index: number): Block {
         href: str(value.href),
         description: str(value.description),
       };
+    case "fast-facts":
+    case "pull-quote":
+    case "bar-chart":
+      return schemaPart(blockSchema.safeParse({ ...value, id }), where);
     default: {
       const exhaustive: never = type;
       throw new Error(`Unknown block ${String(exhaustive)}`);
@@ -186,11 +191,21 @@ function normalizeBlock(value: unknown, index: number): Block {
   }
 }
 
+/** A part of a type added by the modes is taken only if it already passes the core schema. */
+function schemaPart<T>(result: { success: true; data: T } | { success: false; error: { issues: Array<{ path: Array<string | number>; message: string }> } }, where: string): T {
+  if (result.success) return result.data;
+  const first = result.error.issues[0];
+  throw new Error(`${where}: ${first ? `${first.path.join(".") || "part"} ${first.message}` : "is not valid"}`);
+}
+
+const MODE_SECTION_TYPES = new Set(["hero", "feature-grid", "team", "pricing", "testimonials", "contact", "social-proof", "cta", "cover-story", "category-grid", "fast-facts"]);
+
 function normalizeSection(value: unknown, index: number): PageSection {
   const where = `Section ${index + 1}`;
   if (!isRecord(value)) throw new Error(`${where} is not an object.`);
   const type = sectionTypeOf(value.type);
   const id = str(value.id) || createId(type ?? "section");
+  if (type && MODE_SECTION_TYPES.has(type)) return schemaPart(pageSectionSchema.safeParse({ ...value, id }), where);
   if (type === "carousel" && Array.isArray(value.slides)) {
     return {
       id,

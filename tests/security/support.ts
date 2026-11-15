@@ -82,6 +82,7 @@ const SITE_PATH = /^\/(?!\/)[A-Za-z0-9/._~%?=&#-]*$/;
 export function isAllowedHrefValue(value: string): boolean {
   if (value === "#") return true;
   if (SITE_PATH.test(value) && !value.includes("..")) return true;
+  if (/^mailto:[A-Za-z0-9._%+-]{1,64}@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}$/.test(value)) return true;
   return /^https?:\/\/[^\s\\<>"'`]+$/i.test(value) && !/[\u0000-\u001f\u007f-\u009f]/.test(value);
 }
 

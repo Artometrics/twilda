@@ -83,3 +83,17 @@ export function labelContradictsTarget(label: string, href: string): boolean {
   if (!shown || !real) return false;
   return shown !== real;
 }
+
+const MAILTO = /^mailto:[A-Za-z0-9._%+-]{1,64}@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)$/;
+
+/** A bare address: `mailto:name@host.tld`. No query (so no `?subject=` or `?bcc=` header injection), no punycode host. */
+export function isMailto(value: string): boolean {
+  if (value.length > 140 || FORBIDDEN.test(value)) return false;
+  const match = MAILTO.exec(value);
+  return match !== null && !hasPunycodeHost(match[1] as string);
+}
+
+/** What a button or contact line may point at: a site path, an http(s) address, or a bare `mailto:` address. */
+export function isActionHref(value: string): boolean {
+  return isSafeHref(value) || isMailto(value);
+}

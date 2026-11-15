@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TwildaError } from "./errors";
 import { assertJsonBounds } from "./json-guard";
+import { PRESET_IDS, type PresetId } from "./modes";
 import { hrefSchema } from "./schema";
 import type { SiteChrome } from "./render";
 import { DEFAULT_CHROME } from "./render";
@@ -87,6 +88,12 @@ const chromeOverrideSchema = siteChromeSchema.partial();
 
 export const siteSchema = z.object({
   version: z.literal(SITE_VERSION),
+  /**
+   * Which mode (preset) the site is in. Optional: a site with no `mode` is a magazine, as every
+   * site was before modes existed. The mode picks the section library the desk offers and the
+   * masthead styling. It never restricts what the renderer prints.
+   */
+  mode: z.enum(PRESET_IDS).optional(),
   chrome: siteChromeSchema,
   /** Per-template overrides: `article` pages and `page` pages can say a different issue label, note, or nav. */
   templates: z.object({ article: chromeOverrideSchema.optional(), page: chromeOverrideSchema.optional() }).default({}),
@@ -141,6 +148,12 @@ export function resolveChrome(site: SiteSettings, doc: { id: string; kind: "arti
   const own = site.documents[doc.id] ?? {};
   const merged = { ...site.chrome, ...template, ...own };
   return { ...merged, nav: merged.nav.map((item) => ({ ...item })) };
+}
+
+/** Render options that depend on the site: the masthead for this document and the site's mode. */
+export function renderOptionsFor(site: SiteSettings, doc: { id: string; kind: "article" | "page" }): { chrome: SiteChrome; mode?: PresetId } {
+  const chrome = resolveChrome(site, doc);
+  return site.mode ? { chrome, mode: site.mode } : { chrome };
 }
 
 const HEX = /^#[0-9a-fA-F]{6}$/;

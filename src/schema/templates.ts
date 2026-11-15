@@ -1,8 +1,12 @@
 import {
+  BLOCK_CATALOG,
   BLOCK_LABELS,
   BLOCK_TYPES,
   PAGE_SECTION_TYPES,
+  SECTION_CATALOG,
   SECTION_LABELS,
+  createBlock,
+  createSection,
   type Block,
   type BlockType,
   type PageSection,
@@ -20,32 +24,19 @@ export interface PartCatalogEntry {
   kinds: Array<TwildaDocument["kind"]>;
 }
 
-const HINTS: Record<PartType, string> = {
-  carousel: "A sideways row of lead stories.",
-  "story-grid": "Story cards with a plate, a title, and a dek.",
-  "menu-shelf": "A heading and a list of links.",
-  heading: "A section heading in the article.",
-  paragraph: "Body copy. Separate paragraphs with a blank line.",
-  "key-findings": "A title and a list of findings.",
-  chart: "A chart CSV under content/data/, or a link, plus alt text.",
-  callout: "A desk note set off from the body.",
-  sources: "Citations: a label and a link for each.",
-  image: "A plate, alt text, and a caption.",
-  embed: "A video or audio link.",
-  download: "A file a reader can take.",
-};
+const HINTS: Record<string, string> = Object.fromEntries([...SECTION_CATALOG, ...BLOCK_CATALOG].map((entry) => [entry.type, entry.hint]));
 
 export const PART_CATALOG: PartCatalogEntry[] = [
   ...PAGE_SECTION_TYPES.map((type) => ({
     type,
     label: SECTION_LABELS[type],
-    hint: HINTS[type],
+    hint: HINTS[type] ?? "",
     kinds: ["page"] as Array<TwildaDocument["kind"]>,
   })),
   ...BLOCK_TYPES.map((type) => ({
     type,
     label: BLOCK_LABELS[type],
-    hint: HINTS[type],
+    hint: HINTS[type] ?? "",
     kinds: ["article"] as Array<TwildaDocument["kind"]>,
   })),
 ];
@@ -167,9 +158,9 @@ export function createPart(type: PartType): Part {
         label: "Download",
         description: "",
       };
-    default: {
-      const exhaustive: never = type;
-      throw new Error(`Unknown part type ${exhaustive}`);
-    }
+    default:
+      return (PAGE_SECTION_TYPES as readonly string[]).includes(type) && type !== "fast-facts"
+        ? createSection(type as PageSectionType)
+        : createBlock(type as BlockType);
   }
 }

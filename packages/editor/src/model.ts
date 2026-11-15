@@ -66,7 +66,19 @@ export function sectionSummary(section: PageSection): string {
     case "story-grid":
       return section.heading;
     case "menu-shelf":
+    case "feature-grid":
+    case "team":
+    case "pricing":
+    case "testimonials":
+    case "contact":
+    case "social-proof":
+    case "cta":
+    case "category-grid":
+    case "fast-facts":
       return section.heading;
+    case "hero":
+    case "cover-story":
+      return section.title;
     default: {
       const exhaustive: never = section;
       return exhaustive;

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { unsafeLinkTargets } from "./marks";
-import { isSafeHref, isSitePath, isWebUrl } from "./url";
+import { isActionHref, isSafeHref, isSitePath, isWebUrl } from "./url";
 
 /**
  * Contract v1 content model.
@@ -39,6 +39,21 @@ export const hrefSchema = z
   .min(1)
   .max(400)
   .refine(isSafeHref, "Use a site path or an http(s) URL with no spaces, backslashes, or look-alike characters.");
+
+/** A button or contact target: a site path, an http(s) address, or a bare `mailto:` address. */
+export const actionHrefSchema = z
+  .string()
+  .min(1)
+  .max(400)
+  .refine(isActionHref, "Use a site path, an http(s) URL, or a bare mailto: address with no spaces, query, or look-alike characters.");
+
+/** An action target a section may leave empty, which prints no button. */
+const optionalActionHref = z.union([z.literal(""), actionHrefSchema]);
+
+/** A number kept as text so the click-to-edit overlay can edit it like any other field: `42`, `3.5`, up to nine digits. */
+export const chartValueSchema = z
+  .string()
+  .regex(/^\d{1,9}(?:\.\d{1,2})?$/, "Use a plain number such as 42 or 3.5.");
 
 export const imageSrcSchema = z
   .string()
@@ -138,6 +153,42 @@ export const downloadBlockSchema = z.object({
   description: shortText(300),
 });
 
+export const factSchema = z.object({
+  id,
+  value: requiredText(24),
+  label: requiredText(100),
+});
+
+export const fastFactsBlockSchema = z.object({
+  id,
+  type: z.literal("fast-facts"),
+  title: requiredText(140),
+  facts: z.array(factSchema).min(1).max(6),
+});
+
+export const pullQuoteBlockSchema = z.object({
+  id,
+  type: z.literal("pull-quote"),
+  quote: requiredText(400),
+  attribution: shortText(120),
+});
+
+export const barSchema = z.object({
+  id,
+  label: requiredText(60),
+  value: chartValueSchema,
+});
+
+export const barChartBlockSchema = z.object({
+  id,
+  type: z.literal("bar-chart"),
+  title: requiredText(180),
+  alt: requiredText(300),
+  unit: shortText(24),
+  caption: shortText(400),
+  bars: z.array(barSchema).min(2).max(12),
+});
+
 export const blockSchema = z.discriminatedUnion("type", [
   headingBlockSchema,
   paragraphBlockSchema,
@@ -148,6 +199,9 @@ export const blockSchema = z.discriminatedUnion("type", [
   imageBlockSchema,
   embedBlockSchema,
   downloadBlockSchema,
+  fastFactsBlockSchema,
+  pullQuoteBlockSchema,
+  barChartBlockSchema,
 ]);
 
 export const BLOCK_TYPES = [
@@ -160,6 +214,9 @@ export const BLOCK_TYPES = [
   "image",
   "embed",
   "download",
+  "fast-facts",
+  "pull-quote",
+  "bar-chart",
 ] as const;
 
 export const carouselSlideSchema = z.object({
@@ -211,13 +268,201 @@ export const menuShelfSectionSchema = z.object({
   items: z.array(menuItemSchema).min(1).max(12),
 });
 
+/** Fields every preset section opens with. */
+const intro = {
+  kicker: shortText(80),
+  heading: requiredText(160),
+  intro: shortMarkText(400),
+};
+
+export const heroSectionSchema = z.object({
+  id,
+  type: z.literal("hero"),
+  kicker: shortText(80),
+  title: requiredText(180),
+  dek: shortMarkText(400),
+  primaryLabel: shortText(60),
+  primaryHref: optionalActionHref,
+  secondaryLabel: shortText(60),
+  secondaryHref: optionalActionHref,
+  image: imageSrcSchema,
+  imageAlt: requiredText(200),
+});
+
+export const featureItemSchema = z.object({
+  id,
+  label: shortText(40),
+  title: requiredText(120),
+  text: shortMarkText(400),
+});
+
+export const featureGridSectionSchema = z.object({
+  id,
+  type: z.literal("feature-grid"),
+  ...intro,
+  items: z.array(featureItemSchema).min(1).max(12),
+});
+
+export const teamMemberSchema = z.object({
+  id,
+  name: requiredText(80),
+  role: shortText(80),
+  bio: shortText(300),
+  image: imageSrcSchema,
+  imageAlt: requiredText(200),
+});
+
+export const teamSectionSchema = z.object({
+  id,
+  type: z.literal("team"),
+  ...intro,
+  members: z.array(teamMemberSchema).min(1).max(12),
+});
+
+export const pricingTierSchema = z.object({
+  id,
+  name: requiredText(60),
+  price: requiredText(40),
+  period: shortText(40),
+  summary: shortText(200),
+  features: z.array(requiredText(120)).max(10),
+  ctaLabel: shortText(60),
+  ctaHref: optionalActionHref,
+  featured: z.boolean(),
+});
+
+export const pricingSectionSchema = z.object({
+  id,
+  type: z.literal("pricing"),
+  ...intro,
+  tiers: z.array(pricingTierSchema).min(1).max(4),
+});
+
+export const testimonialSchema = z.object({
+  id,
+  quote: requiredText(500),
+  name: requiredText(80),
+  role: shortText(80),
+});
+
+export const testimonialsSectionSchema = z.object({
+  id,
+  type: z.literal("testimonials"),
+  ...intro,
+  items: z.array(testimonialSchema).min(1).max(6),
+});
+
+export const contactChannelSchema = z.object({
+  id,
+  label: requiredText(60),
+  value: requiredText(160),
+  href: optionalActionHref,
+});
+
+export const contactSectionSchema = z.object({
+  id,
+  type: z.literal("contact"),
+  ...intro,
+  channels: z.array(contactChannelSchema).min(1).max(6),
+  address: shortText(300),
+});
+
+export const statSchema = z.object({
+  id,
+  value: requiredText(24),
+  label: requiredText(80),
+});
+
+export const socialProofSectionSchema = z.object({
+  id,
+  type: z.literal("social-proof"),
+  ...intro,
+  stats: z.array(statSchema).max(4),
+  brands: z.array(requiredText(60)).max(10),
+});
+
+export const ctaSectionSchema = z.object({
+  id,
+  type: z.literal("cta"),
+  kicker: shortText(80),
+  heading: requiredText(160),
+  text: shortMarkText(400),
+  buttonLabel: requiredText(60),
+  buttonHref: actionHrefSchema,
+  asks: z.array(requiredText(40)).max(4),
+  note: shortText(200),
+});
+
+export const coverStorySectionSchema = z.object({
+  id,
+  type: z.literal("cover-story"),
+  kicker: shortText(80),
+  title: requiredText(180),
+  dek: shortMarkText(400),
+  byline: shortText(160),
+  href: hrefSchema,
+  linkLabel: shortText(40),
+  image: imageSrcSchema,
+  imageAlt: requiredText(200),
+});
+
+export const categorySchema = z.object({
+  id,
+  label: requiredText(60),
+  dek: shortText(160),
+  href: hrefSchema,
+  count: shortText(24),
+});
+
+export const categoryGridSectionSchema = z.object({
+  id,
+  type: z.literal("category-grid"),
+  kicker: shortText(80),
+  heading: requiredText(160),
+  categories: z.array(categorySchema).min(1).max(12),
+});
+
+export const fastFactsSectionSchema = z.object({
+  id,
+  type: z.literal("fast-facts"),
+  kicker: shortText(80),
+  heading: requiredText(160),
+  facts: z.array(factSchema).min(1).max(8),
+});
+
 export const pageSectionSchema = z.discriminatedUnion("type", [
   carouselSectionSchema,
   storyGridSectionSchema,
   menuShelfSectionSchema,
+  heroSectionSchema,
+  featureGridSectionSchema,
+  teamSectionSchema,
+  pricingSectionSchema,
+  testimonialsSectionSchema,
+  contactSectionSchema,
+  socialProofSectionSchema,
+  ctaSectionSchema,
+  coverStorySectionSchema,
+  categoryGridSectionSchema,
+  fastFactsSectionSchema,
 ]);
 
-export const PAGE_SECTION_TYPES = ["carousel", "story-grid", "menu-shelf"] as const;
+export const PAGE_SECTION_TYPES = [
+  "carousel",
+  "story-grid",
+  "menu-shelf",
+  "hero",
+  "feature-grid",
+  "team",
+  "pricing",
+  "testimonials",
+  "contact",
+  "social-proof",
+  "cta",
+  "cover-story",
+  "category-grid",
+  "fast-facts",
+] as const;
 
 const articleSchema = z.object({
   id: documentId,
@@ -282,6 +527,20 @@ export type BlockType = Block["type"];
 export type CarouselSection = z.infer<typeof carouselSectionSchema>;
 export type StoryGridSection = z.infer<typeof storyGridSectionSchema>;
 export type MenuShelfSection = z.infer<typeof menuShelfSectionSchema>;
+export type FastFactsBlock = z.infer<typeof fastFactsBlockSchema>;
+export type PullQuoteBlock = z.infer<typeof pullQuoteBlockSchema>;
+export type BarChartBlock = z.infer<typeof barChartBlockSchema>;
+export type HeroSection = z.infer<typeof heroSectionSchema>;
+export type FeatureGridSection = z.infer<typeof featureGridSectionSchema>;
+export type TeamSection = z.infer<typeof teamSectionSchema>;
+export type PricingSection = z.infer<typeof pricingSectionSchema>;
+export type TestimonialsSection = z.infer<typeof testimonialsSectionSchema>;
+export type ContactSection = z.infer<typeof contactSectionSchema>;
+export type SocialProofSection = z.infer<typeof socialProofSectionSchema>;
+export type CtaSection = z.infer<typeof ctaSectionSchema>;
+export type CoverStorySection = z.infer<typeof coverStorySectionSchema>;
+export type CategoryGridSection = z.infer<typeof categoryGridSectionSchema>;
+export type FastFactsSection = z.infer<typeof fastFactsSectionSchema>;
 export type PageSection = z.infer<typeof pageSectionSchema>;
 export type PageSectionType = PageSection["type"];
 export type ArticleDocument = z.infer<typeof articleSchema>;
@@ -299,10 +558,24 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   image: "Image",
   embed: "Video or audio",
   download: "Download",
+  "fast-facts": "Fast facts",
+  "pull-quote": "Pull quote",
+  "bar-chart": "Bar chart",
 };
 
 export const SECTION_LABELS: Record<PageSectionType, string> = {
   carousel: "Carousel",
   "story-grid": "Story grid",
   "menu-shelf": "Menu shelf",
+  hero: "Hero",
+  "feature-grid": "Features",
+  team: "Team",
+  pricing: "Pricing",
+  testimonials: "Testimonials",
+  contact: "Contact",
+  "social-proof": "Social proof",
+  cta: "Call to action",
+  "cover-story": "Cover story",
+  "category-grid": "Category grid",
+  "fast-facts": "Fast facts",
 };
