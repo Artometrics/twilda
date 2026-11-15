@@ -170,6 +170,18 @@ export function renderOptionsFor(
   return options;
 }
 
+/**
+ * Render options for showing a document inside an editor (the desk's page pane, the click-to-edit build).
+ * The same as {@link renderOptionsFor} with `preview` on, so a form prints inert: it cannot post, and it
+ * loads no script, whatever `forms` says. Anything that serves the page to visitors uses `renderOptionsFor`.
+ */
+export function previewOptionsFor(
+  site: SiteSettings,
+  doc: { id: string; kind: "article" | "page" },
+): { chrome: SiteChrome; mode?: PresetId; forms?: FormsConfig; preview: true } {
+  return { ...renderOptionsFor(site, doc), preview: true };
+}
+
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 /** A theme that always passes the schema: invalid colors fall back to the default, and an invalid theme to the default. */

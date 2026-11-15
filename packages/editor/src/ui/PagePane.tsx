@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { renderOptionsFor, themeVars, type SiteSettings, type TwildaDocument } from "@twilda/core";
+import { previewOptionsFor, themeVars, type SiteSettings, type TwildaDocument } from "@twilda/core";
 import { mountOverlay, type MediaChoice, type OverlayHandle } from "@twilda/core/edit";
 import type { Doc, MediaAsset } from "../model";
 
@@ -111,7 +111,7 @@ export function PagePane({
       root,
       doc: docRef.current as TwildaDocument,
       media: choices(),
-      render: renderOptionsFor(siteRef.current, docRef.current),
+      render: previewOptionsFor(siteRef.current, docRef.current),
       lenient: true,
       structure,
       onUploadImage: async (file) => {
@@ -144,13 +144,13 @@ export function PagePane({
 
   useEffect(() => {
     handleRef.current?.setMedia(choices());
-    handleRef.current?.setRender(renderOptionsFor(siteRef.current, docRef.current));
+    handleRef.current?.setRender(previewOptionsFor(siteRef.current, docRef.current));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [media, plates]);
 
-  const chromeKey = JSON.stringify(renderOptionsFor(site, doc));
+  const chromeKey = JSON.stringify(previewOptionsFor(site, doc));
   useEffect(() => {
-    handleRef.current?.setRender(renderOptionsFor(siteRef.current, docRef.current));
+    handleRef.current?.setRender(previewOptionsFor(siteRef.current, docRef.current));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chromeKey, id]);
 

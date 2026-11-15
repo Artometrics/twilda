@@ -78,6 +78,7 @@ export {
   contrastRatio,
   defaultSite,
   parseSite,
+  previewOptionsFor,
   renderOptionsFor,
   resolveChrome,
   serializeSite,
