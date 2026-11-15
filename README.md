@@ -108,13 +108,14 @@ GitHub Actions runs those four commands on pull requests and on this branch. Tha
 | --- | --- |
 | `content/` | Git content. Draft and published JSON. |
 | `src/` | Astro site: pages, section HTML, content store. The section schema is `@twilda/core`. |
-| `packages/core/` | `@twilda/core`. Article blocks, page sections, storage interface. |
+| `packages/core/` | `@twilda/core`. Article blocks, page sections, storage interface, and the one document renderer (`@twilda/core/node` loads content, `@twilda/core/edit` is the browser overlay). |
 | `packages/astro/` | `@twilda/astro`. The `twilda()` integration. |
 | `editor/` | Vite + React desk. Dev only. |
-| `packages/editor/` | The phone-first desk: new, edit, save, preview, export to Astro MDX or Markdown. Own `package.json`. Hosted on site `twilda-desk`. `/desk` on the magazine site redirects there. |
+| `packages/editor/` | The phone-first desk: a drafts dashboard, new drafts from templates, the draft as the real page edited in place, save, export to Astro MDX or Markdown, and publish as a pull request. Own `package.json`. Hosted on site `twilda-desk`. `/desk` on the magazine site redirects there. |
 | `drafts/artometrics/` | Three DRAFT sample articles (real public facts, cited, `[VERIFY]` notes) that the phone desk seeds on first visit. Not in `content/`. |
 | `public/media/` | Demo plates (original SVG). |
-| `docs/architecture.md` | Static contract, phone editor, drafts, and open questions. |
+| `docs/architecture.md` | Static contract, the one renderer, phone editor, drafts, and open questions. |
+| `docs/phase1.md` | Phase 1: single renderer, drafting dashboard, design refresh, auth scope limits. |
 | `docs/content-model.md` | Localhost desk section types. |
 | `docs/franchise-slice.md` | Franchise article mapped onto blocks. |
 | `docs/demo-hosting.md` | Build and host the phone demo separately. |

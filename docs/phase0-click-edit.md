@@ -5,7 +5,8 @@ Status: throwaway-but-working. It edits one page, `content/home`, in the real Fi
 ## What it does
 
 - A second Astro config, `astro.edit.config.ts`, builds `click-edit/` into `dist-edit/`. `astro.config.ts` and `dist/` are unchanged.
-- The page is the production template (`src/render/document.ts` plus `magazine.css`). With `{ annotate: true }`, the renderer adds `data-twilda-ref` (a dotted path into the document JSON, for example `sections.0.slides.2.title`) and `data-twilda-type` (`text` or `image`). Images also get `data-twilda-alt-ref`. These are plain attributes, not stega.
+- Status: the renderer-split and `load.ts` blockers below were resolved in [phase1.md](phase1.md). The renderer now lives in `@twilda/core`, and `src/render/document.ts` is gone.
+- The page is the production template (`src/render/document.ts` plus `magazine.css`, now `@twilda/core`). With `{ annotate: true }`, the renderer adds `data-twilda-ref` (a dotted path into the document JSON, for example `sections.0.slides.2.title`) and `data-twilda-type` (`text` or `image`). Images also get `data-twilda-alt-ref`. These are plain attributes, not stega.
 - Desktop: hover outlines a field and names it ("Edit title"). Click edits the text in place, or opens the image sheet.
 - Phone: outlines are on by default because there is no hover. Tap text to edit it where it sits (the keyboard opens, the bottom bar hides). Tap an image for a bottom sheet. Targets in the bar and sheets are at least 44px.
 - Text edit: Enter or leaving the field commits, Escape cancels, paste is plain text. Every commit is validated by the `@twilda/core` Zod schema. A refused value (an empty title, text over a limit) shows an error and the old text comes back.

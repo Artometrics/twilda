@@ -2,6 +2,8 @@
 
 Date: 2026-11-15. Evidence: [phase0-click-edit.md](phase0-click-edit.md) (prototype, tests, blockers) and [phase0-bakeoff.md](phase0-bakeoff.md) (EmDash, TinaCMS, CloudCannon).
 
+Status: the renderer decision (2) was carried out in [phase1.md](phase1.md). Auth (1) is unchanged: token paste by default, the optional proxy hook kept, no GitHub App yet.
+
 ## Recommendation: NARROW
 
 Keep building Twilda, but only as **a static, git-native, no-database editor for prepared-section Astro sites that works from a phone**. Do not try to become a general CMS. Do not switch now.
