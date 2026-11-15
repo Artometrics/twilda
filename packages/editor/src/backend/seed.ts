@@ -29,6 +29,7 @@ const lumenDraft: ArticleDoc = {
   kicker: "Franchise",
   dek: "A fictional municipal operator, written so a franchise template can be reordered block by block.",
   byline: "Desk sample · Field Desk",
+  status: "draft",
   updatedAt: "2026-11-09T18:30:00.000Z",
   blocks: [
     { id: "h-concession", type: "heading", level: 2, text: "The concession" },
@@ -42,18 +43,14 @@ const lumenDraft: ArticleDoc = {
       id: "findings-sheet",
       type: "key-findings",
       title: "What the concession records",
-      findings: [
-        { id: "f-year", label: "Story year", detail: "1978" },
-        { id: "f-stations", label: "Stations", detail: "24" },
-        { id: "f-span", label: "Night span", detail: "18 minutes" },
-      ],
+      items: ["Story year: 1978", "Stations: 24", "Night span: 18 minutes"],
     },
     {
       id: "chart-span",
       type: "chart",
       title: "Night span, by hour",
       caption: "A chart embed. The bars are a stand-in until a data file is attached.",
-      src: "",
+      dataPath: "",
       alt: "",
     },
     {
@@ -62,10 +59,12 @@ const lumenDraft: ArticleDoc = {
       src: "media/plate-yard.svg",
       alt: "Geometric plate of tracks, ties, and a pale shed",
       caption: "Plate for the yard. Original geometry for the demo, not a photograph.",
+      role: "figure",
     },
     {
       id: "sources-desk",
       type: "sources",
+      title: "Sources",
       items: [
         { id: "src-sheet", label: "Sample night sheet", href: "/articles/lumen-rail" },
         { id: "src-clause", label: "Concession clause 4", href: "/articles/lumen-rail" },
@@ -73,14 +72,18 @@ const lumenDraft: ArticleDoc = {
     },
     {
       id: "video-span",
-      type: "video",
+      type: "embed",
+      kind: "video",
       src: "",
+      title: "Night span",
       caption: "A clip of the night span would sit here. The demo does not ship a video file.",
     },
     {
       id: "audio-bell",
-      type: "audio",
+      type: "embed",
+      kind: "audio",
       src: "",
+      title: "Platform bell",
       caption: "The platform bell, if a recording is uploaded.",
     },
     {
@@ -88,6 +91,7 @@ const lumenDraft: ArticleDoc = {
       type: "download",
       label: "Night sheet (sample)",
       href: "",
+      description: "",
     },
     {
       id: "note-draft-only",
@@ -111,26 +115,54 @@ const home: PageDoc = {
   slug: "home",
   kicker: "Demo issue 01",
   dek: "A sample issue assembled from prepared sections. Field Desk is demo content, not a live magazine.",
-  byline: "",
+  status: "draft",
   updatedAt: "2026-11-09T16:00:00.000Z",
   sections: [
     {
       id: "issue-carousel",
       type: "carousel",
       label: "In this issue",
-      summary: "Three leads, including the Lumen Rail franchise.",
+      slides: [
+        {
+          id: "slide-rail",
+          kicker: "Franchise",
+          title: "Lumen Rail",
+          dek: "Three leads, including the Lumen Rail franchise.",
+          href: "/articles/lumen-rail",
+          image: "/media/plate-signal.svg",
+          imageAlt: "Geometric plate",
+        },
+      ],
     },
     {
       id: "issue-grid",
       type: "story-grid",
-      label: "The desk",
-      summary: "A franchise page is a stack, not a canvas.",
+      kicker: "The desk",
+      heading: "A franchise page is a stack, not a canvas",
+      stories: [
+        {
+          id: "story-stack",
+          kicker: "Lead",
+          title: "A franchise page is a stack, not a canvas",
+          dek: "Prepared sections, in order.",
+          href: "/articles/lumen-rail",
+          image: "/media/plate-yard.svg",
+          imageAlt: "Geometric plate of a yard",
+        },
+      ],
     },
     {
       id: "issue-feature",
-      type: "magazine-feature",
-      label: "The shed faces the river",
-      summary: "One feature plate for the yard, with a dek under it.",
+      type: "menu-shelf",
+      heading: "The shed faces the river",
+      items: [
+        {
+          id: "feature-yard",
+          label: "The shed faces the river",
+          href: "/articles/lumen-rail",
+          dek: "One feature plate for the yard, with a dek under it.",
+        },
+      ],
     },
   ],
 };
@@ -143,6 +175,7 @@ const river: ArticleDoc = {
   kicker: "Draft",
   dek: "A short draft that has never been published. It stays off the static site.",
   byline: "Desk sample",
+  status: "draft",
   updatedAt: "2026-11-09T19:00:00.000Z",
   blocks: [
     {

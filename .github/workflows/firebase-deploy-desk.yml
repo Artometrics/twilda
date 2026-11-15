@@ -1,0 +1,114 @@
+name: Deploy Twilda desk to Firebase Hosting
+
+# Builds packages/editor and deploys it to the phone-desk site.
+# The site id is twilda-desk in project twilda-510519.
+# Create that Hosting site in the Firebase console before this job can succeed.
+# Until the site exists, the deploy fails and https://twilda-desk.web.app/ stays "Site Not Found".
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: firebase-hosting-desk-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  id-token: write
+  checks: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  build_and_preview:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install workspace
+        run: npm ci
+      - name: Install desk
+        working-directory: packages/editor
+        run: npm ci
+      - name: Build desk
+        working-directory: packages/editor
+        run: npm run build
+        env:
+          # Public OAuth client id. Leave the variable unset until Kyle creates the app.
+          # An empty value keeps publish on browser storage.
+          PUBLIC_TWILDA_GITHUB_CLIENT_ID: ${{ vars.PUBLIC_TWILDA_GITHUB_CLIENT_ID }}
+          PUBLIC_TWILDA_GITHUB_OWNER: ${{ vars.PUBLIC_TWILDA_GITHUB_OWNER }}
+          PUBLIC_TWILDA_GITHUB_REPO: ${{ vars.PUBLIC_TWILDA_GITHUB_REPO }}
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.FIREBASE_WIF_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SA }}
+          create_credentials_file: true
+      - name: Load WIF credentials for the Firebase action
+        id: wif
+        run: |
+          {
+            echo "json<<__WIF__"
+            cat "$GOOGLE_APPLICATION_CREDENTIALS"
+            echo
+            echo "__WIF__"
+          } >> "$GITHUB_OUTPUT"
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ steps.wif.outputs.json }}
+          projectId: twilda-510519
+          target: twilda-desk
+          expires: 7d
+
+  build_and_deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install workspace
+        run: npm ci
+      - name: Install desk
+        working-directory: packages/editor
+        run: npm ci
+      - name: Build desk
+        working-directory: packages/editor
+        run: npm run build
+        env:
+          PUBLIC_TWILDA_GITHUB_CLIENT_ID: ${{ vars.PUBLIC_TWILDA_GITHUB_CLIENT_ID }}
+          PUBLIC_TWILDA_GITHUB_OWNER: ${{ vars.PUBLIC_TWILDA_GITHUB_OWNER }}
+          PUBLIC_TWILDA_GITHUB_REPO: ${{ vars.PUBLIC_TWILDA_GITHUB_REPO }}
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.FIREBASE_WIF_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SA }}
+          create_credentials_file: true
+      - name: Load WIF credentials for the Firebase action
+        id: wif
+        run: |
+          {
+            echo "json<<__WIF__"
+            cat "$GOOGLE_APPLICATION_CREDENTIALS"
+            echo
+            echo "__WIF__"
+          } >> "$GITHUB_OUTPUT"
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ steps.wif.outputs.json }}
+          projectId: twilda-510519
+          target: twilda-desk
+          channelId: live

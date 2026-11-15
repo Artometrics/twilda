@@ -18,27 +18,11 @@
       "id": "findings",
       "type": "key-findings",
       "title": "The setup",
-      "findings": [
-        {
-          "id": "f-contest",
-          "label": "The contest",
-          "detail": "2026 MCM Problem C, titled Data With The Stars. Contest weekend: 29 January to 2 February 2026 (COMAP)."
-        },
-        {
-          "id": "f-teams",
-          "label": "Teams",
-          "detail": "13,185 teams took Problem C and 19 earned Outstanding Winner, under 1% (COMAP). [VERIFY: the five published designations add up to 13,015, which is 170 fewer than 13,185. Ask COMAP, or say the table omits some teams.]"
-        },
-        {
-          "id": "f-data",
-          "label": "The data file",
-          "detail": "421 contestant rows across 34 seasons, covering 408 different names because some stars danced more than once. We counted these in COMAP's CSV."
-        },
-        {
-          "id": "f-votes",
-          "label": "The missing column",
-          "detail": "Fan votes are not published. Estimating them is the task."
-        }
+      "items": [
+        "The contest: 2026 MCM Problem C, titled Data With The Stars. Contest weekend: 29 January to 2 February 2026 (COMAP).",
+        "Teams: 13,185 teams took Problem C and 19 earned Outstanding Winner, under 1% (COMAP). [VERIFY: the five published designations add up to 13,015, which is 170 fewer than 13,185. Ask COMAP, or say the table omits some teams.]",
+        "The data file: 421 contestant rows across 34 seasons, covering 408 different names because some stars danced more than once. We counted these in COMAP's CSV.",
+        "The missing column: Fan votes are not published. Estimating them is the task."
       ]
     },
     {
@@ -78,36 +62,20 @@
       "id": "findings-controversy",
       "type": "key-findings",
       "title": "Judge-score rank against final placement (our calculation)",
-      "findings": [
-        {
-          "id": "c-27",
-          "label": "Season 27, Bobby Bones",
-          "detail": "8th of 13 on average judge score (7.46). Finished 1st."
-        },
-        {
-          "id": "c-2",
-          "label": "Season 2, Jerry Rice",
-          "detail": "6th of 10 (7.51). Finished 2nd."
-        },
-        {
-          "id": "c-4",
-          "label": "Season 4, Billy Ray Cyrus",
-          "detail": "10th of 11 (6.33). Finished 5th."
-        },
-        {
-          "id": "c-11",
-          "label": "Season 11, Bristol Palin",
-          "detail": "6th of 12 (7.37). Finished 3rd."
-        }
+      "items": [
+        "Season 27, Bobby Bones: 8th of 13 on average judge score (7.46). Finished 1st.",
+        "Season 2, Jerry Rice: 6th of 10 (7.51). Finished 2nd.",
+        "Season 4, Billy Ray Cyrus: 10th of 11 (6.33). Finished 5th.",
+        "Season 11, Bristol Palin: 6th of 12 (7.37). Finished 3rd."
       ]
     },
     {
       "id": "chart-controversy",
       "type": "chart",
       "title": "Judge-score rank against final placement, four contestants",
-      "src": "",
       "alt": "Planned chart: for each of the four contestants, mean judge-score rank beside final placement.",
-      "caption": "[VERIFY: this chart is not built yet. Make it from COMAP's CSV, publish it, then paste its embed URL here.]"
+      "caption": "[VERIFY: this chart is not built yet. Make it from COMAP's CSV, publish it, then paste its embed URL here.]",
+      "dataPath": ""
     },
     {
       "id": "h-cast",
@@ -150,7 +118,8 @@
           "label": "COMAP, 2026_MCM_Problem_C_Data.csv",
           "href": "https://contest.comap.org/undergraduate/contests/mcm/contests/2026/problems/2026_MCM_Problem_C_Data.csv"
         }
-      ]
+      ],
+      "title": "Sources"
     },
     {
       "id": "dl-csv",
@@ -159,5 +128,6 @@
       "href": "https://contest.comap.org/undergraduate/contests/mcm/contests/2026/problems/2026_MCM_Problem_C_Data.csv",
       "description": "Contestant details, results and weekly judge scores for seasons 1 to 34."
     }
-  ]
+  ],
+  "status": "draft"
 }

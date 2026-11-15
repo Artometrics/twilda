@@ -1,91 +1,79 @@
 import {
+  BLOCK_LABELS,
+  BLOCK_TYPES,
+  PAGE_SECTION_TYPES,
   SECTION_LABELS,
-  type ContentDocument,
-  type Section,
-  type SectionType,
-} from "./sections";
+  type Block,
+  type BlockType,
+  type PageSection,
+  type PageSectionType,
+  type TwildaDocument,
+} from "@twilda/core";
 
-export interface SectionCatalogEntry {
-  type: SectionType;
+export type Part = Block | PageSection;
+export type PartType = BlockType | PageSectionType;
+
+export interface PartCatalogEntry {
+  type: PartType;
   label: string;
   hint: string;
-  kinds: Array<ContentDocument["kind"]>;
+  kinds: Array<TwildaDocument["kind"]>;
 }
 
-export const SECTION_CATALOG: SectionCatalogEntry[] = [
-  {
-    type: "carousel",
-    label: SECTION_LABELS.carousel,
-    hint: "A sideways row of lead stories.",
-    kinds: ["page"],
-  },
-  {
-    type: "story-grid",
-    label: SECTION_LABELS["story-grid"],
-    hint: "One lead story beside a short stack.",
-    kinds: ["page"],
-  },
-  {
-    type: "headline-facts",
-    label: SECTION_LABELS["headline-facts"],
-    hint: "A headline beside a fact table.",
-    kinds: ["page", "article"],
-  },
-  {
-    type: "magazine-feature",
-    label: SECTION_LABELS["magazine-feature"],
-    hint: "A single feature with a plate and a dek.",
-    kinds: ["page"],
-  },
-  {
-    type: "category-tiles",
-    label: SECTION_LABELS["category-tiles"],
-    hint: "A row of section doors.",
-    kinds: ["page"],
-  },
-  {
-    type: "heading",
-    label: SECTION_LABELS.heading,
-    hint: "A section heading in the article.",
-    kinds: ["article"],
-  },
-  {
-    type: "paragraph",
-    label: SECTION_LABELS.paragraph,
-    hint: "Body copy. Separate paragraphs with a blank line.",
-    kinds: ["article"],
-  },
-  {
-    type: "pull-quote",
-    label: SECTION_LABELS["pull-quote"],
-    hint: "A quotation pulled out of the body.",
-    kinds: ["article"],
-  },
-  {
-    type: "figure",
-    label: SECTION_LABELS.figure,
-    hint: "A plate with a caption.",
-    kinds: ["article"],
-  },
-  {
-    type: "list",
-    label: SECTION_LABELS.list,
-    hint: "A short ordered or bulleted list.",
-    kinds: ["article"],
-  },
-  {
-    type: "callout",
-    label: SECTION_LABELS.callout,
-    hint: "A desk note set off from the body.",
-    kinds: ["article"],
-  },
+const HINTS: Record<PartType, string> = {
+  carousel: "A sideways row of lead stories.",
+  "story-grid": "Story cards with a plate, a title, and a dek.",
+  "menu-shelf": "A heading and a list of links.",
+  heading: "A section heading in the article.",
+  paragraph: "Body copy. Separate paragraphs with a blank line.",
+  "key-findings": "A title and a list of findings.",
+  chart: "A chart CSV under content/data/, or a link, plus alt text.",
+  callout: "A desk note set off from the body.",
+  sources: "Citations: a label and a link for each.",
+  image: "A plate, alt text, and a caption.",
+  embed: "A video or audio link.",
+  download: "A file a reader can take.",
+};
+
+export const PART_CATALOG: PartCatalogEntry[] = [
+  ...PAGE_SECTION_TYPES.map((type) => ({
+    type,
+    label: SECTION_LABELS[type],
+    hint: HINTS[type],
+    kinds: ["page"] as Array<TwildaDocument["kind"]>,
+  })),
+  ...BLOCK_TYPES.map((type) => ({
+    type,
+    label: BLOCK_LABELS[type],
+    hint: HINTS[type],
+    kinds: ["article"] as Array<TwildaDocument["kind"]>,
+  })),
 ];
+
+export function partLabel(type: string): string {
+  if ((BLOCK_TYPES as readonly string[]).includes(type)) return BLOCK_LABELS[type as BlockType];
+  if ((PAGE_SECTION_TYPES as readonly string[]).includes(type)) return SECTION_LABELS[type as PageSectionType];
+  return type;
+}
+
+export function documentParts(doc: TwildaDocument): Part[] {
+  return doc.kind === "article" ? doc.blocks : doc.sections;
+}
+
+export function withParts(doc: TwildaDocument, parts: Part[]): TwildaDocument {
+  if (doc.kind === "article") return { ...doc, blocks: parts as Block[] };
+  return { ...doc, sections: parts as PageSection[] };
+}
 
 function nid(prefix: string): string {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
-export function createSection(type: SectionType): Section {
+const PLATE = "/media/plate-signal.svg";
+
+export function createPart(type: BlockType): Block;
+export function createPart(type: PageSectionType): PageSection;
+export function createPart(type: PartType): Part {
   switch (type) {
     case "carousel":
       return {
@@ -99,8 +87,8 @@ export function createSection(type: SectionType): Section {
             title: "New slide",
             dek: "Replace this dek.",
             href: "/articles/lumen-rail",
-            image: "/media/plate-signal.svg",
-            imageAlt: "Abstract signal plate",
+            image: PLATE,
+            imageAlt: "Geometric plate",
           },
         ],
       };
@@ -109,113 +97,79 @@ export function createSection(type: SectionType): Section {
         id: nid("grid"),
         type: "story-grid",
         kicker: "Desk",
-        lead: {
-          kicker: "Lead",
-          title: "New lead story",
-          dek: "Replace this dek.",
-          href: "/articles/lumen-rail",
-          image: "/media/plate-yard.svg",
-          imageAlt: "Abstract yard plate",
-          byline: "Field Desk",
-        },
+        heading: "New stories",
         stories: [
           {
             id: nid("story"),
-            kicker: "Short",
-            title: "New short",
-            dek: "A supporting story.",
+            kicker: "Lead",
+            title: "New story",
+            dek: "Replace this dek.",
             href: "/articles/lumen-rail",
+            image: PLATE,
+            imageAlt: "Geometric plate",
           },
         ],
       };
-    case "headline-facts":
+    case "menu-shelf":
       return {
-        id: nid("facts"),
-        type: "headline-facts",
-        kicker: "Facts",
-        headline: "New headline",
-        dek: "A line under the headline.",
-        facts: [
-          { id: nid("fact"), label: "Label", value: "Value" },
-          { id: nid("fact"), label: "Second", value: "Value" },
-        ],
-      };
-    case "magazine-feature":
-      return {
-        id: nid("feature"),
-        type: "magazine-feature",
-        kicker: "Feature",
-        title: "New feature",
-        dek: "Replace this dek.",
-        byline: "Field Desk",
-        href: "/articles/lumen-rail",
-        image: "/media/plate-map.svg",
-        imageAlt: "Abstract route plate",
-        };
-    case "category-tiles":
-      return {
-        id: nid("tiles"),
-        type: "category-tiles",
+        id: nid("menu"),
+        type: "menu-shelf",
         heading: "Sections",
-        tiles: [
-          {
-            id: nid("tile"),
-            title: "First door",
-            dek: "Where this tile goes.",
-            href: "/articles/lumen-rail",
-            image: "/media/plate-archive.svg",
-            imageAlt: "Abstract archive plate",
-          },
-          {
-            id: nid("tile"),
-            title: "Second door",
-            dek: "Where this tile goes.",
-            href: "/articles/lumen-rail",
-            image: "/media/plate-river.svg",
-            imageAlt: "Abstract river plate",
-          },
-        ],
+        items: [{ id: nid("item"), label: "First door", href: "/articles/lumen-rail", dek: "Where this link goes." }],
       };
     case "heading":
       return { id: nid("heading"), type: "heading", level: 2, text: "New heading" };
     case "paragraph":
+      return { id: nid("paragraph"), type: "paragraph", text: "Write the paragraph here." };
+    case "key-findings":
+      return { id: nid("findings"), type: "key-findings", title: "Key findings", items: ["Finding: What the reporting shows."] };
+    case "chart":
       return {
-        id: nid("paragraph"),
-        type: "paragraph",
-        text: "Write the paragraph here.",
-      };
-    case "pull-quote":
-      return {
-        id: nid("quote"),
-        type: "pull-quote",
-        quote: "A sentence worth pulling out.",
-        attribution: "Field Desk",
-      };
-    case "figure":
-      return {
-        id: nid("figure"),
-        type: "figure",
-        image: "/media/plate-yard.svg",
-        imageAlt: "Abstract yard plate",
-        caption: "Caption for the plate.",
-      };
-    case "list":
-      return {
-        id: nid("list"),
-        type: "list",
-        ordered: true,
-        items: ["First item", "Second item"],
+        id: nid("chart"),
+        type: "chart",
+        title: "Chart title",
+        dataPath: "content/data/chart.csv",
+        alt: "What the chart shows.",
+        caption: "Caption for the chart.",
       };
     case "callout":
+      return { id: nid("callout"), type: "callout", title: "Desk note", text: "A short note beside the body." };
+    case "sources":
       return {
-        id: nid("callout"),
-        type: "callout",
-        title: "Desk note",
-        text: "A short note beside the body.",
+        id: nid("sources"),
+        type: "sources",
+        title: "Sources",
+        items: [{ id: nid("source"), label: "Source name", href: "https://example.com" }],
+      };
+    case "image":
+      return {
+        id: nid("image"),
+        type: "image",
+        src: PLATE,
+        alt: "Geometric plate",
+        caption: "Caption for the plate.",
+        role: "figure",
+      };
+    case "embed":
+      return {
+        id: nid("embed"),
+        type: "embed",
+        kind: "video",
+        src: "https://example.com",
+        title: "Clip",
+        caption: "What the clip shows.",
+      };
+    case "download":
+      return {
+        id: nid("download"),
+        type: "download",
+        href: "https://example.com/file.csv",
+        label: "Download",
+        description: "",
       };
     default: {
       const exhaustive: never = type;
-      throw new Error(`Unknown section type ${exhaustive}`);
+      throw new Error(`Unknown part type ${exhaustive}`);
     }
   }
 }

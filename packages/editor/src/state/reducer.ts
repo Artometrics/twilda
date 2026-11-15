@@ -53,7 +53,7 @@ export type Action =
   | { type: "dismiss-confirm" }
   | { type: "busy"; label: string }
   | { type: "saved"; draft: Doc; documents: DocSummary[] }
-  | { type: "published"; draft: Doc; published: Doc; documents: DocSummary[] }
+  | { type: "published"; draft: Doc; published: Doc; documents: DocSummary[]; notice?: string }
   | { type: "reverted"; draft: Doc; published: Doc; documents: DocSummary[] }
   | { type: "uploaded"; asset: MediaAsset }
   | { type: "removed-media"; path: string }
@@ -157,6 +157,10 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
       return { ...state, view: action.view };
     case "edit-meta":
       if (!state.draft) return state;
+      if (state.draft.kind === "page") {
+        const { byline: _byline, ...rest } = action.patch;
+        return { ...state, error: null, draft: { ...state.draft, ...rest } };
+      }
       return { ...state, error: null, draft: { ...state.draft, ...action.patch } };
     case "update-block":
       return mapArticle(state, (article) => ({
@@ -230,7 +234,7 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
         saved: action.draft,
         published: action.published,
         documents: action.documents,
-        notice: "Published. The static build reads this copy the next time it runs.",
+        notice: action.notice ?? "Published. The static build reads this copy the next time it runs.",
       };
     case "reverted":
       return {

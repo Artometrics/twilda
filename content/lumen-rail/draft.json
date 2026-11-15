@@ -6,8 +6,9 @@
   "dek": "A fictional municipal operator, written so a franchise template can be reordered section by section.",
   "kicker": "Franchise",
   "byline": "Desk sample · Field Desk",
+  "status": "draft",
   "updatedAt": "2026-11-09T18:30:00.000Z",
-  "sections": [
+  "blocks": [
     {
       "id": "h-concession",
       "type": "heading",
@@ -20,17 +21,20 @@
       "text": "Lumen Rail is not a transit agency you can ride. It is the sample franchise in this repository: a city-owned concession that runs a light line along a river the demo never names on a map you could navigate.\n\nThe night timetable is a public document. In the story, it is posted at every platform and filed at the yard office. In the CMS, it is a paragraph an editor can move."
     },
     {
+      "id": "facts-concession-dek",
+      "type": "paragraph",
+      "text": "The sheet. Structured facts stay in fields so a writer is not asked to invent a layout."
+    },
+    {
       "id": "facts-concession",
-      "type": "headline-facts",
-      "kicker": "The sheet",
-      "headline": "What the concession records",
-      "dek": "Structured facts stay in fields so a writer is not asked to invent a layout.",
-      "facts": [
-        { "id": "f-opened", "label": "Story year", "value": "1978" },
-        { "id": "f-gauge", "label": "Gauge", "value": "1,435 mm" },
-        { "id": "f-stations", "label": "Stations", "value": "24" },
-        { "id": "f-span", "label": "Night span", "value": "18 minutes" },
-        { "id": "f-owner", "label": "Owner in the story", "value": "The city" }
+      "type": "key-findings",
+      "title": "What the concession records",
+      "items": [
+        "Story year: 1978",
+        "Gauge: 1,435 mm",
+        "Stations: 24",
+        "Night span: 18 minutes",
+        "Owner in the story: The city"
       ]
     },
     {
@@ -40,16 +44,17 @@
     },
     {
       "id": "q-public",
-      "type": "pull-quote",
-      "quote": "If the sheet is public, the yard does not get to be a rumor.",
-      "attribution": "Sample concession, clause 4"
+      "type": "callout",
+      "title": "Sample concession, clause 4",
+      "text": "If the sheet is public, the yard does not get to be a rumor."
     },
     {
       "id": "fig-yard",
-      "type": "figure",
-      "image": "/media/plate-yard.svg",
-      "imageAlt": "Geometric plate of tracks, ties, and a pale shed",
-      "caption": "Plate for the yard. Original geometry for the demo, not a photograph of a railway."
+      "type": "image",
+      "src": "/media/plate-yard.svg",
+      "alt": "Geometric plate of tracks, ties, and a pale shed",
+      "caption": "Plate for the yard. Original geometry for the demo, not a photograph of a railway.",
+      "role": "figure"
     },
     {
       "id": "h-yard",
@@ -59,14 +64,8 @@
     },
     {
       "id": "list-yard",
-      "type": "list",
-      "ordered": true,
-      "items": [
-        "Cars come off the river span and wait under the shed.",
-        "The night sheet is copied before the last southbound leaves.",
-        "A fault on the span holds the following car at the previous station.",
-        "The cabinet copy and the platform copy are meant to match."
-      ]
+      "type": "paragraph",
+      "text": "1. Cars come off the river span and wait under the shed.\n2. The night sheet is copied before the last southbound leaves.\n3. A fault on the span holds the following car at the previous station.\n4. The cabinet copy and the platform copy are meant to match."
     },
     {
       "id": "p-yard",
@@ -86,10 +85,11 @@
     },
     {
       "id": "fig-night",
-      "type": "figure",
-      "image": "/media/plate-night.svg",
-      "imageAlt": "Geometric night plate with a pale moon and three signal posts",
-      "caption": "The night span, drawn as a plate rather than a photo."
+      "type": "image",
+      "src": "/media/plate-night.svg",
+      "alt": "Geometric night plate with a pale moon and three signal posts",
+      "caption": "The night span, drawn as a plate rather than a photo.",
+      "role": "figure"
     },
     {
       "id": "note-published",

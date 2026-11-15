@@ -64,13 +64,12 @@ test.describe("drafting", () => {
 
     await addBlock(page, "key-findings");
     const findings = page.locator(".item").nth(2);
-    await findings.getByLabel("Label").first().fill("Gap");
-    await findings.getByLabel("Detail").first().fill("Merch beats tickets.");
+    await findings.getByLabel("Finding line").first().fill("Gap: Merch beats tickets.");
 
     await addBlock(page, "chart");
     const chart = page.locator(".item").nth(3);
     await chart.getByLabel("Title").fill("Franchise streams");
-    await chart.getByLabel("Chart embed link").fill("https://artometrics.com/franchise");
+    await chart.getByLabel("CSV path").fill("https://artometrics.com/franchise");
     await chart.getByLabel("Alt text").fill("Bars comparing merchandise to box office.");
     await chart.getByLabel("Caption").fill("Source: Artometrics.");
 

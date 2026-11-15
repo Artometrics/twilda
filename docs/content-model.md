@@ -1,22 +1,25 @@
 # Content model
 
-This file describes the localhost desk (`editor/`, `src/schema/sections.ts`, `content/*/draft.json`). The phone editor uses a different contract: JSON articles and pages in `packages/core/src/schema.ts`. See [architecture.md](architecture.md).
+Article blocks and page sections are `@twilda/core` (`packages/core/src/schema.ts`). The Field Desk store still keeps `content/<id>/draft.json` and `content/<id>/published.json`. See [architecture.md](architecture.md).
 
-Documents for the desk are JSON. Zod schemas in `src/schema/sections.ts` are the contract the desk, the tests, and the static Field Desk build share.
+Documents are JSON. The Zod schema in `@twilda/core` is the contract the desk, the tests, and the static Field Desk build share. An article's body is `blocks`. A page's body is `sections`. `status` is `draft` or `published`. `id` and `slug` match.
 
 ```ts
-interface ContentDocument {
-  id: string;            // folder name under content/
-  kind: "page" | "article";
+interface ArticleDocument {
+  id: string;            // matches slug; Field Desk folder name under content/
+  kind: "article";
   title: string;
-  slug: string;          // article URL is /articles/<slug>; the homepage id "home" is served at /
+  slug: string;          // article URL is /articles/<slug>; the homepage id "home" is a page
   dek: string;
   kicker: string;
   byline: string;
-  updatedAt: string;     // set by the store on save and publish
-  sections: Section[];   // order is the published order
+  status: "draft" | "published";
+  updatedAt: string;
+  blocks: Block[];
 }
 ```
+
+A page has the same fields except `byline`, and `sections` instead of `blocks`.
 
 Every section has `id` and `type`. Ids are stable so the desk can reorder without losing field edits.
 
@@ -25,10 +28,8 @@ Every section has `id` and `type`. Ids are stable so the desk can reorder withou
 | type | Role | Fields |
 | --- | --- | --- |
 | `carousel` | Sideways row of leads | `label`, `slides[]` of kicker, title, dek, href, image, imageAlt |
-| `story-grid` | One lead and a stack of shorts | `kicker`, `lead`, `stories[]` |
-| `headline-facts` | Headline beside a fact table | `kicker`, `headline`, `dek`, `facts[]` of label and value |
-| `magazine-feature` | One feature with a plate | `kicker`, `title`, `dek`, `byline`, `href`, image, imageAlt |
-| `category-tiles` | A row of doors into the issue | `heading`, `tiles[]` |
+| `story-grid` | Story cards | `kicker`, `heading`, `stories[]` with image and imageAlt |
+| `menu-shelf` | A heading and a list of links | `heading`, `items[]` of label, href, dek |
 
 ## Article sections
 
@@ -36,13 +37,15 @@ Every section has `id` and `type`. Ids are stable so the desk can reorder withou
 | --- | --- | --- |
 | `heading` | Section title | `level` 2 or 3, `text` |
 | `paragraph` | Body. A blank line starts a new paragraph | `text` |
-| `pull-quote` | A quotation | `quote`, `attribution` |
-| `figure` | Plate and caption | `image`, `imageAlt`, `caption` |
-| `list` | Ordered or bulleted | `ordered`, `items[]` |
+| `key-findings` | A short list of findings | `title`, `items[]` |
+| `chart` | CSV path or chart link, plus alt text | `dataPath`, `alt`, `title`, `caption` |
 | `callout` | Desk note | `title`, `text` |
-| `headline-facts` | Same fact table as a page, for a franchise sheet | as above |
+| `sources` | Citations | `title`, `items[]` of label and href |
+| `image` | Plate and caption | `src`, `alt`, `caption`, `role` `banner` or `figure` |
+| `embed` | Video or audio link | `kind`, `src`, `title`, `caption` |
+| `download` | A file the reader can take | `href`, `label`, `description` |
 
-A page cannot contain article body blocks. An article cannot contain a carousel, story grid, magazine feature, or category tiles. The schema rejects the mismatch.
+A page cannot contain article body blocks. An article cannot contain a carousel, story grid, or menu shelf. The schema rejects the mismatch. The Field Desk sample was migrated from the older names (`pull-quote`, `figure`, `list`, `headline-facts`, `magazine-feature`, `category-tiles`) without dropping the sentences.
 
 ## Links and images
 

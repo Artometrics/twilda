@@ -26,8 +26,27 @@ test("the integration refuses a server output", () => {
   if (!hook) return;
   assert.throws(() =>
     hook({
-      config: { output: "server" },
+      config: { output: "server", root: new URL("file:///tmp/twilda-site/") },
       logger: { info() {}, warn() {}, error() {} },
+      updateConfig() {},
     } as never),
   );
+});
+
+test("the integration points a static site at its content directory", () => {
+  const integration = twilda({ contentDir: "content" });
+  const hook = integration.hooks["astro:config:setup"];
+  assert.equal(typeof hook, "function");
+  if (!hook) return;
+  let defined = "";
+  hook({
+    config: { output: "static", root: new URL("file:///tmp/twilda-site/") },
+    command: "build",
+    logger: { info() {}, warn() {}, error() {} },
+    updateConfig(next: { vite?: { define?: Record<string, string>; plugins?: unknown[] } }) {
+      defined = next.vite?.define?.__TWILDA_CONTENT__ ?? "";
+      assert.equal(Array.isArray(next.vite?.plugins), true);
+    },
+  } as never);
+  assert.equal(defined, JSON.stringify("/tmp/twilda-site/content"));
 });

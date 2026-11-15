@@ -1,84 +1,54 @@
 /**
- * Document model used by the desk until `@twilda/core` lands.
- * Articles are an ordered list of prepared blocks. Pages are an ordered
- * list of prepared section types. Neither is a freeform canvas.
+ * Phone-desk helpers over the `@twilda/core` contract.
+ * Article blocks and page sections are the core types. This file does not
+ * declare a second schema.
  */
+import {
+  BLOCK_LABELS,
+  BLOCK_TYPES,
+  SECTION_LABELS,
+  type ArticleDocument,
+  type Block,
+  type BlockType,
+  type PageDocument,
+  type PageSection,
+  type PageSectionType,
+} from "../../core/src/schema";
 
-export const BLOCK_CATALOG = [
-  { type: "heading", label: "Heading", hint: "A section title." },
-  { type: "paragraph", label: "Paragraph", hint: "Body copy." },
-  { type: "key-findings", label: "Key findings", hint: "Labeled findings, kept in fields." },
-  { type: "chart", label: "Chart", hint: "A chart embed (URL), alt text, and a caption." },
-  { type: "callout", label: "Callout", hint: "A desk note set off from the body." },
-  { type: "sources", label: "Sources", hint: "Citations: a label and a link for each." },
-  { type: "image", label: "Image", hint: "A plate, alt text, and a caption." },
-  { type: "video", label: "Video", hint: "A video file or embed path." },
-  { type: "audio", label: "Audio", hint: "An audio file and a caption." },
-  { type: "download", label: "Download", hint: "A file or dataset a reader can take." },
-] as const;
+export type { ArticleDocument, Block, BlockType, PageDocument, PageSection, PageSectionType };
 
-export const SECTION_CATALOG = [
-  { type: "carousel", label: "Carousel", hint: "A sideways row of leads." },
-  { type: "story-grid", label: "Story grid", hint: "One lead and a stack of shorts." },
-  { type: "headline-facts", label: "Headline / facts", hint: "A headline beside a fact table." },
-  { type: "magazine-feature", label: "Magazine feature", hint: "One feature with a plate." },
-  { type: "category-tiles", label: "Category tiles", hint: "A row of doors into the issue." },
-] as const;
+const BLOCK_HINTS: Record<BlockType, string> = {
+  heading: "A section title.",
+  paragraph: "Body copy.",
+  "key-findings": "A title and one line per finding.",
+  chart: "A CSV under content/data/, or a link, plus alt text.",
+  callout: "A desk note set off from the body.",
+  sources: "Citations: a label and a link for each.",
+  image: "A plate, alt text, and a caption.",
+  embed: "A video or audio link.",
+  download: "A file or dataset a reader can take.",
+};
 
-export type BlockType = (typeof BLOCK_CATALOG)[number]["type"];
-export type SectionType = (typeof SECTION_CATALOG)[number]["type"];
+const SECTION_HINTS: Record<PageSectionType, string> = {
+  carousel: "A sideways row of leads.",
+  "story-grid": "Story cards with a plate and a dek.",
+  "menu-shelf": "A heading and a list of links.",
+};
 
-export interface Finding {
-  id: string;
-  label: string;
-  detail: string;
-}
+export const BLOCK_CATALOG = BLOCK_TYPES.map((type) => ({
+  type,
+  label: BLOCK_LABELS[type],
+  hint: BLOCK_HINTS[type],
+}));
 
-export interface SourceItem {
-  id: string;
-  label: string;
-  href: string;
-}
+export const SECTION_CATALOG = (["carousel", "story-grid", "menu-shelf"] as const).map((type) => ({
+  type,
+  label: SECTION_LABELS[type],
+  hint: SECTION_HINTS[type],
+}));
 
-export type Block =
-  | { id: string; type: "heading"; level: 2 | 3; text: string }
-  | { id: string; type: "paragraph"; text: string }
-  | { id: string; type: "key-findings"; title: string; findings: Finding[] }
-  | { id: string; type: "chart"; title: string; caption: string; src: string; alt: string }
-  | { id: string; type: "callout"; title: string; text: string }
-  | { id: string; type: "sources"; items: SourceItem[] }
-  | { id: string; type: "image"; src: string; alt: string; caption: string }
-  | { id: string; type: "video"; src: string; caption: string }
-  | { id: string; type: "audio"; src: string; caption: string }
-  | { id: string; type: "download"; label: string; href: string; description?: string };
-
-export interface PageSection {
-  id: string;
-  type: SectionType;
-  label: string;
-  summary: string;
-}
-
-interface DocBase {
-  id: string;
-  title: string;
-  slug: string;
-  dek: string;
-  kicker: string;
-  byline: string;
-  updatedAt: string;
-}
-
-export interface ArticleDoc extends DocBase {
-  kind: "article";
-  blocks: Block[];
-}
-
-export interface PageDoc extends DocBase {
-  kind: "page";
-  sections: PageSection[];
-}
-
+export type ArticleDoc = ArticleDocument;
+export type PageDoc = PageDocument;
 export type Doc = ArticleDoc | PageDoc;
 
 export type DocStatus = "draft-only" | "unpublished" | "published";
@@ -106,14 +76,33 @@ export interface MediaAsset {
   originalHeight: number;
 }
 
-export type MetaPatch = Partial<Pick<Doc, "title" | "dek" | "kicker" | "byline" | "slug">>;
+export type MetaPatch = Partial<Pick<ArticleDoc, "title" | "dek" | "kicker" | "byline" | "slug">>;
 
 export function blockLabel(type: BlockType): string {
-  return BLOCK_CATALOG.find((entry) => entry.type === type)?.label ?? type;
+  return BLOCK_LABELS[type];
 }
 
-export function sectionLabel(type: SectionType): string {
-  return SECTION_CATALOG.find((entry) => entry.type === type)?.label ?? type;
+export function sectionLabel(type: PageSectionType): string {
+  return SECTION_LABELS[type];
+}
+
+export function sectionSummary(section: PageSection): string {
+  switch (section.type) {
+    case "carousel":
+      return section.label || section.slides[0]?.title || "Carousel";
+    case "story-grid":
+      return section.heading;
+    case "menu-shelf":
+      return section.heading;
+    default: {
+      const exhaustive: never = section;
+      return exhaustive;
+    }
+  }
+}
+
+export function docByline(doc: Doc): string {
+  return doc.kind === "article" ? doc.byline : "";
 }
 
 export function createId(prefix: string): string {
@@ -128,19 +117,14 @@ export function createBlock(type: BlockType, id = createId(type)): Block {
     case "paragraph":
       return { id, type, text: "Write the paragraph here." };
     case "key-findings":
-      return {
-        id,
-        type,
-        title: "Key findings",
-        findings: [{ id: createId("finding"), label: "Finding", detail: "What the reporting shows." }],
-      };
+      return { id, type, title: "Key findings", items: ["Finding: What the reporting shows."] };
     case "chart":
       return {
         id,
         type,
         title: "Chart title",
         caption: "What the chart is doing on the page.",
-        src: "",
+        dataPath: "content/data/chart.csv",
         alt: "",
       };
     case "callout":
@@ -149,14 +133,13 @@ export function createBlock(type: BlockType, id = createId(type)): Block {
       return {
         id,
         type,
+        title: "Sources",
         items: [{ id: createId("source"), label: "Source name, title, date", href: "https://" }],
       };
     case "image":
-      return { id, type, src: "", alt: "", caption: "" };
-    case "video":
-      return { id, type, src: "", caption: "What the clip shows." };
-    case "audio":
-      return { id, type, src: "", caption: "What the recording is." };
+      return { id, type, src: "", alt: "", caption: "", role: "figure" };
+    case "embed":
+      return { id, type, kind: "video", src: "", title: "Clip", caption: "What the clip shows." };
     case "download":
       return { id, type, label: "Dataset (CSV)", href: "", description: "" };
     default: {
@@ -166,18 +149,50 @@ export function createBlock(type: BlockType, id = createId(type)): Block {
   }
 }
 
-export function createSection(type: SectionType, id = createId(type)): PageSection {
+export function createSection(type: PageSectionType, id = createId(type)): PageSection {
   switch (type) {
     case "carousel":
-      return { id, type, label: "In this issue", summary: "A row of leads across the top of the issue." };
+      return {
+        id,
+        type,
+        label: "In this issue",
+        slides: [
+          {
+            id: createId("slide"),
+            kicker: "Story",
+            title: "New slide",
+            dek: "A lead.",
+            href: "/",
+            image: "/media/plate-signal.svg",
+            imageAlt: "Geometric plate",
+          },
+        ],
+      };
     case "story-grid":
-      return { id, type, label: "The desk", summary: "One lead story beside a short stack." };
-    case "headline-facts":
-      return { id, type, label: "What the sheet records", summary: "A headline with a fact table beside it." };
-    case "magazine-feature":
-      return { id, type, label: "Feature", summary: "A single feature with a plate and a dek." };
-    case "category-tiles":
-      return { id, type, label: "Sections", summary: "Doors into the rest of the issue." };
+      return {
+        id,
+        type,
+        kicker: "Desk",
+        heading: "Stories",
+        stories: [
+          {
+            id: createId("story"),
+            kicker: "Lead",
+            title: "New story",
+            dek: "A short card.",
+            href: "/",
+            image: "/media/plate-signal.svg",
+            imageAlt: "Geometric plate",
+          },
+        ],
+      };
+    case "menu-shelf":
+      return {
+        id,
+        type,
+        heading: "Sections",
+        items: [{ id: createId("item"), label: "First door", href: "/", dek: "Where this link goes." }],
+      };
     default: {
       const exhaustive: never = type;
       throw new Error(`Unknown section ${exhaustive}`);
@@ -195,7 +210,7 @@ function normalize(value: unknown): unknown {
     const record = value as Record<string, unknown>;
     const out: Record<string, unknown> = {};
     for (const key of Object.keys(record).sort()) {
-      if (key === "updatedAt") continue;
+      if (key === "updatedAt" || key === "status") continue;
       out[key] = normalize(record[key]);
     }
     return out;

@@ -1,4 +1,4 @@
-import type { ContentDocument } from "../src/schema/sections";
+import type { ContentDocument } from "../src/content/store";
 import type { DocumentSummary } from "../src/content/store";
 
 export interface DocumentPayload {

@@ -1,8 +1,8 @@
 # AGENTS.md — Twilda CMS
 
-Twilda CMS is a git-native static CMS for Astro. The public site is `src/` and builds with `astro build` (`output: "static"`). Content is JSON in `content/<id>/draft.json` and `published.json`. The visual editor is `editor/` and runs only in Vite dev. Do not import the editor from `src/`, do not add an Astro adapter, and do not add a deploy script.
+Twilda CMS is a git-native static CMS for Astro. The public site is `src/` and builds with `astro build` (`output: "static"`). Content is JSON in `content/<id>/draft.json` and `published.json`, using the `@twilda/core` document contract. The visual editor is `editor/` and runs only in Vite dev. Do not import the editor from `src/`, and do not add an Astro adapter. Do not add an npm deploy script. Deploys are the GitHub Actions in `.github/workflows/firebase-deploy.yml`, `firebase-deploy-www.yml`, and `firebase-deploy-desk.yml`, and they run on merge to `main`.
 
-The previous Expo novel workspace lived in this repo through commit `106b96f`. It is history. See `HISTORY.md`. Do not restore Expo, Supabase, or Netlify. Do not add a deploy script. Firebase Hosting for the static `dist/` is `firebase.json` and `.firebaserc` (project `twilda-510519`); do not put secrets in those files.
+The previous Expo novel workspace lived in this repo through commit `106b96f`. It is history. See `HISTORY.md`. Do not restore Expo, Supabase, or Netlify. Firebase Hosting for the static `dist/` is `firebase.json` and `.firebaserc` (project `twilda-510519`); the phone desk site id is `twilda-desk` and the marketing target `www` is site `twilda-landing`. Do not put secrets in those files.
 
 ## Commands
 
@@ -15,7 +15,7 @@ The previous Expo novel workspace lived in this repo through commit `106b96f`. I
 ## Product rules
 
 - Saving a draft and publishing are separate.
-- Sections are prepared types from `src/schema/sections.ts`. Add, remove, and reorder. Do not turn the desk into a freeform canvas.
+- Sections and article blocks are prepared types from `packages/core/src/schema.ts` (`@twilda/core`). Add, remove, and reorder. Do not turn the desk into a freeform canvas.
 - The static build reads published files only.
 - Demo content stays fictional. Do not scrape a live magazine into `content/`. `drafts/artometrics/` is separate: real-fact DRAFT articles in our own words, each cited, with `[VERIFY]` notes for anything unconfirmed. It feeds the phone desk and is not read by the static build.
 - No secrets in the tree. No `.env` required.

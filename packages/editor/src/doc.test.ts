@@ -53,11 +53,11 @@ describe("createBlock", () => {
     }
   });
 
-  it("gives a chart block an embed link and alt text", () => {
+  it("gives a chart block a data path and alt text", () => {
     const chart = createBlock("chart", "c1");
     assert.equal(chart.type, "chart");
     if (chart.type === "chart") {
-      assert.equal(typeof chart.src, "string");
+      assert.equal(typeof chart.dataPath, "string");
       assert.equal(typeof chart.alt, "string");
     }
   });
@@ -72,6 +72,7 @@ describe("normalizeDoc", () => {
     kicker: "",
     dek: "",
     byline: "",
+    status: "draft",
     updatedAt: "2026-11-12T00:00:00.000Z",
     blocks: [createBlock("paragraph", "p1"), createBlock("sources", "s1")],
   });
@@ -88,7 +89,10 @@ describe("normalizeDoc", () => {
     if (doc.kind === "article") {
       const chart = doc.blocks[0];
       assert.equal(chart?.type, "chart");
-      if (chart?.type === "chart") assert.equal(chart.alt, "");
+      if (chart?.type === "chart") {
+        assert.equal(chart.alt, "");
+        assert.equal(chart.dataPath, "https://x.test/c");
+      }
     }
   });
 
