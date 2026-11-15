@@ -15,6 +15,7 @@ export {
   CONTENT_ROOT,
   DRAFT_BRANCH_PREFIX,
   MEDIA_DIR,
+  SITE_BRANCH,
   SITE_PATH,
   documentDir,
   documentIdFromPath,
@@ -101,5 +102,5 @@ export {
 export type { StructureResult } from "./structure";
 export { canRedo, canUndo, emptyHistory, recordChange, redo, undo } from "./history";
 export type { History } from "./history";
-export { mergeDocuments } from "./merge";
-export type { MergeChoice, MergeConflict, MergeResult } from "./merge";
+export { mergeDocuments, mergeSites } from "./merge";
+export type { MergeChoice, MergeConflict, MergeResult, SiteMergeResult } from "./merge";

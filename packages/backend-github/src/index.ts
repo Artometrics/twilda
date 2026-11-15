@@ -10,7 +10,7 @@ import type {
   StorageListItem,
 } from "../../core/src/storage";
 import { contentDigest, parseDocument } from "../../core/src/serialize";
-import { BASE_BRANCH, DRAFT_BRANCH_PREFIX, draftPath, publishedPath } from "../../core/src/paths";
+import { BASE_BRANCH, DRAFT_BRANCH_PREFIX, SITE_BRANCH, draftPath, publishedPath } from "../../core/src/paths";
 
 /**
  * GitHub REST backend. No server of ours.
@@ -124,24 +124,69 @@ export class GitHubBackend implements StorageBackend {
     return { path, text, updatedAt: "", sha: payload.sha };
   }
 
-  async write(path: string, text: string): Promise<StorageEntry> {
-    let sha: string | undefined;
-    try {
-      sha = (await this.read(path)).sha;
-    } catch (error) {
-      if (!(error instanceof TwildaError) || error.code !== "not-found") throw error;
-    }
+  async write(path: string, text: string, message?: string): Promise<StorageEntry> {
+    const sha = await this.putContents(path, encodeBase64(text), message ?? `Update ${path}`);
+    return { path, text, updatedAt: "", sha };
+  }
+
+  /** Commit raw bytes (already base64) to `path` on this ref. Used for uploaded images. */
+  async writeBinary(path: string, base64: string, message?: string): Promise<{ path: string; sha: string }> {
+    const sha = await this.putContents(path, base64, message ?? `Add ${path}`);
+    return { path, sha };
+  }
+
+  private async putContents(path: string, content: string, message: string): Promise<string> {
+    const existing = await this.fileSha(path);
     const payload = await this.request<{ commit: { sha: string }; content: { path: string } }>(
       "PUT",
       `/repos/${this.owner}/${this.repo}/contents/${path}`,
-      {
-        message: `Update ${path}`,
-        content: encodeBase64(text),
-        branch: this.ref,
-        sha,
-      },
+      { message, content, branch: this.ref, sha: existing ?? undefined },
     );
-    return { path, text, updatedAt: "", sha: payload.commit.sha };
+    return payload.commit.sha;
+  }
+
+  /** The git blob sha of a file on this ref, or null when it is not there. */
+  async fileSha(path: string): Promise<string | null> {
+    try {
+      const payload = await this.request<ContentsEntry>(
+        "GET",
+        `/repos/${this.owner}/${this.repo}/contents/${path}?ref=${encodeURIComponent(this.ref)}`,
+      );
+      return payload.sha;
+    } catch (error) {
+      if (error instanceof TwildaError && error.code === "not-found") return null;
+      throw error;
+    }
+  }
+
+  /** The commit a branch points at, or null when the branch does not exist. */
+  async headSha(branch = this.ref): Promise<string | null> {
+    try {
+      const ref = await this.request<{ object: { sha: string } }>("GET", `/repos/${this.owner}/${this.repo}/git/ref/heads/${branch}`);
+      return ref.object.sha;
+    } catch (error) {
+      if (error instanceof TwildaError && error.code === "not-found") return null;
+      throw error;
+    }
+  }
+
+  /**
+   * Point `name` at the tip of `fromRef`, creating the branch or moving it. Only for the
+   * tool-owned `twilda/draft/*` and `twilda/site` branches: a publish rebuilds them from `main` so a stale
+   * branch never carries old content into a pull request. Refuses any other name.
+   */
+  async resetBranch(name: string, fromRef = this.baseBranch): Promise<BranchRef> {
+    if (!name.startsWith(DRAFT_BRANCH_PREFIX) && name !== SITE_BRANCH) {
+      throw new TwildaError(`Only ${DRAFT_BRANCH_PREFIX}* and ${SITE_BRANCH} may be reset.`, "github-config");
+    }
+    const base = await this.headSha(fromRef);
+    if (!base) throw new TwildaError(`GitHub could not find the ${fromRef} branch.`, "not-found");
+    if ((await this.headSha(name)) === null) {
+      await this.request("POST", `/repos/${this.owner}/${this.repo}/git/refs`, { ref: `refs/heads/${name}`, sha: base });
+    } else {
+      await this.request("PATCH", `/repos/${this.owner}/${this.repo}/git/refs/heads/${name}`, { sha: base, force: true });
+    }
+    return { name, headSha: base };
   }
 
   async delete(path: string): Promise<void> {

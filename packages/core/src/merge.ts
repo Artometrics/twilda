@@ -1,3 +1,4 @@
+import type { SiteSettings } from "./site";
 import { BLOCK_LABELS, SECTION_LABELS, type BlockType, type PageSectionType, type TwildaDocument } from "./schema";
 
 /**
@@ -193,5 +194,72 @@ export function mergeDocuments(
     doc: { ...merged, status: ours.status, updatedAt: ours.updatedAt } as TwildaDocument,
     conflicts: ctx.conflicts,
     theirsChanged: base ? !same(strip(base), strip(theirs)) : true,
+  };
+}
+
+// ---- site settings ------------------------------------------------------------------------
+
+function leavesOf(value: Json, prefix: string, out: Map<string, Json>): void {
+  if (isRecord(value)) {
+    for (const [key, child] of Object.entries(value)) leavesOf(child, prefix ? `${prefix}.${key}` : key, out);
+    return;
+  }
+  out.set(prefix, value);
+}
+
+function setLeaf(target: Record<string, Json>, path: string, value: Json | undefined): void {
+  const keys = path.split(".");
+  let node = target;
+  for (const key of keys.slice(0, -1)) {
+    if (!isRecord(node[key])) node[key] = {};
+    node = node[key] as Record<string, Json>;
+  }
+  const last = keys[keys.length - 1] as string;
+  if (value === undefined) delete node[last];
+  else node[last] = value;
+}
+
+export interface SiteMergeResult {
+  site: SiteSettings;
+  conflicts: MergeConflict[];
+  theirsChanged: boolean;
+}
+
+/** The same three-way rule as documents, applied per setting: `theme.colors.paper`, `chrome.name`. A list (the nav) is one setting. */
+export function mergeSites(
+  base: SiteSettings | null,
+  ours: SiteSettings,
+  theirs: SiteSettings,
+  decisions: Record<string, MergeChoice> = {},
+): SiteMergeResult {
+  const b = new Map<string, Json>();
+  const o = new Map<string, Json>();
+  const t = new Map<string, Json>();
+  if (base) leavesOf(base, "", b);
+  leavesOf(ours, "", o);
+  leavesOf(theirs, "", t);
+  const result = structuredClone(ours) as unknown as Record<string, Json>;
+  const conflicts: MergeConflict[] = [];
+  const keys = new Set([...o.keys(), ...t.keys()]);
+  for (const key of [...keys].sort()) {
+    const mine = o.get(key);
+    const theirsValue = t.get(key);
+    const original = base ? b.get(key) : undefined;
+    if (same(mine, theirsValue)) continue;
+    if (base && same(original, mine)) {
+      setLeaf(result, key, theirsValue);
+      continue;
+    }
+    if (base && same(original, theirsValue)) continue;
+    const decision = decisions[key];
+    if (decision === "theirs") setLeaf(result, key, theirsValue);
+    if (!decision) {
+      conflicts.push({ key, label: `Site: ${key.replace(/\./g, " / ")}`, base: original, ours: mine, theirs: theirsValue });
+    }
+  }
+  return {
+    site: result as unknown as SiteSettings,
+    conflicts,
+    theirsChanged: base ? !same(base, theirs) : true,
   };
 }

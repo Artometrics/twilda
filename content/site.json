@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "chrome": {
+    "name": "Field Desk",
+    "issueLabel": "Demo issue 01",
+    "note": "A sample magazine built with Twilda CMS. Not a live publication.",
+    "nav": [
+      {
+        "label": "Issue",
+        "href": "/"
+      },
+      {
+        "label": "Franchise",
+        "href": "/articles/lumen-rail"
+      }
+    ],
+    "colophon": "Field Desk is sample content shipped with Twilda CMS so the editor and the static build can be tried without touching a live site."
+  },
+  "templates": {},
+  "documents": {},
+  "theme": {
+    "colors": {
+      "paper": "#f3efe4",
+      "ink": "#1a1714",
+      "muted": "#5c564c",
+      "hair": "#d4cbb8",
+      "kicker": "#9d2b1f",
+      "plate": "#243126"
+    },
+    "fonts": {
+      "heading": "newsreader",
+      "body": "public-sans"
+    },
+    "baseSize": 17,
+    "headingScale": 1,
+    "spacing": 1
+  }
+}

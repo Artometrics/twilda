@@ -4,7 +4,7 @@
  * its styles. The Astro site never imports this entry.
  */
 export { mountOverlay } from "./overlay";
-export type { OverlayHandle, OverlayOptions } from "./overlay";
+export type { MediaChoice, OverlayHandle, OverlayOptions } from "./overlay";
 export {
   applyEdit,
   changedRefs,

@@ -1,7 +1,8 @@
 ---
 import Base from "../../layouts/Base.astro";
 import { listPublished, readPublished } from "../../content/store";
-import { renderDocument } from "@twilda/core";
+import { renderDocument, resolveChrome } from "@twilda/core";
+import { readSite } from "../../content/site";
 
 export function getStaticPaths() {
   return listPublished()
@@ -21,7 +22,7 @@ const doc = readPublished(id);
 if (!doc) {
   throw new Error(`Published article "${id}" disappeared during the build.`);
 }
-const html = renderDocument(doc);
+const html = renderDocument(doc, { chrome: resolveChrome(readSite(), doc) });
 ---
 
 <Base title={`${doc.title} · Field Desk`} description={doc.dek}>

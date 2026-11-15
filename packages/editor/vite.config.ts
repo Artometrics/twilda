@@ -4,7 +4,10 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, type Connect, type Plugin } from "vite";
 
 const MEDIA_DIR = fileURLToPath(new URL("../../public/media/", import.meta.url));
-const PLATE = /^[a-z0-9-]+\.svg$/;
+const PLATE = /^[a-z0-9][a-z0-9-]*\.(?:svg|jpg|png|webp|gif)$/;
+const TYPES: Record<string, string> = { svg: "image/svg+xml", jpg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif" };
+const SITE_FILE = fileURLToPath(new URL("../../content/site.json", import.meta.url));
+const SITE_VIRTUAL = "virtual:twilda-site";
 const VIRTUAL = "virtual:twilda-plates";
 
 function plateFiles(): string[] {
@@ -19,10 +22,10 @@ function plateFiles(): string[] {
  */
 function twildaPlates(): Plugin {
   const serve: Connect.NextHandleFunction = (req, res, next) => {
-    const match = /^\/media\/([a-z0-9-]+\.svg)(?:\?.*)?$/.exec(req.url ?? "");
+    const match = /^\/media\/([a-z0-9][a-z0-9-]*\.(?:svg|jpg|png|webp|gif))(?:\?.*)?$/.exec(req.url ?? "");
     const file = match?.[1];
     if (!file || !plateFiles().includes(file)) return next();
-    res.setHeader("content-type", "image/svg+xml");
+    res.setHeader("content-type", TYPES[file.split(".").pop() ?? "svg"] ?? "application/octet-stream");
     res.end(readFileSync(`${MEDIA_DIR}${file}`));
   };
   return {
@@ -39,13 +42,26 @@ function twildaPlates(): Plugin {
   };
 }
 
+/** `content/site.json` as text (or null), so the desk dresses its page the way the site will. */
+function twildaSite(): Plugin {
+  return {
+    name: "twilda-site",
+    resolveId: (id) => (id === SITE_VIRTUAL ? `\0${SITE_VIRTUAL}` : undefined),
+    load(id) {
+      if (id !== `\0${SITE_VIRTUAL}`) return undefined;
+      this.addWatchFile(SITE_FILE);
+      return `export default ${JSON.stringify(existsSync(SITE_FILE) ? readFileSync(SITE_FILE, "utf8") : null)};`;
+    },
+  };
+}
+
 /**
  * Standalone desk. `astro build` does not load this config, and the Astro
  * site never imports this package, so the production `dist/` stays the
  * static magazine.
  */
 export default defineConfig({
-  plugins: [react(), twildaPlates()],
+  plugins: [react(), twildaPlates(), twildaSite()],
   // OAuth client id is public. Vite only inlines VITE_* unless this prefix is listed.
   envPrefix: ["VITE_", "PUBLIC_"],
   server: {

@@ -67,6 +67,8 @@ export interface OverlayHandle {
   setDoc(doc: TwildaDocument): void;
   /** Replace the images the picker offers. */
   setMedia(media: Array<string | MediaChoice>): void;
+  /** Change what the renderer is given (for example the masthead) and draw the page again. */
+  setRender(render: OverlayOptions["render"]): void;
   setOutlines(on: boolean): void;
   hasOutlines(): boolean;
   setStructure(on: boolean): void;
@@ -889,6 +891,13 @@ export function mountOverlay(options: OverlayOptions): OverlayHandle {
       media = normalizeMedia(next);
       imageSheet.renderThumbs();
       syncImageSheet();
+    },
+    setRender(next) {
+      if (editing) commitText();
+      options.render = next;
+      render();
+      syncImageSheet();
+      syncVideoSheet();
     },
     setOutlines(on) {
       root.classList.toggle("twilda-outlines", on);

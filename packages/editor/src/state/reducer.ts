@@ -9,12 +9,14 @@ import {
   type PageDoc,
   type PageSection,
 } from "../model";
+import { canRedo, canUndo, emptyHistory, recordChange, redo, undo, type History } from "../../../core/src/history";
+import { changedRefs } from "../../../core/src/edit/doc-path";
 import { moveById } from "./move";
 
 export type FailurePhase = "load" | "save" | "build" | "publish" | "revert" | "upload" | "import";
 
 /** `page` is the draft in the real template; `edit` is the Blocks panel. */
-export type DeskView = "list" | "page" | "edit" | "media" | "export";
+export type DeskView = "list" | "page" | "edit" | "media" | "export" | "theme";
 
 export interface EditorState {
   phase: "ready" | "busy";
@@ -27,9 +29,11 @@ export interface EditorState {
   view: DeskView;
   error: { phase: FailurePhase; message: string } | null;
   notice: string | null;
-  confirm: "publish" | "revert" | "delete" | null;
+  confirm: "publish" | "revert" | "delete" | "theme" | null;
   media: MediaAsset[];
   previewUrl: string | null;
+  /** Snapshots of the draft before each edit, for undo and redo. Cleared when another document opens. */
+  history: History<Doc>;
 }
 
 export type Action =
@@ -41,7 +45,9 @@ export type Action =
   | { type: "autosaved"; saved: Doc; documents: DocSummary[] }
   | { type: "notice"; message: string }
   | { type: "view"; view: DeskView }
-  | { type: "replace-draft"; draft: Doc }
+  | { type: "replace-draft"; draft: Doc; at?: number }
+  | { type: "undo" }
+  | { type: "redo" }
   | { type: "edit-meta"; patch: MetaPatch }
   | { type: "update-block"; block: Block }
   | { type: "add-block"; block: Block }
@@ -51,7 +57,7 @@ export type Action =
   | { type: "add-section"; section: PageSection }
   | { type: "remove-section"; id: string }
   | { type: "move-section"; id: string; to: number }
-  | { type: "ask-confirm"; confirm: "publish" | "revert" | "delete" }
+  | { type: "ask-confirm"; confirm: "publish" | "revert" | "delete" | "theme" }
   | { type: "dismiss-confirm" }
   | { type: "busy"; label: string }
   | { type: "saved"; draft: Doc; documents: DocSummary[] }
@@ -76,6 +82,7 @@ export const initialState: EditorState = {
   confirm: null,
   media: [],
   previewUrl: null,
+  history: emptyHistory<Doc>(),
 };
 
 export function editorReducer(state: EditorState, action: Action): EditorState {
@@ -101,6 +108,7 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
         saved: action.draft,
         published: action.published,
         previewUrl: action.previewUrl,
+        history: emptyHistory<Doc>(),
         view: "page",
         notice: `Opened ${action.draft.title}.`,
       };
@@ -116,6 +124,7 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
         saved: action.draft,
         published: null,
         previewUrl: null,
+        history: emptyHistory<Doc>(),
         documents: action.documents,
         view: "page",
         notice: action.notice,
@@ -132,6 +141,7 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
         saved: null,
         published: null,
         previewUrl: null,
+        history: emptyHistory<Doc>(),
         documents: action.documents,
         view: "list",
         notice: "Document deleted from this device.",
@@ -157,21 +167,39 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
       return { ...state, notice: action.message };
     case "view":
       return { ...state, view: action.view };
-    case "replace-draft":
+    case "replace-draft": {
       if (!state.draft || state.draft.id !== action.draft.id) return state;
-      return { ...state, error: null, draft: action.draft };
-    case "edit-meta":
+      const refs = changedRefs(state.draft as never, action.draft as never);
+      return commit(state, action.draft, refs.length === 1 ? (refs[0] as string) : null, action.at);
+    }
+    case "undo": {
       if (!state.draft) return state;
+      const step = undo(state.history, state.draft);
+      return step ? { ...state, error: null, draft: step.value, history: step.history } : state;
+    }
+    case "redo": {
+      if (!state.draft) return state;
+      const step = redo(state.history, state.draft);
+      return step ? { ...state, error: null, draft: step.value, history: step.history } : state;
+    }
+    case "edit-meta": {
+      if (!state.draft) return state;
+      const key = `meta.${Object.keys(action.patch).join(",")}`;
       if (state.draft.kind === "page") {
         const { byline: _byline, ...rest } = action.patch;
-        return { ...state, error: null, draft: { ...state.draft, ...rest } };
+        return commit(state, { ...state.draft, ...rest }, key);
       }
-      return { ...state, error: null, draft: { ...state.draft, ...action.patch } };
+      return commit(state, { ...state.draft, ...action.patch }, key);
+    }
     case "update-block":
-      return mapArticle(state, (article) => ({
-        ...article,
-        blocks: article.blocks.map((block) => (block.id === action.block.id ? action.block : block)),
-      }));
+      return mapArticle(
+        state,
+        (article) => ({
+          ...article,
+          blocks: article.blocks.map((block) => (block.id === action.block.id ? action.block : block)),
+        }),
+        `block.${action.block.id}`,
+      );
     case "add-block":
       return mapArticle(state, (article) => ({
         ...article,
@@ -188,12 +216,14 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
         blocks: moveById(article.blocks, action.id, action.to),
       }));
     case "update-section":
-      return mapPage(state, (page) => ({
-        ...page,
-        sections: page.sections.map((section) =>
-          section.id === action.section.id ? action.section : section,
-        ),
-      }));
+      return mapPage(
+        state,
+        (page) => ({
+          ...page,
+          sections: page.sections.map((section) => (section.id === action.section.id ? action.section : section)),
+        }),
+        `section.${action.section.id}`,
+      );
     case "add-section":
       return mapPage(state, (page) => ({
         ...page,
@@ -210,7 +240,8 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
         sections: moveById(page.sections, action.id, action.to),
       }));
     case "ask-confirm":
-      if (!state.draft || state.phase === "busy") return state;
+      if (state.phase === "busy") return state;
+      if (!state.draft && action.confirm !== "theme") return state;
       if (action.confirm === "revert" && !state.published) return state;
       return { ...state, confirm: action.confirm };
     case "dismiss-confirm":
@@ -251,6 +282,7 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
         draft: action.draft,
         saved: action.draft,
         published: action.published,
+        history: emptyHistory<Doc>(),
         documents: action.documents,
         notice: "Draft reset to the published copy.",
       };
@@ -287,15 +319,30 @@ export function editorReducer(state: EditorState, action: Action): EditorState {
   }
 }
 
-function mapArticle(state: EditorState, update: (article: ArticleDoc) => ArticleDoc): EditorState {
-  if (state.draft?.kind !== "article") return state;
-  return { ...state, error: null, draft: update(state.draft) };
+/** Replace the draft and remember the one it replaced, unless nothing changed. */
+function commit(state: EditorState, next: Doc, key: string | null, at?: number): EditorState {
+  if (!state.draft) return state;
+  if (fingerprint(next) === fingerprint(state.draft)) return { ...state, error: null, draft: next };
+  return {
+    ...state,
+    error: null,
+    draft: next,
+    history: recordChange(state.history, state.draft, { key, at }),
+  };
 }
 
-function mapPage(state: EditorState, update: (page: PageDoc) => PageDoc): EditorState {
-  if (state.draft?.kind !== "page") return state;
-  return { ...state, error: null, draft: update(state.draft) };
+function mapArticle(state: EditorState, update: (article: ArticleDoc) => ArticleDoc, key: string | null = null): EditorState {
+  if (state.draft?.kind !== "article") return state;
+  return commit(state, update(state.draft), key);
 }
+
+function mapPage(state: EditorState, update: (page: PageDoc) => PageDoc, key: string | null = null): EditorState {
+  if (state.draft?.kind !== "page") return state;
+  return commit(state, update(state.draft), key);
+}
+
+export const canUndoDraft = (state: EditorState): boolean => canUndo(state.history);
+export const canRedoDraft = (state: EditorState): boolean => canRedo(state.history);
 
 export function isDirty(state: EditorState): boolean {
   if (!state.draft || !state.saved) return false;

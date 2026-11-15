@@ -4,6 +4,8 @@ import { TwildaError } from "./errors";
 
 export const BASE_BRANCH = "main";
 export const DRAFT_BRANCH_PREFIX = "twilda/draft/";
+/** Branch a theme or masthead publish goes through. */
+export const SITE_BRANCH = "twilda/site";
 export const REVERT_BRANCH_PREFIX = "twilda/revert/";
 
 const ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
