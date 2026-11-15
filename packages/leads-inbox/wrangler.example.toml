@@ -1,0 +1,27 @@
+# Example only. Nothing in this repository deploys it. Copy it to your own project, fill in the ids, and deploy
+# it yourself with your own Cloudflare account. The free plan is enough for a small site.
+#
+#   npx wrangler kv namespace create LEADS        # paste the id below
+#   npx wrangler secret put SIGNING_SECRET        # 32+ random characters; keep a copy somewhere safe
+#   npx wrangler secret put INBOX_PASSWORD        # 16+ characters
+#   npx wrangler secret put INBOX_USER
+#   npx wrangler deploy
+#
+# Secrets are never written in this file.
+
+name = "twilda-leads"
+main = "src/cloudflare.ts"
+compatibility_date = "2025-01-01"
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "LEADS"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+[vars]
+# Exact https origins of your site, comma separated. No wildcards.
+ALLOWED_ORIGINS = "https://example.com,https://www.example.com"
+# Days to keep a lead (default 90).
+RETENTION_DAYS = "90"
+# Names of the fixed hidden fields in site.json "forms.hidden", comma separated. Leave empty if there are none.
+EXTRA_FIELDS = ""

@@ -16,6 +16,8 @@ Twilda has two editors. They do not share a process.
 | [phase1.md](phase1.md) | The single renderer, the drafting dashboard and page view, the design refresh, and auth scope limits |
 | [phase2.md](phase2.md) | The live visual editor on prepared sections, media uploads, and merge handling |
 | [phase3.md](phase3.md) | Security hardening: what was found and fixed, and the checks that keep it fixed |
+| [phase5.md](phase5.md) | Forms and CRM hand-off: the Form section, per-site policy, the forms script, the desk card, the optional leads inbox |
+| [forms-and-crm.md](forms-and-crm.md) | Setting a form up and sending it to Formspree, Basin, Netlify, Zapier, Make, HubSpot, Airtable, or Sheets |
 | [phase4.md](phase4.md) | Modes and presets (corporate, magazine, lead generation), eleven new prepared sections, three new article blocks, starters, `create-twilda`, and what was checked |
 | [choose-a-mode.md](choose-a-mode.md) | Which mode to pick, what each includes, and how to switch in the desk |
 | [security.md](security.md) | Architecture, trust boundaries, token handling, what Twilda does and does not protect, remaining risks |

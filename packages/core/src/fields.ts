@@ -1,3 +1,5 @@
+import { FORM_FIELD_KINDS, FORM_FIELD_KIND_LABELS, FORM_VARIANTS, FORM_VARIANT_LABELS, MAX_FORM_FIELDS } from "./forms";
+
 /**
  * The fields of the mode sections and blocks, described once so the desk's forms and the
  * dev editor's inspector can render an editor for any of them, and so tests can check that
@@ -7,8 +9,8 @@
  * This describes fields. It does not validate: the schema in `schema.ts` is the only judge.
  */
 
-/** `lines` is a list of short strings edited one per line. */
-export type FieldKind = "text" | "multiline" | "href" | "path" | "boolean" | "lines";
+/** `lines` is a list of short strings edited one per line. `choice` is one of a fixed list (`options`). */
+export type FieldKind = "text" | "multiline" | "href" | "path" | "boolean" | "lines" | "choice";
 
 export type FieldValue = string | boolean | string[];
 
@@ -16,6 +18,8 @@ export interface FieldSpec {
   key: string;
   label: string;
   kind: FieldKind;
+  /** For `choice`: the allowed values and how to show each. */
+  options?: ReadonlyArray<{ value: string; label: string }>;
 }
 
 export interface ListSpec {
@@ -39,6 +43,9 @@ export interface PartFieldSpec {
   fields: FieldSpec[];
   lists: ListSpec[];
 }
+
+const variantOptions = FORM_VARIANTS.map((value) => ({ value, label: FORM_VARIANT_LABELS[value] }));
+const fieldKindOptions = FORM_FIELD_KINDS.map((value) => ({ value, label: FORM_FIELD_KIND_LABELS[value] }));
 
 const intro: FieldSpec[] = [
   { key: "kicker", label: "Kicker", kind: "text" },
@@ -253,6 +260,34 @@ export const PART_FIELDS: {
         { key: "heading", label: "Heading", kind: "text" },
       ],
       lists: [facts],
+    },
+    form: {
+      fields: [
+        ...intro,
+        { key: "variant", label: "Kind of form", kind: "choice", options: variantOptions },
+        { key: "submitLabel", label: "Send button label", kind: "text" },
+        { key: "successTitle", label: "After sending: title", kind: "text" },
+        { key: "successText", label: "After sending: message", kind: "multiline" },
+        { key: "errorText", label: "If it fails: message", kind: "multiline" },
+        { key: "privacy", label: "Small print under the form", kind: "multiline" },
+      ],
+      lists: [
+        {
+          key: "fields",
+          label: "Fields",
+          itemLabel: "field",
+          idPrefix: "field",
+          min: 1,
+          max: MAX_FORM_FIELDS,
+          fields: [
+            { key: "kind", label: "Kind of field", kind: "choice", options: fieldKindOptions },
+            { key: "label", label: "Label", kind: "text" },
+            { key: "hint", label: "Hint under the label", kind: "text" },
+            { key: "required", label: "Required", kind: "boolean" },
+          ],
+          blank: { kind: "text", label: "Another question", hint: "", required: false },
+        },
+      ],
     },
   },
   blocks: {

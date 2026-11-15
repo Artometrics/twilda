@@ -1,4 +1,4 @@
-import { BLOCK_CATALOG, SECTION_CATALOG } from "./library";
+import { BLOCK_CATALOG, SECTION_CATALOG, createFormSection } from "./library";
 import { DEFAULT_MODE, PRESET_IDS, isPresetId, type PresetId } from "./modes";
 import { DEFAULT_CHROME, type SiteChrome } from "./render";
 import { documentSchema, type BlockType, type PageSectionType, type TwildaDocument } from "./schema";
@@ -51,7 +51,7 @@ export const PRESETS: Record<PresetId, Preset> = {
     label: "Corporate",
     tagline: "A company site: hero, features, team, pricing, testimonials, contact.",
     audience: "A business, studio, or product that wants a clear, calm front door.",
-    sections: ["hero", "feature-grid", "team", "pricing", "testimonials", "contact", "story-grid", "menu-shelf"],
+    sections: ["hero", "feature-grid", "team", "pricing", "testimonials", "contact", "form", "story-grid", "menu-shelf"],
     blocks: ["heading", "paragraph", "image", "key-findings", "fast-facts", "pull-quote", "callout", "bar-chart", "embed", "download"],
     theme: CORPORATE_THEME,
     chrome: {
@@ -88,7 +88,7 @@ export const PRESETS: Record<PresetId, Preset> = {
     label: "Lead generation",
     tagline: "A landing page: hero, benefits, social proof, and one call to action.",
     audience: "A campaign or offer that exists to get one action from a visitor.",
-    sections: ["hero", "feature-grid", "social-proof", "testimonials", "cta", "contact"],
+    sections: ["hero", "feature-grid", "social-proof", "testimonials", "cta", "form", "contact"],
     blocks: ["heading", "paragraph", "image", "fast-facts", "pull-quote", "callout", "download"],
     theme: LEADGEN_THEME,
     chrome: {
@@ -138,10 +138,17 @@ export function applyPreset(site: SiteSettings, id: PresetId): SiteSettings {
   };
 }
 
+/** The placeholder form address a starter ships with. Replace it with the address your form service gives you. */
+export const STARTER_FORM_ENDPOINT = "https://forms.example.com/replace-with-your-form-address";
+
 /** A new `content/site.json` for a mode, with a masthead whose links reach the starter documents. */
 export function starterSite(id: PresetId): SiteSettings {
   const site = applyPreset({ version: SITE_VERSION, chrome: structuredClone(DEFAULT_CHROME), templates: {}, documents: {}, theme: structuredClone(DEFAULT_THEME) }, id);
   if (id === "magazine") site.chrome.nav = [{ label: "Home", href: "/" }, { label: "Cover story", href: "/articles/parking-tickets" }];
+  // The two modes that have a form start with a placeholder address. It is a valid https address on a
+  // reserved-looking demo host, so the starter builds and its policy is built, but nothing is received
+  // until the owner replaces it. `npm run check:forms` warns while it is still the placeholder.
+  if (id !== "magazine") site.forms = { endpoint: STARTER_FORM_ENDPOINT, mode: "fetch", format: "form", hidden: {} };
   return site;
 }
 
@@ -262,6 +269,7 @@ function corporateDocuments(): TwildaDocument[] {
           ],
           address: "Brightline Ltd\n12 Canal Row\nLeeds LS1 4AB",
         },
+        createFormSection("enquiry", "contact"),
       ],
     }),
     doc({
@@ -354,10 +362,11 @@ function leadgenDocuments(): TwildaDocument[] {
           heading: "Save your seat for the next cohort",
           text: "Seats are free and limited to forty. Tell us where to send the first email.",
           buttonLabel: "Join the waitlist",
-          buttonHref: "https://forms.example.com/launchpad",
+          buttonHref: "/#join",
           asks: ["Your name", "Your email", "What you are building"],
           note: "No spam. One email a day for fourteen days, then nothing unless you ask.",
         },
+        createFormSection("join", "lead"),
       ],
     }),
     doc({

@@ -183,7 +183,7 @@ describe("starter documents", () => {
       for (const doc of docs) {
         assert.equal(documentSchema.safeParse(doc).success, true, doc.id);
         assert.equal(doc.status, "published");
-        for (const annotate of [false, true]) assertInertMarkup(renderDocument(doc, { annotate, ...renderOptionsFor(starterSite(id), doc) }), `${id}/${doc.id}`);
+        for (const annotate of [false, true]) assertInertMarkup(renderDocument(doc, { annotate, ...renderOptionsFor(starterSite(id), doc) }), `${id}/${doc.id}`, { forms: starterSite(id).forms !== undefined });
       }
     });
 

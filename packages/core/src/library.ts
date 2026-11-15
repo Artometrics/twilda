@@ -1,3 +1,4 @@
+import { defaultFields, type FormVariant } from "./forms";
 import {
   BLOCK_LABELS,
   BLOCK_TYPES,
@@ -46,6 +47,7 @@ const SECTION_HINTS: Record<PageSectionType, string> = {
   "cover-story": "The lead story: a large plate, headline, dek, and byline.",
   "category-grid": "Tiles for each desk or topic, with a story count.",
   "fast-facts": "A row of squares, each a big number and a label.",
+  form: "A contact, lead, or newsletter form. It sends to the form service you choose; Twilda keeps nothing.",
 };
 
 export const BLOCK_CATALOG = BLOCK_TYPES.map((type) => ({ type, label: BLOCK_LABELS[type], hint: BLOCK_HINTS[type] }));
@@ -55,6 +57,29 @@ export const SECTION_CATALOG = PAGE_SECTION_TYPES.map((type) => ({
   label: SECTION_LABELS[type],
   hint: SECTION_HINTS[type],
 }));
+
+/** A form with a variant's default field set, ready to add. Section ids make field ids unique across forms through the `<section>-<field>` prefix. */
+export function createFormSection(id: string, variant: FormVariant): Extract<PageSection, { type: "form" }> {
+  const copy = {
+    contact: { kicker: "Contact", heading: "Send us a message", intro: "We reply within one working day.", submit: "Send message", ok: "Message sent", okText: "Thank you. We will reply within one working day.", privacy: "We use your details only to reply to you." },
+    lead: { kicker: "Next step", heading: "Tell us about you", intro: "Two minutes, and we will be in touch.", submit: "Request a call", ok: "Request received", okText: "Thank you. Someone will contact you soon.", privacy: "We use your details only to contact you about this request." },
+    newsletter: { kicker: "Newsletter", heading: "Get the next issue", intro: "One email when there is something worth reading.", submit: "Subscribe", ok: "You are on the list", okText: "Thank you. Watch for the next issue.", privacy: "Unsubscribe at any time." },
+  }[variant];
+  return {
+    id,
+    type: "form",
+    kicker: copy.kicker,
+    heading: copy.heading,
+    intro: copy.intro,
+    variant,
+    fields: defaultFields(variant),
+    submitLabel: copy.submit,
+    successTitle: copy.ok,
+    successText: copy.okText,
+    errorText: "Something went wrong and your message was not sent. Please try again in a moment.",
+    privacy: copy.privacy,
+  };
+}
 
 export function createId(prefix: string): string {
   const raw = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(16).slice(2).padEnd(8, "0");
@@ -295,6 +320,8 @@ export function createSection(type: PageSectionType, id = createId(type)): PageS
           { id: createId("fact"), value: "7%", label: "What this one measures" },
         ],
       };
+    case "form":
+      return createFormSection(id, "contact");
     default: {
       const exhaustive: never = type;
       throw new Error(`Unknown section ${exhaustive}`);

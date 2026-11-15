@@ -2,6 +2,7 @@ import type { PresetId } from "@twilda/core";
 import { uniqueSlug } from "./doc";
 import {
   createBlock,
+  createFormSection,
   createId,
   createSection,
   type ArticleDoc,
@@ -134,7 +135,7 @@ export const DRAFT_TEMPLATES: DraftTemplate[] = [
     modes: ["corporate"],
     label: "Company home",
     hint: "Hero, features, team, pricing, testimonials, and contact, with anchors the masthead links to.",
-    outline: ["Hero", "Features", "Team", "Pricing", "Testimonials", "Contact"],
+    outline: ["Hero", "Features", "Team", "Pricing", "Testimonials", "Contact", "Contact form"],
     parts: () => [
       createSection("hero", "hero"),
       createSection("feature-grid", "features"),
@@ -142,6 +143,7 @@ export const DRAFT_TEMPLATES: DraftTemplate[] = [
       createSection("pricing", "pricing"),
       createSection("testimonials", "testimonials"),
       createSection("contact", "contact"),
+      createFormSection("enquiry", "contact"),
     ],
   },
   {
@@ -166,13 +168,14 @@ export const DRAFT_TEMPLATES: DraftTemplate[] = [
     modes: ["leadgen"],
     label: "Landing page",
     hint: "Hero, benefits, social proof, quotes, and one call to action, with anchors the masthead links to.",
-    outline: ["Hero", "Benefits", "Social proof", "Testimonials", "Call to action"],
+    outline: ["Hero", "Benefits", "Social proof", "Testimonials", "Call to action", "Lead form"],
     parts: () => [
       createSection("hero", "hero"),
       createSection("feature-grid", "benefits"),
       createSection("social-proof", "proof"),
       createSection("testimonials", "voices"),
       createSection("cta", "start"),
+      createFormSection("join", "lead"),
     ],
   },
   {

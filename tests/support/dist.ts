@@ -9,6 +9,8 @@ export interface AuditOptions {
   /** Pages where an external script is expected (desk, edit build). Inline script is never allowed. */
   runsScript: boolean;
   page?: string;
+  /** The page has a form. Each `<form>` must be a POST whose action the policy's `form-action` allows. Off: any `<form>` is a problem. */
+  forms?: boolean;
 }
 
 const PAGE = "https://host.test/";
@@ -57,8 +59,20 @@ export function auditHtml(file: string, html: string, options: AuditOptions): st
   const problems: string[] = [];
   const at = (message: string) => problems.push(`${file}: ${message}`);
 
-  for (const tag of ["base", "form", "object", "embed", "applet", "frame", "frameset", "portal", "template"]) {
+  for (const tag of ["base", ...(options.forms ? [] : ["form"]), "object", "embed", "applet", "frame", "frameset", "portal", "template"]) {
     if (new RegExp(`<${tag}[\\s>/]`, "i").test(html)) at(`<${tag}> is not allowed`);
+  }
+  if (options.forms) {
+    for (const match of html.matchAll(/<form\b([^>]*)>/gi)) {
+      const a = attrs(match[1]);
+      if ((a.get("method") ?? "get").toLowerCase() !== "post") at("a form must use method=post");
+      if (a.has("target")) at("a form must not open a new window");
+      const action = a.get("action");
+      if (action === undefined) at("a form without an action posts to the page itself, which form-action does not allow");
+      else if (!allows(options.policy, "form-action", action, options.page ?? PAGE)) at(`form action ${action} is blocked by form-action`);
+      if (a.has("enctype") && !/^application\/x-www-form-urlencoded$/i.test(a.get("enctype") ?? "")) at("a form must not use a multipart or text enctype");
+    }
+    if (/<input[^>]+type=["']?file/i.test(html)) at("a file input is not allowed in a form");
   }
   if (/<meta[^>]+http-equiv/i.test(html)) at("a meta http-equiv would override the header policy");
   if (/<style[\s>]/i.test(html)) at("inline <style> would need style-src 'unsafe-inline'");

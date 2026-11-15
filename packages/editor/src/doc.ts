@@ -198,7 +198,7 @@ function schemaPart<T>(result: { success: true; data: T } | { success: false; er
   throw new Error(`${where}: ${first ? `${first.path.join(".") || "part"} ${first.message}` : "is not valid"}`);
 }
 
-const MODE_SECTION_TYPES = new Set(["hero", "feature-grid", "team", "pricing", "testimonials", "contact", "social-proof", "cta", "cover-story", "category-grid", "fast-facts"]);
+const MODE_SECTION_TYPES = new Set(["hero", "feature-grid", "team", "pricing", "testimonials", "contact", "social-proof", "cta", "cover-story", "category-grid", "fast-facts", "form"]);
 
 function normalizeSection(value: unknown, index: number): PageSection {
   const where = `Section ${index + 1}`;

@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import {
   blockLabel,
   createBlock,
+  createFormSection,
   createId,
   createSection,
   sectionLabel,
@@ -12,7 +13,7 @@ import {
   type PageDoc,
   type PageSection,
 } from "../model";
-import { blockCatalogFor, inLibrary, sectionCatalogFor, type PresetId } from "@twilda/core";
+import { FORM_VARIANTS, FORM_VARIANT_LABELS, blockCatalogFor, inLibrary, sectionCatalogFor, type FormVariant, type PresetId } from "@twilda/core";
 import { Field } from "./Field";
 import { GenericFields } from "./GenericFields";
 import { ItemFrame, ReorderList } from "./Reorder";
@@ -200,6 +201,39 @@ export function SectionEditor({
   );
 }
 
+/**
+ * A form starts from one of three field sets. Switching replaces the fields and the wording with that
+ * set's, which is what a person wants when they change their mind about the kind of form, so it asks first.
+ */
+function FormStarter({ section, onChange }: { section: Extract<PageSection, { type: "form" }>; onChange: (section: PageSection) => void }) {
+  const [kind, setKind] = useState<FormVariant>(section.variant);
+  return (
+    <div className="form-reset" data-testid={`form-starter-${section.id}`}>
+      <label className="field">
+        <span>Start from</span>
+        <select data-testid={`form-starter-kind-${section.id}`} value={kind} onChange={(event) => setKind(event.target.value as FormVariant)}>
+          {FORM_VARIANTS.map((value) => (
+            <option key={value} value={value}>
+              {FORM_VARIANT_LABELS[value]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        className="btn"
+        data-testid={`form-starter-apply-${section.id}`}
+        onClick={() => {
+          if (typeof window !== "undefined" && !window.confirm("Replace this form's fields and wording with the new set?")) return;
+          onChange({ ...createFormSection(section.id, kind) });
+        }}
+      >
+        Replace fields and wording
+      </button>
+    </div>
+  );
+}
+
 function SectionFields({ section, onChange }: { section: PageSection; onChange: (section: PageSection) => void }) {
   switch (section.type) {
     case "carousel":
@@ -254,6 +288,13 @@ function SectionFields({ section, onChange }: { section: PageSection; onChange: 
               }}
             />
           ))}
+        </>
+      );
+    case "form":
+      return (
+        <>
+          <FormStarter section={section} onChange={onChange} />
+          <GenericFields kind="section" part={section} onChange={onChange} />
         </>
       );
     default:

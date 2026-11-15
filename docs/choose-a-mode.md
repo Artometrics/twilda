@@ -43,9 +43,11 @@ Still unsure: if the main thing a visitor does is **read**, choose Magazine. If 
 - Theme: warm paper, strong accent, humanist headings over system sans, larger body text, roomier spacing. The last masthead link is a button.
 - The `cta` section is the one call to action. It is a heading, a sentence, one button, a short list of what the form would ask, and a note.
 
-## There is no form
+## Forms
 
-Twilda is static and the site's Content-Security-Policy is `form-action 'none'`, so no page can submit a form. The `cta` section prints the questions as a plain list, and its button goes to a form, booking, or checkout page you host somewhere else (`https://...`) or to a plain `mailto:` address. A `mailto:` link may carry the address only, with no subject or body.
+Corporate and lead-generation sites can add a **Form** section (contact, lead, or newsletter). Twilda stores nothing: the form posts to one `https://` address you set in **Theme → Forms** (Formspree, Basin, a Zapier or Make webhook, your own receiver), and the site's policy opens that address and nothing else. With no address set, the form is inert and the policy stays shut. See [forms-and-crm.md](forms-and-crm.md).
+
+The `cta` section still prints the questions as a plain list, and its button goes to the on-page form (`/#join`), to a booking or checkout page you host elsewhere (`https://...`), or to a plain `mailto:` address. A `mailto:` link may carry the address only, with no subject or body.
 
 ## Choosing and switching in the desk
 
@@ -73,4 +75,4 @@ See [phase4.md](phase4.md#starters) for what a starter contains.
 - Sections are prepared types. You add, remove, and reorder them. There is no freeform canvas, and a mode does not add one.
 - Links are site paths, `https://` addresses, or a bare `mailto:`. There is no `tel:` link. Put the phone number in the text.
 - Pricing has at most four plans, a testimonial list six quotes, a team twelve people. The schema states each limit, and the desk stops offering "Add" at the limit.
-- Everything printed is escaped. A mode cannot add script, inline style, or a form to a page.
+- Everything printed is escaped. A mode cannot add script or inline style to a page. The only script a site can carry is Twilda's own form script, served from the site itself, and only when a form address is set.

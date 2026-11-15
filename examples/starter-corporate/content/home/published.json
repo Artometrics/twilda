@@ -184,6 +184,42 @@
         }
       ],
       "address": "Brightline Ltd\n12 Canal Row\nLeeds LS1 4AB"
+    },
+    {
+      "id": "enquiry",
+      "type": "form",
+      "kicker": "Contact",
+      "heading": "Send us a message",
+      "intro": "We reply within one working day.",
+      "variant": "contact",
+      "fields": [
+        {
+          "id": "name",
+          "kind": "name",
+          "label": "Your name",
+          "required": true,
+          "hint": ""
+        },
+        {
+          "id": "email",
+          "kind": "email",
+          "label": "Email address",
+          "required": true,
+          "hint": "We reply here."
+        },
+        {
+          "id": "message",
+          "kind": "message",
+          "label": "How can we help?",
+          "required": true,
+          "hint": ""
+        }
+      ],
+      "submitLabel": "Send message",
+      "successTitle": "Message sent",
+      "successText": "Thank you. We will reply within one working day.",
+      "errorText": "Something went wrong and your message was not sent. Please try again in a moment.",
+      "privacy": "We use your details only to reply to you."
     }
   ]
 }

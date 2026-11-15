@@ -25,6 +25,12 @@
     ],
     "colophon": "Brightline is a fictional company. This demo site ships with Twilda CMS so it can be tried without touching a live business."
   },
+  "forms": {
+    "endpoint": "https://forms.example.com/replace-with-your-form-address",
+    "mode": "fetch",
+    "format": "form",
+    "hidden": {}
+  },
   "templates": {},
   "documents": {},
   "theme": {

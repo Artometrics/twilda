@@ -13,6 +13,7 @@ import {
   type Theme,
 } from "@twilda/core";
 import { useId, useState } from "react";
+import { FormsCard } from "./FormsCard";
 
 const COLOR_LABELS: Array<[keyof Theme["colors"], string]> = [
   ["paper", "Paper (page background)"],
@@ -165,6 +166,7 @@ export function ThemePanel({
       </header>
       <div className="theme-body">
         <ModePicker site={site} busy={busy} onChange={onChange} />
+        <FormsCard site={site} busy={busy} onChange={onChange} />
         <h3>Colors</h3>
         {COLOR_LABELS.map(([key, label]) => (
           <ColorField key={key} label={label} value={theme.colors[key]} testId={`theme-color-${key}`} onChange={(value) => setColor(key, value)} />

@@ -21,6 +21,12 @@
     ],
     "colophon": "Launchpad is a fictional offer. This demo landing page ships with Twilda CMS so it can be tried without touching a live campaign."
   },
+  "forms": {
+    "endpoint": "https://forms.example.com/replace-with-your-form-address",
+    "mode": "fetch",
+    "format": "form",
+    "hidden": {}
+  },
   "templates": {},
   "documents": {},
   "theme": {

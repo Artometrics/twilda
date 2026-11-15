@@ -47,6 +47,21 @@ function ScalarField({ spec, value, testId, onChange }: { spec: FieldSpec; value
       </label>
     );
   }
+  if (spec.kind === "choice") {
+    const current = asText(value);
+    return (
+      <label className="field">
+        <span>{spec.label}</span>
+        <select data-testid={testId} value={current} onChange={(event) => onChange(event.target.value)}>
+          {(spec.options ?? []).map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  }
   return <Field label={spec.label} value={asText(value)} multiline={spec.kind === "multiline"} testId={testId} onChange={onChange} />;
 }
 

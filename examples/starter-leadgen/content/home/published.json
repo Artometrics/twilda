@@ -107,13 +107,56 @@
       "heading": "Save your seat for the next cohort",
       "text": "Seats are free and limited to forty. Tell us where to send the first email.",
       "buttonLabel": "Join the waitlist",
-      "buttonHref": "https://forms.example.com/launchpad",
+      "buttonHref": "/#join",
       "asks": [
         "Your name",
         "Your email",
         "What you are building"
       ],
       "note": "No spam. One email a day for fourteen days, then nothing unless you ask."
+    },
+    {
+      "id": "join",
+      "type": "form",
+      "kicker": "Next step",
+      "heading": "Tell us about you",
+      "intro": "Two minutes, and we will be in touch.",
+      "variant": "lead",
+      "fields": [
+        {
+          "id": "name",
+          "kind": "name",
+          "label": "Your name",
+          "required": true,
+          "hint": ""
+        },
+        {
+          "id": "email",
+          "kind": "email",
+          "label": "Email address",
+          "required": true,
+          "hint": ""
+        },
+        {
+          "id": "company",
+          "kind": "company",
+          "label": "Company",
+          "required": false,
+          "hint": ""
+        },
+        {
+          "id": "goal",
+          "kind": "text",
+          "label": "What are you building?",
+          "required": false,
+          "hint": ""
+        }
+      ],
+      "submitLabel": "Request a call",
+      "successTitle": "Request received",
+      "successText": "Thank you. Someone will contact you soon.",
+      "errorText": "Something went wrong and your message was not sent. Please try again in a moment.",
+      "privacy": "We use your details only to contact you about this request."
     }
   ]
 }

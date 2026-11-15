@@ -78,6 +78,7 @@ export {
   contrastRatio,
   defaultSite,
   parseSite,
+  previewOptionsFor,
   renderOptionsFor,
   resolveChrome,
   serializeSite,
@@ -126,3 +127,31 @@ export type { JsonBounds } from "./json-guard";
 export { MAX_RASTER_BYTES, MEDIA_FILE_NAME, auditSvg, containsActiveContent, inspectUpload, sniffImage } from "./media-guard";
 export type { ImageKind } from "./media-guard";
 export { hasPunycodeHost, isActionHref, isMailto, isSafeHref, isSitePath, isWebUrl, labelContradictsTarget } from "./url";
+export {
+  FORM_FIELD_KINDS,
+  FORM_FIELD_KIND_LABELS,
+  FORM_FIELD_MAX,
+  FORM_MAX_PAYLOAD_CHARS,
+  FORM_MIN_FILL_MS,
+  FORM_RESERVED_NAMES,
+  FORM_VARIANTS,
+  FORM_VARIANT_LABELS,
+  MAX_FORM_FIELDS,
+  MAX_FORM_HIDDEN,
+  checkFormEndpoint,
+  defaultFields,
+  formEndpointOrigin,
+  formEndpointSchema,
+  formFieldNames,
+  formsConfigSchema,
+  isFormEndpoint,
+  isSafeEmail,
+  isSingleLine,
+  validateSubmission,
+} from "./forms";
+export type { EndpointCheck, FormFieldDef, FormFieldKind, FormVariant, FormsConfig, SubmissionResult } from "./forms";
+export { FORMS_CLIENT_JS } from "./forms-client";
+export { FORMS_SCRIPT_PATH } from "./render";
+export { formsOrigin, siteCsp, usesForms } from "./csp";
+export type { CspInput } from "./csp";
+export { createFormSection } from "./library";

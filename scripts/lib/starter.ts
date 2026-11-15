@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { PRESETS, PRESET_IDS, serializeDocument, serializeSite, starterDocuments, starterSite, type PresetId, type TwildaDocument } from "@twilda/core";
+import { PRESETS, PRESET_IDS, serializeDocument, serializeSite, siteCsp, starterDocuments, starterSite, type PresetId, type SiteSettings, type TwildaDocument } from "@twilda/core";
 
 /**
  * One generator for every starter. `examples/starter-<mode>/` is its output with `kind: "example"`,
@@ -65,14 +65,20 @@ function favicon(id: PresetId): string {
 `;
 }
 
-/** The headers the repository's own site is served with, minus the ones that only make sense for a noindex demo. */
-export function recommendedHeaders(): Array<{ key: string; value: string }> {
+/**
+ * The headers the repository's own site is served with, minus the ones that only make sense for a noindex demo.
+ * With `forSite`, the Content-Security-Policy is the one that site needs: shut tight, or opened to its one form
+ * address when `forSite.forms` is set (see `siteCsp`).
+ */
+export function recommendedHeaders(forSite?: Pick<SiteSettings, "forms"> | null): Array<{ key: string; value: string }> {
   const config = JSON.parse(fs.readFileSync(path.join(REPO, "firebase.json"), "utf8")) as {
     hosting: Array<{ site?: string; headers: Array<{ source: string; headers: Array<{ key: string; value: string }> }> }>;
   };
   const site = config.hosting.find((entry) => entry.site === "twilda-510519");
   const all = site?.headers.find((entry) => entry.source === "**")?.headers ?? [];
-  return all.filter((header) => !["X-Robots-Tag", "Cache-Control"].includes(header.key));
+  return all
+    .filter((header) => !["X-Robots-Tag", "Cache-Control"].includes(header.key))
+    .map((header) => (header.key === "Content-Security-Policy" && forSite !== undefined ? { key: header.key, value: siteCsp(forSite) } : header));
 }
 
 const BASE_LAYOUT = `---
@@ -171,6 +177,18 @@ const site = loadSite();
 </Base>
 `;
 
+const FORMS_ROUTE = `import type { APIRoute, GetStaticPaths } from "astro";
+import { FORMS_CLIENT_JS } from "@twilda/core";
+import { loadSite } from "twilda:content";
+
+// The one script a form page loads. It is built only when content/site.json has a "forms" setting,
+// so a site with no form ships no script at all.
+export const getStaticPaths: GetStaticPaths = () => (loadSite().forms ? [{ params: { asset: "twilda-forms" } }] : []);
+
+export const GET: APIRoute = () =>
+  new Response(FORMS_CLIENT_JS, { headers: { "Content-Type": "text/javascript; charset=utf-8" } });
+`;
+
 const THEME_ROUTE = `import type { APIRoute } from "astro";
 import { loadSite, themeCss } from "twilda:content";
 
@@ -196,7 +214,9 @@ export default defineConfig({
 function readme(id: PresetId, kind: "example" | "project", name: string): string {
   const preset = PRESETS[id];
   const docs = starterDocuments(id);
-  const headers = recommendedHeaders();
+  const site = starterSite(id);
+  const hasForm = site.forms !== undefined;
+  const headers = recommendedHeaders(site);
   const run =
     kind === "example"
       ? `From the root of the Twilda repository (Node.js 22 or newer):
@@ -220,7 +240,7 @@ npm run preview
 
 ${preset.tagline} ${preset.audience}
 
-This is a working Astro site wired to Twilda. It is fully static (\`output: "static"\`, no adapter, no script on the page, no database). Content is JSON in \`content/\`, and the page is drawn by one renderer from prepared sections.
+This is a working Astro site wired to Twilda. It is fully static (\`output: "static"\`, no adapter, ${hasForm ? "one small script only on pages with the form, " : "no script on the page, "}no database). Content is JSON in \`content/\`, and the page is drawn by one renderer from prepared sections.
 
 ## Quickstart
 
@@ -242,7 +262,20 @@ The build reads \`content/<id>/published.json\` only. A draft never reaches the 
 2. **With the Twilda desk.** The desk reads and writes this same layout (\`content/<id>/draft.json\`, \`published.json\`, \`public/media/\`) through your GitHub repository and publishes as a pull request. Saving a draft and publishing stay separate.
 3. **Change the mode.** In the desk, open Theme and pick another mode, or edit \`content/site.json\` and copy the theme and masthead from the preset. Existing sections stay valid in every mode.
 
-## Layout
+${
+    hasForm
+      ? `## Forms
+
+The ${preset.label.toLowerCase()} starter has a form section. Twilda stores nothing a visitor types: the form posts to the address in \`forms.endpoint\` in \`content/site.json\`.
+
+1. Make a form with a service (Formspree, Basin, Netlify Forms, a Zapier or Make webhook, and others) and copy its address.
+2. Replace the placeholder \`${site.forms?.endpoint}\` with it. It must start with \`https://\`.
+3. Serve the Content-Security-Policy under "Before you launch". It lists only that address. If you change the address, rebuild the header: \`npx tsx scripts/site-headers.ts content\` in a Twilda checkout prints it.
+4. Read \`docs/forms-and-crm.md\` in the Twilda repository for each service, and for what to turn on to catch spam.
+
+`
+      : ""
+  }## Layout
 
 | Path | What it is |
 | --- | --- |
@@ -256,7 +289,7 @@ The build reads \`content/<id>/published.json\` only. A draft never reaches the 
 
 - [ ] Replace the fictional text and plates, and the name and links in \`content/site.json\`.
 - [ ] Set \`site\` in \`astro.config.ts\` if you want a sitemap or absolute URLs.
-- [ ] Serve \`dist/\` with security headers. The page needs no script and no inline style, so this policy works as is:
+- [ ] Serve \`dist/\` with security headers. ${hasForm ? "The page needs no inline script and no inline style, and the policy below opens only your form address (see Forms above), so it works as is:" : "The page needs no script and no inline style, so this policy works as is:"}
 
 \`\`\`
 ${headers.map((header) => `${header.key}: ${header.value}`).join("\n")}
@@ -293,6 +326,7 @@ export function starterFiles(id: PresetId, kind: "example" | "project", options:
   files.set("src/pages/articles/[slug].astro", ARTICLE_PAGE);
   files.set("src/pages/404.astro", NOT_FOUND);
   files.set("src/pages/theme.css.ts", THEME_ROUTE);
+  files.set("src/pages/[asset].js.ts", FORMS_ROUTE);
   files.set("public/favicon.svg", favicon(id));
   files.set("public/robots.txt", "User-agent: *\nAllow: /\n");
   const media = path.join(REPO, "public", "media");
