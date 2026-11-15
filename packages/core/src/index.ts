@@ -31,7 +31,17 @@ export type { DocumentSummary, HistoryEntry, MediaUpload, TwildaEditorApi } from
 export { DemoBackend, createEmptyDemoState, seedDemoState } from "./demo-backend";
 export type { DemoState } from "./demo-backend";
 export { createEditorApi } from "./editor-session";
-export { renderDocument, renderPreviewPage, parseSimpleCsv } from "./render";
+export {
+  DEFAULT_CHROME,
+  escapeHtml,
+  parseSimpleCsv,
+  renderDocument,
+  renderPreviewPage,
+  safeHref,
+  safeMedia,
+} from "./render";
+export type { RenderOptions, SiteChrome } from "./render";
+export { MAGAZINE_CSS } from "./magazine-css";
 export {
   FRANCHISE_CSV,
   createSampleState,
@@ -41,5 +51,4 @@ export {
   samplePages,
 } from "./sample";
 export { clearBrowserDemo, openBrowserDemo, openMemoryDemo } from "./browser-demo";
-export { loadContentTree, type LoadedContent } from "./load";
 export { migrateFieldDeskDocument } from "./migrate";

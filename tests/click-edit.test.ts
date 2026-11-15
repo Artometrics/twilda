@@ -3,11 +3,11 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { documentSchema, type TwildaDocument } from "@twilda/core";
 import { GitHubBackend } from "../packages/backend-github/src/index";
-import { applyEdit, changedRefs, fieldLabel, getAtPath, normalizeText } from "../click-edit/client/doc-path";
+import { applyEdit, changedRefs, fieldLabel, getAtPath, normalizeText } from "@twilda/core/edit";
 import { clearLocalDraft, draftKey, loadLocalDraft, saveLocalDraft, type StorageLike } from "../click-edit/client/draft-store";
 import { beginDeviceFlow, describeAuthError, fieldDeskFiles, publishToGithub } from "../click-edit/client/publish";
 import { readConfig } from "../click-edit/client/config";
-import { renderDocument } from "../src/render/document";
+import { renderDocument } from "@twilda/core";
 
 function load(id: string): TwildaDocument {
   return documentSchema.parse(JSON.parse(readFileSync(`content/${id}/draft.json`, "utf8")));

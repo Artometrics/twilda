@@ -26,6 +26,7 @@
     "dev:edit": "ASTRO_TELEMETRY_DISABLED=1 astro dev --config astro.edit.config.ts --host 127.0.0.1 --port 4322",
     "preview:edit": "ASTRO_TELEMETRY_DISABLED=1 astro preview --config astro.edit.config.ts --host 127.0.0.1 --port 4322",
     "build:packages": "npm run build -w @twilda/core -w @twilda/astro",
+    "sync:css": "node scripts/sync-magazine-css.mjs",
     "build:demo": "node scripts/build-demo.mjs",
     "demo": "vite --config apps/demo-editor/vite.config.ts --host 127.0.0.1 --port 4173",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview --host 127.0.0.1 --port 4321",

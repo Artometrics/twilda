@@ -61,6 +61,8 @@ export interface DocSummary {
   dek: string;
   status: DocStatus;
   hasPublished: boolean;
+  /** When the draft file was last written. */
+  updatedAt: string;
   /** Open [VERIFY] notes in the draft. */
   verifyCount: number;
 }
@@ -233,6 +235,7 @@ export function toSummary(draft: Doc, published: Doc | null, verifyCount = 0): D
     dek: draft.dek,
     status: documentStatus(draft, published),
     hasPublished: published !== null,
+    updatedAt: draft.updatedAt,
     verifyCount,
   };
 }

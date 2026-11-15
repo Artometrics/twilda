@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Base from "../../src/layouts/Base.astro";
 import { readDraft } from "../../src/content/store";
-import { renderDocument } from "../../src/render/document";
+import { renderDocument } from "@twilda/core";
 
 const doc = readDraft("home");
 if (doc.kind !== "page") throw new Error("content/home/draft.json must be a page.");

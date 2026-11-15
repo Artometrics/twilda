@@ -1,7 +1,7 @@
 {
   "name": "@twilda/core",
   "version": "0.1.0",
-  "description": "Content contract, storage interface, and static render helpers for Twilda CMS.",
+  "description": "Content contract, storage interface, and the one document renderer for Twilda CMS.",
   "license": "Apache-2.0",
   "author": "Artometrics",
   "private": false,
@@ -21,7 +21,19 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
-    }
+    },
+    "./node": {
+      "types": "./src/node.ts",
+      "import": "./src/node.ts",
+      "default": "./src/node.ts"
+    },
+    "./magazine.css": "./src/magazine.css",
+    "./edit": {
+      "types": "./src/edit/index.ts",
+      "import": "./src/edit/index.ts",
+      "default": "./src/edit/index.ts"
+    },
+    "./edit.css": "./src/edit/edit.css"
   },
   "files": [
     "src"

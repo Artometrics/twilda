@@ -1,0 +1,30 @@
+/* The Phase 0 page bar. Overlay styles come from @twilda/core/edit.css. */
+body {
+  padding-bottom: 6.5rem;
+}
+
+body.twilda-typing .twilda-bar {
+  display: none;
+}
+
+.twilda-bar {
+  position: fixed;
+  z-index: 50;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.6rem 0.75rem calc(0.6rem + env(safe-area-inset-bottom));
+  background: var(--tw-ink);
+  color: #f3efe4;
+  font: 0.85rem/1.3 "Public Sans", system-ui, sans-serif;
+}
+
+.twilda-status {
+  margin: 0 0 0.5rem;
+}
+
+.twilda-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+

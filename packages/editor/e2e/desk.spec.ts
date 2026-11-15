@@ -5,6 +5,11 @@ const PNG = Buffer.from(
   "base64",
 );
 
+async function show(page: Page, tab: "list" | "page" | "edit") {
+  const button = page.getByTestId(`tab-${tab}`);
+  if (await button.isVisible()) await button.click();
+}
+
 async function orderOf(page: Page) {
   return (await page.getByTestId("reorder-list").getAttribute("data-order")) ?? "";
 }
@@ -12,12 +17,12 @@ async function orderOf(page: Page) {
 test("field desk sample: edit, reorder, section, upload, preview, and publish", async ({ page }, info) => {
   const name = info.project.name;
   await page.goto("/?sample=field-desk");
-  await expect(page.getByRole("heading", { name: "Documents" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Drafts" })).toBeVisible();
   await expect(page.getByTestId("doc-lumen-rail")).toContainText("Unpublished changes");
-  await expect(page.getByTestId("doc-lumen-rail")).toContainText("Published");
   await expect(page.getByTestId("doc-river-note")).toContainText("Not published");
 
   await page.getByTestId("doc-lumen-rail").click();
+  await show(page, "edit");
   await expect(page.getByTestId("text-p-concession")).toBeVisible();
   await page.getByTestId("text-p-concession").fill("The night sheet moved. The yard copied it before the last train.");
   await page.getByTestId("down-p-concession").click();
@@ -47,12 +52,13 @@ test("field desk sample: edit, reorder, section, upload, preview, and publish", 
   await expect(page.getByTestId("notice")).toContainText("Draft saved");
   await expect(page.getByTestId("mast-status")).toHaveText("Unpublished changes");
 
-  await page.getByTestId("tab-preview").click();
-  await expect(page.getByTestId("preview-fallback")).toContainText("The night sheet moved.");
+  await show(page, "page");
+  await expect(page.getByTestId("page-canvas")).toContainText("The night sheet moved.");
   await expect(page.getByTestId("preview-iframe")).toBeVisible();
 
-  await page.getByTestId("tab-list").click();
+  await show(page, "list");
   await page.getByTestId("doc-home").click();
+  await show(page, "edit");
   await page.getByTestId("add-section").click();
   await page.getByTestId("choose-menu-shelf").click();
   await expect(page.getByTestId("reorder-list")).toHaveAttribute("data-order", /menu-shelf-/);

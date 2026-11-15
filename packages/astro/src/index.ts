@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import type { Plugin } from "vite";
 
-export { loadContentTree } from "@twilda/core";
+export { loadContentTree } from "@twilda/core/node";
 export { renderDocument, renderPreviewPage } from "@twilda/core";
 
 export interface TwildaOptions {
@@ -62,7 +62,8 @@ function contentModule(contentDir: string): Plugin {
     load(id) {
       if (id !== resolved) return null;
       return `
-        import { loadContentTree, renderDocument } from "@twilda/core";
+        import { renderDocument } from "@twilda/core";
+        import { loadContentTree } from "@twilda/core/node";
         export const contentDir = ${JSON.stringify(contentDir)};
         export function loadPublished() {
           return loadContentTree(contentDir);

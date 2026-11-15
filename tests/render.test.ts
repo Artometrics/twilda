@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { readFileSync } from "node:fs";
 import { documentSchema, type TwildaDocument } from "@twilda/core";
-import { renderDocument } from "../src/render/document";
-import { escapeHtml, safeHref, safeMedia } from "../src/render/escape";
+import { renderDocument } from "@twilda/core";
+import { escapeHtml, safeHref, safeMedia } from "@twilda/core";
 
 describe("render", () => {
   it("escapes author text", () => {

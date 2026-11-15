@@ -16,9 +16,14 @@ async function shot(page: Page, project: string, name: string) {
   await page.screenshot({ path: `${SHOTS}/${size}-${name}.png` });
 }
 
+async function show(page: Page, tab: "list" | "page" | "edit") {
+  const button = page.getByTestId(`tab-${tab}`);
+  if (await button.isVisible()) await button.click();
+}
+
 async function scrollTop(page: Page) {
   await page.evaluate(() => {
-    for (const selector of [".workspace", ".pane-edit", ".pane-export", ".pane-preview", ".pane-list"]) {
+    for (const selector of [".workspace", ".pane-edit", ".pane-export", ".pane-page", ".pane-list", ".side"]) {
       document.querySelector(selector)?.scrollTo(0, 0);
     }
   });
@@ -31,6 +36,8 @@ async function startNew(page: Page, title: string) {
   await page.getByTestId("new-byline").fill("Kyle McAuliffe · DRAFT");
   await page.getByTestId("new-dek").fill("A test article drafted on a phone.");
   await page.getByTestId("new-create").click();
+  await expect(page.getByTestId("page-canvas")).toContainText(title);
+  await show(page, "edit");
   await expect(page.getByTestId("doc-title")).toHaveText(title);
 }
 
@@ -100,19 +107,20 @@ test.describe("drafting", () => {
 
     // Reload: the draft is still here and still a draft.
     await page.reload();
-    await page.getByTestId("tab-list").click();
+    await show(page, "list");
     await expect(page.getByTestId("doc-ballpark-test-piece")).toContainText("Not published");
     await expect(page.getByTestId("doc-ballpark-test-piece")).toContainText("1 to verify");
     await page.getByTestId("doc-ballpark-test-piece").click();
+    await show(page, "edit");
     await expect(page.locator(".item").first().getByLabel("Text")).toHaveValue(/^Opening paragraph with \*stars\*/);
     await expect(page.locator(".item")).toHaveCount(8);
 
     // Preview.
-    await page.getByTestId("tab-preview").click();
+    await show(page, "page");
     await expect(page.getByTestId("draft-ribbon")).toBeVisible();
     await expect(page.getByTestId("verify-mark").first()).toContainText("VERIFY");
-    await expect(page.getByTestId("preview-fallback")).toContainText("What the numbers say");
-    await expect(page.getByTestId("preview-fallback")).toContainText("Example Org, Annual report, 2026");
+    await expect(page.getByTestId("page-canvas")).toContainText("What the numbers say");
+    await expect(page.getByTestId("page-canvas")).toContainText("Example Org, Annual report, 2026");
 
     // Export.
     await page.getByTestId("tab-export").click();
@@ -156,8 +164,8 @@ test.describe("drafting", () => {
     await expect(page.getByTestId("doc-ballpark-test-piece")).toHaveCount(0);
 
     await page.getByTestId("import-input").setInputFiles(jsonPath);
-    await expect(page.getByTestId("doc-title")).toHaveText("Ballpark Test Piece");
-    await page.getByTestId("tab-list").click();
+    await expect(page.getByTestId("page-canvas")).toContainText("Ballpark Test Piece");
+    await show(page, "list");
     await expect(page.getByTestId("doc-ballpark-test-piece")).toBeVisible();
   });
 
@@ -165,16 +173,17 @@ test.describe("drafting", () => {
     const project = info.project.name;
     await page.goto("/");
     await page.getByTestId("doc-franchise-toy-aisle").click();
+    await expect(page.getByTestId("page-canvas")).toBeVisible();
+    await expect(page.getByTestId("verify-mark").first()).toBeVisible();
+    await scrollTop(page);
+    await shot(page, project, "page");
+    await show(page, "edit");
     await expect(page.getByTestId("doc-title")).toBeVisible();
     await scrollTop(page);
     await shot(page, project, "editor");
     await page.getByTestId("collapse-all").click();
     await scrollTop(page);
     await shot(page, project, "editor-outline");
-    await page.getByTestId("tab-preview").click();
-    await expect(page.getByTestId("verify-mark").first()).toBeVisible();
-    await scrollTop(page);
-    await shot(page, project, "preview");
     await page.getByTestId("tab-export").click();
     await expect(page.getByTestId("export-text")).toContainText("draft: true");
     await scrollTop(page);
@@ -185,18 +194,18 @@ test.describe("drafting", () => {
     await page.goto("/");
     await startNew(page, "Autosave Piece");
     await page.locator(".item").first().getByLabel("Text").fill("Typed and not saved by hand.");
-    await expect(page.getByTestId("mast-status")).toHaveText("Unsaved edits");
-    await expect(page.getByTestId("mast-status")).toHaveText("Draft saved", { timeout: 6_000 });
+    await expect(page.getByTestId("notice")).toContainText("Draft saved on this device", { timeout: 6_000 });
     await page.reload();
-    await page.getByTestId("tab-list").click();
+    await show(page, "list");
     await page.getByTestId("doc-autosave-piece").click();
+    await show(page, "edit");
     await expect(page.locator(".item").first().getByLabel("Text")).toHaveValue("Typed and not saved by hand.");
   });
 
-  test("a sample draft opens, previews its VERIFY notes, and exports Markdown with frontmatter", async ({ page }) => {
+  test("a sample draft opens, shows its VERIFY notes on the page, and exports Markdown with frontmatter", async ({ page }) => {
     await page.goto("/");
     await page.getByTestId("doc-data-with-the-stars").click();
-    await page.getByTestId("tab-preview").click();
+    await show(page, "page");
     await expect(page.getByTestId("verify-mark").first()).toBeVisible();
     await page.getByTestId("tab-export").click();
     await page.getByTestId("flavor-md").click();
@@ -212,12 +221,12 @@ test.describe("drafting", () => {
     await startNew(page, "Separate Steps");
     await page.getByTestId("save-draft").click();
     await expect(page.getByTestId("notice")).toContainText("Draft saved");
-    await page.getByTestId("tab-list").click();
+    await show(page, "list");
     await expect(page.getByTestId("doc-separate-steps")).toContainText("Not published");
     await page.getByTestId("doc-separate-steps").click();
     await page.getByTestId("publish").click();
     await page.getByTestId("confirm-cancel").click();
-    await page.getByTestId("tab-list").click();
+    await show(page, "list");
     await expect(page.getByTestId("doc-separate-steps")).toContainText("Not published");
   });
 });

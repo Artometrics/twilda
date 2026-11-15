@@ -1,5 +1,5 @@
 import type { TwildaDocument } from "@twilda/core";
-import { renderDocument } from "../../src/render/document";
+import { renderDocument } from "@twilda/core";
 
 export function Preview({ doc }: { doc: TwildaDocument }) {
   return (

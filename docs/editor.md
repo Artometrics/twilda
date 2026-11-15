@@ -1,6 +1,6 @@
 # Twilda desk
 
-The desk is a standalone static app in `packages/editor`. It is the phone-capable editor: prepared blocks for an article, prepared sections for a page, a draft that is not the published file, and a preview. It does not ship inside `astro build`. The site in `src/` never imports it, and its own build output is `packages/editor/dist`, not the site's `dist/`.
+The desk is a standalone static app in `packages/editor`. It is the phone-capable editor: a dashboard of drafts, a page view that is the draft in the real template and is edited in place, prepared blocks for an article, prepared sections for a page, and a draft that is not the published file. See [phase1.md](phase1.md). It does not ship inside `astro build`. The site in `src/` never imports it, and its own build output is `packages/editor/dist`, not the site's `dist/`.
 
 The older dev desk in `editor/` is unchanged. It still binds to port 5173 and writes `content/` through the Vite middleware. This package binds to `127.0.0.1:5174` and talks to a `StorageBackend` injected at startup. Until the git backends land, that backend keeps files in the browser (IndexedDB, then localStorage) so drafts survive a reload. `?sample=field-desk` opens the old fictional Field Desk sample on a throwaway in-memory store instead.
 
@@ -37,16 +37,18 @@ To open it on a phone, build it with `npm run build` and host `packages/editor/d
 
 ## What you can do
 
-- The document list shows a Draft badge, and Published or Not published. If the draft and the published copy differ, it also says Unpublished changes.
+- The Drafts dashboard shows each draft as a card with a status pill (`Draft · Not published`, `Unpublished changes`, or `Published`), open `[VERIFY]` notes, and when it was last edited. It filters by status and searches title, kicker, and dek.
+- New draft starts from a template: Blank article, Feature story, Data story, Short note, Front page, Topic page. Each is an ordered list of prepared blocks or sections with placeholder copy.
+- The Page view is the draft rendered by `@twilda/core` in the real template. Tap text to edit it where it sits. Tap an image to pick a repo plate. Each edit is checked against the schema and saved to the device 250 ms later. The template only prints `/media/<name>.svg` plates, so other images show "Plate unavailable" and the desk says so.
 - An article is an ordered list of prepared blocks: heading, paragraph, key findings, chart, callout, sources, image, video, audio, download. Add, edit, delete, drag the handle, or use Up and Down. Arrow keys on the handle do the same move. Tap a block title to collapse it. Collapse all gives a one-line outline.
 - A page is an ordered list of prepared sections: carousel, story grid, headline / facts, magazine feature, category tiles. The same add, remove, and reorder controls. It is not a freeform canvas.
 - Media upload reads the file in the browser, scales a raster image so the long edge is at most 1600 pixels, and writes the result through the backend. SVG and GIF are stored as uploaded. A file that already fits is not re-encoded.
-- Preview has two parts. The draft proof is rendered from the document you are editing, including unsaved edits. If the backend supplies a preview URL, an iframe loads it. The sample URL is `/preview-frame.html`, a stand-in for the built page. If the URL is missing, the proof remains and the desk says so.
-- New article makes a draft with a unique slug. Import reads a JSON backup. Delete asks first. Edits are written to the draft file after a 1.5 second pause. The chart block is an embed link, alt text, and a caption. The image block uploads in place. Sources are a citation and a link. `[VERIFY ...]` notes are counted on the list and highlighted in the proof.
+- Under the page, if the backend supplies a preview URL, an iframe loads it. The sample URL is `/preview-frame.html`, a stand-in for the built page. If the URL is missing, the desk says so.
+- New article makes a draft with a unique slug. Import reads a JSON backup. Delete asks first. Edits are written to the draft file after a 250 millisecond pause. The chart block is an embed link, alt text, and a caption. The image block uploads in place. Sources are a citation and a link. `[VERIFY ...]` notes are counted on the list and highlighted on the page.
 - Export gives MDX or Markdown with Astro frontmatter, a `.zip` bundle (MDX, Markdown, JSON, images), and a JSON backup. A preflight list shows what to fix first. `packages/editor/astro-kit/` holds the Astro components the MDX imports.
-- Save draft writes `content/<id>/draft.json` only. Publish asks first, then saves, checks the draft (the build step), and writes `content/<id>/published.json`. Revert asks first, then copies the published file back over the draft. Save, build, and publish failures use different banners. A build failure leaves the published file alone.
+- Save draft writes `content/<id>/draft.json` only. Publish asks first, then saves, checks the draft (the build step), and writes `content/<id>/published.json`. If a GitHub token was pasted in the dialog, it also opens a pull request into `main` (branch `twilda/draft/<id>`, file `content/articles|pages/<slug>.json`). Revert asks first, then copies the published file back over the draft. Save, build, and publish failures use different banners. A build failure leaves the published file alone.
 
-On a phone the desk is one column: Documents, Edit, Preview, Export, Media. Actions sit above the tab bar. Targets are at least 44px, focus is a 2px ink outline, and motion is removed when the reader asks for reduced motion. At 960px and wider the list, the editor, and the preview sit in three columns.
+On a phone the desk is one column with tabs: Drafts, Page, Blocks, Export, Media. Actions sit above the tab bar. Main targets are at least 44px, focus is a 2px accent outline, and motion is removed when the reader asks for reduced motion. At 960px and wider the draft list and the page sit side by side, and Blocks, Export, and Media open in a right-hand panel.
 
 The installed app shell is a manifest plus `public/sw.js`, registered only in the production build. Icons are generated with `npm run icons` (no extra dependency).
 
@@ -71,17 +73,17 @@ A build fault for tests is the file `content/<id>/build-fault.txt`. In dev, `win
 
 ## Look
 
-The desk keeps the Field Desk palette already in this repository: paper `#f3efe6`, ink `#1b1714`, a hairline rule, Newsreader for the wordmark, document titles, and the proof, Public Sans for the controls. Proof red `#7d1e16` is the publish button and the failure banner. Green is only the Published badge. Corners are 2px. There is no drop shadow and no second accent.
+White surfaces on a cool grey ground, rounded cards and pills, one violet accent, and Public Sans for the interface. The page itself is styled by `@twilda/core/magazine.css`, so it keeps the magazine's type and colour. Desk class names must not collide with the template's (the desk uses `topbar`, `brand`, and `eyebrow`, not `mast`, `mark`, and `kicker`).
 
-The phone structure follows a reorder list (a grip on the row, one primary action pinned under the work) and a reading proof that is the article, not a miniature canvas. Block types are named rows because the product is prepared blocks, not a freeform text surface.
+The phone structure is a reorder list (a grip on the row, one primary action pinned under the work) and a page that is the article, not a miniature canvas. Block types are named rows because the product is prepared blocks, not a freeform text surface.
 
 ## Stubbed until the other packages land
 
 - Document types in `src/model.ts` are the `@twilda/core` article blocks and page sections. `src/contract.ts` is still the desk's storage method list.
 - The chart block is a link to a chart that already exists (for example an Artometrics chart page), alt text, and a caption. It does not embed a charting library. The proof shows a ruled stand-in unless the link is an image.
 - Video and audio blocks store a path and a caption. The sample does not ship media files for them.
-- Nothing here writes `content/` in the repository or opens a pull request. Publishing writes a published copy into the browser store. To ship an article, export it and commit the file.
-- This package is not wired into the root `npm run dev` or the Astro build.
+- Publishing writes a published copy into the browser store. With a pasted token it also opens a pull request that adds the document at `content/articles|pages/<slug>.json`. Without one, export the draft and commit the file. Auth limits are in [phase1.md](phase1.md).
+- This package is not wired into the root `npm run dev` or the Astro build. The page view uses the Field Desk masthead (`DEFAULT_CHROME`).
 
 ## Demo content and the sample drafts
 

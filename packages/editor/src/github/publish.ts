@@ -1,10 +1,8 @@
 import { GitHubBackend } from "../../../backend-github/src/index";
-import { documentPath, draftBranchName } from "../../../core/src/paths";
-import { serializeDocument } from "../../../core/src/serialize";
+import { documentPath, draftBranchName, serializeDocument } from "@twilda/core";
 import type { Doc } from "../model";
 
 export interface GithubPublishInput {
-  clientId: string;
   token: string;
   owner: string;
   repo: string;
@@ -19,15 +17,13 @@ export interface GithubPublishResult {
 
 /**
  * Open a pull request that adds the document at the contract path.
- * Refuses to call GitHub unless a client id and a runtime token are both set.
- * The token is never read from the repository.
+ * Refuses to call GitHub without a runtime token. The token is never read from
+ * the repository and is not stored: the caller holds it in memory.
+ * Merging the pull request is the publish decision.
  */
 export async function openGithubPullRequest(input: GithubPublishInput): Promise<GithubPublishResult> {
-  if (!input.clientId.trim()) {
-    throw new Error("GitHub publish is off until PUBLIC_TWILDA_GITHUB_CLIENT_ID is set.");
-  }
   if (!input.token.trim()) {
-    throw new Error("GitHub publish needs a token from device sign-in. It is not stored in the repo.");
+    throw new Error("GitHub publish needs a token. Paste one in the publish dialog. It is not stored.");
   }
   const backend = new GitHubBackend({
     owner: input.owner,
@@ -39,13 +35,22 @@ export async function openGithubPullRequest(input: GithubPublishInput): Promise<
   await backend.createBranch(branch);
   const filePath = documentPath(input.doc.kind, input.doc.slug);
   const published = { ...input.doc, status: "published" as const };
-  const text = serializeDocument(published);
-  await backend.at(branch).write(filePath, text);
+  await backend.at(branch).write(filePath, serializeDocument(published));
   const pr = await backend.openPullRequest({
     title: `Publish ${input.doc.title}`,
     head: branch,
     base: "main",
-    body: "Opened from the Twilda phone desk.",
+    body: "Opened from the Twilda desk. Merging this pull request is the publish decision.",
   });
   return { number: pr.number, url: pr.url };
+}
+
+/** A sign-in failure the person can act on. */
+export function describeAuthError(error: unknown, proxy: string): string {
+  if (error instanceof TypeError) {
+    return proxy
+      ? "Could not reach the device-flow proxy. Check PUBLIC_TWILDA_DEVICE_FLOW_PROXY, or paste a token instead."
+      : "GitHub blocks browser calls to its device-flow endpoint. Paste a token instead.";
+  }
+  return error instanceof Error ? error.message : "GitHub sign-in failed.";
 }

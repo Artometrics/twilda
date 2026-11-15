@@ -1,4 +1,4 @@
-/* Edit chrome only. The page itself is styled by the production template CSS. */
+/* Overlay chrome only. The page itself is styled by the template CSS (@twilda/core/magazine.css). */
 :root {
   --tw-ink: #1a1714;
   --tw-paper: #fffdf8;
@@ -6,37 +6,30 @@
   --tw-hair: #cfc6b3;
 }
 
-body {
-  padding-bottom: 6.5rem;
-}
-
-body.twilda-typing .twilda-bar {
-  display: none;
-}
-
-#twilda-root [data-twilda-ref] {
+.twilda-live [data-twilda-ref] {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
-#twilda-root.twilda-outlines [data-twilda-ref] {
+.twilda-live.twilda-outlines [data-twilda-ref] {
   outline: 1.5px dashed rgba(26, 95, 180, 0.65);
   outline-offset: 2px;
 }
 
-#twilda-root [data-twilda-ref][data-twilda-type="text"]:empty::before {
+.twilda-live [data-twilda-ref][data-twilda-type="text"]:empty::before,
+.twilda-live [data-twilda-ref][data-twilda-type="multiline"]:empty::before {
   content: "Add " attr(data-twilda-label);
   color: #8a8478;
   font-style: italic;
 }
 
-#twilda-root [data-twilda-ref][data-twilda-type="image"]:focus-visible {
+.twilda-live [data-twilda-ref][data-twilda-type="image"]:focus-visible {
   outline: 3px solid var(--tw-accent);
   outline-offset: 2px;
 }
 
-#twilda-root [data-twilda-editing="true"] {
+.twilda-live [data-twilda-editing="true"] {
   outline: 2px solid var(--tw-accent);
   outline-offset: 3px;
   background: rgba(26, 95, 180, 0.08);
@@ -74,27 +67,6 @@ body.twilda-typing .twilda-bar {
   bottom: auto;
   top: 100%;
   margin: 4px 0 0;
-}
-
-.twilda-bar {
-  position: fixed;
-  z-index: 50;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 0.6rem 0.75rem calc(0.6rem + env(safe-area-inset-bottom));
-  background: var(--tw-ink);
-  color: #f3efe4;
-  font: 0.85rem/1.3 "Public Sans", system-ui, sans-serif;
-}
-
-.twilda-status {
-  margin: 0 0 0.5rem;
-}
-
-.twilda-actions {
-  display: flex;
-  gap: 0.5rem;
 }
 
 .twilda-btn {
@@ -288,4 +260,9 @@ body.twilda-typing .twilda-bar {
 
 .twilda-result[data-state="ok"] {
   color: #1d5a2a;
+}
+
+.twilda-live [data-twilda-ref][data-twilda-type="multiline"][data-twilda-editing="true"] {
+  white-space: pre-wrap;
+  min-height: 3rem;
 }

@@ -13,5 +13,6 @@ Twilda has two editors. They do not share a process.
 | [phase0-click-edit.md](phase0-click-edit.md) | Phase 0 click-on-the-page prototype: how it works, how to run it, `renderDocument` in the browser, blockers |
 | [phase0-bakeoff.md](phase0-bakeoff.md) | Twilda against EmDash, TinaCMS, and CloudCannon |
 | [phase0-decision.md](phase0-decision.md) | Go, narrow, or switch, and why |
+| [phase1.md](phase1.md) | The single renderer, the drafting dashboard and page view, the design refresh, and auth scope limits |
 
 The production site is still `npm run build`. Output is `dist/`. The phone demo is `npm run build:demo`. Output is `demo-dist/`. Do not point either build at an existing Artometrics or Twilda hosting project.

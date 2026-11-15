@@ -9,6 +9,12 @@ Two editors exist:
 
 The public site never needs either editor to be online.
 
+## One renderer
+
+`renderDocument` in `@twilda/core` is the only document renderer. The Astro site, the click-to-edit prototype, the demo editor's preview, `examples/studio`, and the phone desk's page view all call it, so what you edit is what the template prints. This is a contract-adjacent change: the package root no longer exports `loadContentTree` (use `@twilda/core/node`), and `renderDocument` returns the template markup. Production `dist/` is byte-identical to before. See [phase1.md](phase1.md) for the list of intended differences and the parity tests.
+
+Package entries: `@twilda/core` (schema, storage contract, renderer, escape helpers, browser-safe), `@twilda/core/node` (`loadContentTree`, Node only), `@twilda/core/edit` (click-on-the-page overlay and dotted-path edit rules, browser only), and the stylesheets `@twilda/core/magazine.css` and `@twilda/core/edit.css`.
+
 ## Static contract
 
 The new contract, used by the demo and by `examples/studio`, is JSON:
@@ -72,7 +78,7 @@ In the browser demo, `StorageBackend` id `demo` performs those steps in IndexedD
 
 `packages/backend-fs` writes the same state to a directory and mirrors each branch under `tree/`. `packages/backend-github` calls the GitHub REST API with a token passed in at runtime. Tests use a fake `fetch`. No GitHub App is created in this repo.
 
-The in-editor preview renders the saved draft or the published copy. `demo-dist/preview/` is a static build of the seeded published sample. It does not update when you tap Publish. Rebuilding does.
+The phone desk's Page view renders the draft through the one renderer and edits it in place. The demo editor's preview renders the saved draft or the published copy. `demo-dist/preview/` is a static build of the seeded published sample. It does not update when you tap Publish. Rebuilding does.
 
 ## Phone editor
 

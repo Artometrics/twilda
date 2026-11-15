@@ -1,4 +1,4 @@
-import { documentSchema, type TwildaDocument } from "../../packages/core/src/schema";
+import { documentSchema, type TwildaDocument } from "@twilda/core";
 
 export interface StorageLike {
   getItem(key: string): string | null;

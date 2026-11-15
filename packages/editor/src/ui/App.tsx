@@ -2,24 +2,26 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import type { StorageBackend } from "../contract";
 import type { KeyValueStore } from "../backend/persistent";
 import { seedArtometrics } from "../backend/artometrics";
-import { createArticle, parseDocJson, uniqueSlug } from "../doc";
+import platesList from "virtual:twilda-plates";
+import { parseDocJson, uniqueSlug } from "../doc";
+import { createFromTemplate } from "../templates";
 import { downscaleImage } from "../media/downscale";
 import { docByline, fingerprint, type MediaAsset, type MetaPatch } from "../model";
 import { CmsError, createCms } from "../backend/service";
 import { FAILURE_LABEL, editorReducer, initialState, isDirty, type DeskView } from "../state/reducer";
-import { ArticleList } from "./ArticleList";
+import { Dashboard } from "./Dashboard";
 import { BlockEditor, SectionEditor } from "./editors";
 import { ExportPanel } from "./ExportPanel";
 import { MediaPanel } from "./MediaPanel";
 import { Modal } from "./Modal";
-import { NewArticleSheet, type NewArticleValues } from "./NewArticleSheet";
-import { PreviewPane } from "./PreviewPane";
+import { NewDraftSheet, type NewDraftValues } from "./NewDraftSheet";
+import { PagePane } from "./PagePane";
 import { Field } from "./Field";
-import { githubPublishConfigured } from "../github/config";
+import { githubOwner, githubRepo } from "../github/config";
 import { openGithubPullRequest } from "../github/publish";
-import { GithubSignIn, defaultGithubOwner, defaultGithubRepo } from "../github/SignIn";
+import { GithubPanel } from "./GithubPanel";
 
-const AUTOSAVE_MS = 1500;
+const AUTOSAVE_MS = 250;
 
 export function App({
   backend,
@@ -32,8 +34,9 @@ export function App({
   const [state, dispatch] = useReducer(editorReducer, initialState);
   const [creating, setCreating] = useState(false);
   const [githubToken, setGithubToken] = useState("");
-  const [githubOwnerName, setGithubOwnerName] = useState(defaultGithubOwner);
-  const [githubRepoName, setGithubRepoName] = useState(defaultGithubRepo);
+  const [githubOwnerName, setGithubOwnerName] = useState(githubOwner);
+  const [githubRepoName, setGithubRepoName] = useState(githubRepo);
+  const [panelOpen, setPanelOpen] = useState(false);
   const desktop = useDesktop();
   const dismissConfirm = useCallback(() => dispatch({ type: "dismiss-confirm" }), []);
   const closeCreating = useCallback(() => setCreating(false), []);
@@ -126,15 +129,15 @@ export function App({
     }
   }
 
-  async function createNew(values: NewArticleValues) {
+  async function createNew(values: NewDraftValues) {
     setCreating(false);
     dispatch({ type: "busy", label: "Creating" });
     try {
       const taken = state.documents.map((item) => item.id);
-      const doc = createArticle({ ...values, taken });
+      const doc = createFromTemplate({ ...values, taken });
       const saved = await cms.create(doc);
       const documents = await cms.listDocuments();
-      dispatch({ type: "created", draft: saved, documents, notice: `Created ${saved.title}. It is saved as a draft on this device.` });
+      dispatch({ type: "created", draft: saved, documents, notice: `Created ${saved.title}. It is saved as a draft on this device. Tap any text to edit it.` });
     } catch (error) {
       dispatch(failure("save", error, "The draft could not be created."));
     }
@@ -189,23 +192,20 @@ export function App({
       const published = await cms.publish(draft);
       const documents = await cms.listDocuments();
       let notice: string | undefined;
-      if (githubPublishConfigured()) {
-        if (!githubToken.trim()) {
-          notice = "Published on this device. GitHub sign-in is not finished, so no pull request was opened.";
-        } else {
-          try {
-            const pr = await openGithubPullRequest({
-              clientId: import.meta.env.PUBLIC_TWILDA_GITHUB_CLIENT_ID ?? "",
-              token: githubToken,
-              owner: githubOwnerName,
-              repo: githubRepoName,
-              doc: published,
-            });
-            notice = `Published on this device. GitHub pull request: ${pr.url}`;
-          } catch (error) {
-            const detail = error instanceof Error ? error.message : "GitHub publish failed.";
-            notice = `Published on this device. GitHub pull request was not opened. ${detail}`;
-          }
+      if (!githubToken.trim()) {
+        notice = "Published on this device. No GitHub token was pasted, so no pull request was opened.";
+      } else {
+        try {
+          const pr = await openGithubPullRequest({
+            token: githubToken,
+            owner: githubOwnerName,
+            repo: githubRepoName,
+            doc: published,
+          });
+          notice = `Published on this device. GitHub pull request: ${pr.url}`;
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : "GitHub publish failed.";
+          notice = `Published on this device. GitHub pull request was not opened. ${detail}`;
         }
       }
       dispatch({ type: "published", draft: published, published, documents, notice });
@@ -266,26 +266,146 @@ export function App({
     dispatch({ type: "edit-meta", patch });
   }
 
-  const showList = desktop || state.view === "list" || !draft;
-  const showMedia = state.view === "media";
-  const showExport = Boolean(draft) && state.view === "export";
-  const showEditor = Boolean(draft) && !showMedia && !showExport && (desktop || state.view === "edit");
-  const showPreview = Boolean(draft) && !showExport && (desktop || state.view === "preview");
-  const showActions = Boolean(draft) && (desktop || state.view === "edit" || state.view === "preview");
+  const view = state.view;
+  const sideView: "edit" | "media" | "export" = view === "media" || view === "export" ? view : "edit";
+  const showList = desktop || view === "list" || !draft;
+  const showPage = Boolean(draft) && (desktop || view === "page");
+  const showSide = desktop ? Boolean(draft) && panelOpen : false;
+  const showEditor = Boolean(draft) && (desktop ? showSide && sideView === "edit" : view === "edit");
+  const showMedia = desktop ? showSide && sideView === "media" : view === "media";
+  const showExport = Boolean(draft) && (desktop ? showSide && sideView === "export" : view === "export");
+  const selectTab = (next: DeskView) => {
+    if (desktop && (next === "edit" || next === "media" || next === "export")) setPanelOpen(true);
+    dispatch({ type: "view", view: next });
+  };
+
+  function editorPane() {
+    if (!draft) return null;
+    return (
+      <section className="pane pane-edit" aria-label="Blocks">
+        <header className="doc-head">
+          <p className="eyebrow">{draft.kicker || (draft.kind === "page" ? "Page" : "Article")}</p>
+          <h2 data-testid="doc-title">{draft.title || "Untitled"}</h2>
+          <p className="hint">
+            Tap text on the page to rewrite it. Use this panel to {draft.kind === "page" ? "add, remove, and reorder sections" : "add, remove, and reorder blocks"}, and for fields the page does not show.
+          </p>
+        </header>
+        <details className="meta">
+          <summary data-testid="meta-summary">Document fields</summary>
+          <Field label="Title" value={draft.title} testId="meta-title" onChange={(title) => editMeta({ title })} />
+          <Field label="Kicker" value={draft.kicker} testId="meta-kicker" onChange={(kicker) => editMeta({ kicker })} />
+          <Field label="Dek" value={draft.dek} multiline testId="meta-dek" onChange={(dek) => editMeta({ dek })} />
+          {draft.kind === "article" ? (
+            <Field label="Byline" value={docByline(draft)} testId="meta-byline" onChange={(byline) => editMeta({ byline })} />
+          ) : null}
+          <Field label="Slug" value={draft.slug} testId="meta-slug" onChange={(slug) => editMeta({ slug })} />
+          <button
+            type="button"
+            className="btn btn-danger"
+            data-testid="delete-document"
+            disabled={busy}
+            onClick={() => dispatch({ type: "ask-confirm", confirm: "delete" })}
+          >
+            Delete this document
+          </button>
+        </details>
+        {draft.kind === "article" ? (
+          <BlockEditor
+            doc={draft}
+            media={state.media}
+            onChange={(block) => dispatch({ type: "update-block", block })}
+            onAdd={(block) => dispatch({ type: "add-block", block })}
+            onRemove={(id) => dispatch({ type: "remove-block", id })}
+            onMove={(id, to) => dispatch({ type: "move-block", id, to })}
+            onUploadImage={upload}
+          />
+        ) : (
+          <SectionEditor
+            doc={draft}
+            onChange={(section) => dispatch({ type: "update-section", section })}
+            onAdd={(section) => dispatch({ type: "add-section", section })}
+            onRemove={(id) => dispatch({ type: "remove-section", id })}
+            onMove={(id, to) => dispatch({ type: "move-section", id, to })}
+          />
+        )}
+      </section>
+    );
+  }
+
+  function mediaPane() {
+    return <MediaPanel media={state.media} busy={busy} onUpload={(file) => void upload(file)} onRemove={(path) => void removeMedia(path)} />;
+  }
+
+  function exportPane() {
+    if (!draft) return null;
+    return (
+      <ExportPanel
+        doc={draft}
+        media={state.media}
+        dirty={dirty}
+        onNotice={(message) => dispatch({ type: "notice", message })}
+        onFailure={(message) => dispatch({ type: "failed", phase: "save", message })}
+      />
+    );
+  }
+
+  const actions = draft ? (
+    <div className="actions" data-testid="actions">
+      <button type="button" className="btn" data-testid="save-draft" disabled={busy} onClick={() => void saveDraft()}>
+        Save draft
+      </button>
+      <button
+        type="button"
+        className="btn btn-primary"
+        data-testid="publish"
+        disabled={busy}
+        onClick={() => dispatch({ type: "ask-confirm", confirm: "publish" })}
+      >
+        Publish
+      </button>
+      <button
+        type="button"
+        className="btn btn-quiet"
+        data-testid="revert"
+        disabled={busy || !state.published}
+        onClick={() => dispatch({ type: "ask-confirm", confirm: "revert" })}
+      >
+        Revert
+      </button>
+    </div>
+  ) : null;
+
+  const tabs = (
+    <nav className="tabs" aria-label="Desk">
+      {desktop ? null : <Tab id="list" label="Drafts" current={view} onSelect={selectTab} />}
+      {desktop ? null : <Tab id="page" label="Page" current={view} onSelect={selectTab} />}
+      <Tab id="edit" label="Blocks" current={desktop ? (showSide ? sideView : "page") : view} onSelect={selectTab} />
+      <Tab id="export" label="Export" current={desktop ? (showSide ? sideView : "page") : view} onSelect={selectTab} />
+      <Tab id="media" label="Media" current={desktop ? (showSide ? sideView : "page") : view} onSelect={selectTab} />
+    </nav>
+  );
 
   return (
     <div className={desktop ? "app desktop" : "app"}>
       <a className="skip" href="#desk-main">
         Skip to the desk
       </a>
-      <header className="mast">
-        <div className="mark">
+      <header className="topbar">
+        <div className="brand">
+          <span className="logo" aria-hidden="true">
+            T
+          </span>
           <p className="wordmark">Twilda</p>
-          <p className="issue">Desk</p>
         </div>
-        <p className="mast-status" data-testid="mast-status">
+        <p className="top-status" data-testid="mast-status">
           {busy ? state.busyLabel : statusText(state)}
         </p>
+        {desktop && draft ? (
+          <>
+            {tabs}
+            {actions}
+          </>
+        ) : null}
       </header>
 
       {state.error ? (
@@ -301,9 +421,9 @@ export function App({
         {state.notice ?? ""}
       </p>
 
-      <main id="desk-main" className={draft ? "workspace" : "workspace no-doc"}>
+      <main id="desk-main" className={draft ? "workspace" : "workspace no-doc"} data-side={showSide ? "open" : "closed"}>
         {showList ? (
-          <ArticleList
+          <Dashboard
             documents={state.documents}
             activeId={state.activeId}
             storageKind={storageKind}
@@ -316,132 +436,63 @@ export function App({
         ) : null}
         {desktop && !draft ? (
           <section className="pane pane-empty" aria-label="Desk">
-            <header className="pane-head">
-              <h2>Desk</h2>
+            <div className="welcome">
+              <h2>Write on the page</h2>
               <p>
-                Open a draft or start a new article. Articles are prepared blocks. Edits save to this device as you
-                type. Export gives you Markdown or MDX for Astro.
+                Open a draft, or start a new one from a template. Your draft shows up as the real article, and you edit
+                it right there. It saves to this device as you type. Publishing opens a pull request.
               </p>
-            </header>
-          </section>
-        ) : null}
-        {showEditor && draft ? (
-          <section className="pane pane-edit" aria-label="Editor">
-            <header className="doc-head">
-              <p className="kicker">{draft.kicker || (draft.kind === "page" ? "Page" : "Article")}</p>
-              <h2 data-testid="doc-title">{draft.title || "Untitled"}</h2>
-            </header>
-            <details className="meta">
-              <summary data-testid="meta-summary">Document fields</summary>
-              <Field label="Title" value={draft.title} testId="meta-title" onChange={(title) => editMeta({ title })} />
-              <Field label="Kicker" value={draft.kicker} testId="meta-kicker" onChange={(kicker) => editMeta({ kicker })} />
-              <Field label="Dek" value={draft.dek} multiline testId="meta-dek" onChange={(dek) => editMeta({ dek })} />
-              {draft.kind === "article" ? (
-                <Field label="Byline" value={docByline(draft)} testId="meta-byline" onChange={(byline) => editMeta({ byline })} />
-              ) : null}
-              <Field label="Slug" value={draft.slug} testId="meta-slug" onChange={(slug) => editMeta({ slug })} />
-              <button
-                type="button"
-                className="btn btn-danger"
-                data-testid="delete-document"
-                disabled={busy}
-                onClick={() => dispatch({ type: "ask-confirm", confirm: "delete" })}
-              >
-                Delete this document
+              <button type="button" className="btn btn-primary" data-testid="empty-new" disabled={busy} onClick={() => setCreating(true)}>
+                New draft
               </button>
-            </details>
-            {draft.kind === "article" ? (
-              <BlockEditor
-                doc={draft}
-                media={state.media}
-                onChange={(block) => dispatch({ type: "update-block", block })}
-                onAdd={(block) => dispatch({ type: "add-block", block })}
-                onRemove={(id) => dispatch({ type: "remove-block", id })}
-                onMove={(id, to) => dispatch({ type: "move-block", id, to })}
-                onUploadImage={upload}
-              />
-            ) : (
-              <SectionEditor
-                doc={draft}
-                onChange={(section) => dispatch({ type: "update-section", section })}
-                onAdd={(section) => dispatch({ type: "add-section", section })}
-                onRemove={(id) => dispatch({ type: "remove-section", id })}
-                onMove={(id, to) => dispatch({ type: "move-section", id, to })}
-              />
-            )}
+            </div>
           </section>
         ) : null}
-        {showMedia ? (
-          <MediaPanel media={state.media} busy={busy} onUpload={(file) => void upload(file)} onRemove={(path) => void removeMedia(path)} />
-        ) : null}
-        {showPreview && draft ? (
-          <PreviewPane doc={draft} media={state.media} previewUrl={state.previewUrl} />
-        ) : null}
-        {showExport && draft ? (
-          <ExportPanel
+        {showPage && draft ? (
+          <PagePane
             doc={draft}
-            media={state.media}
-            dirty={dirty}
-            onNotice={(message) => dispatch({ type: "notice", message })}
-            onFailure={(message) => dispatch({ type: "failed", phase: "save", message })}
+            plates={platesList}
+            previewUrl={state.previewUrl}
+            onEdit={(next) => dispatch({ type: "replace-draft", draft: next })}
           />
         ) : null}
+        {desktop && showSide ? (
+          <aside className="side" aria-label="Panel">
+            <button type="button" className="btn btn-quiet side-close" data-testid="panel-close" onClick={() => setPanelOpen(false)}>
+              Hide panel
+            </button>
+            {showEditor ? editorPane() : null}
+            {showMedia ? mediaPane() : null}
+            {showExport ? exportPane() : null}
+          </aside>
+        ) : null}
+        {!desktop && showEditor ? editorPane() : null}
+        {!desktop && showMedia ? mediaPane() : null}
+        {!desktop && showExport ? exportPane() : null}
       </main>
 
-      {showActions ? (
-        <div className="actions">
-          <button type="button" className="btn" data-testid="save-draft" disabled={busy} onClick={() => void saveDraft()}>
-            Save draft
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            data-testid="publish"
-            disabled={busy}
-            onClick={() => dispatch({ type: "ask-confirm", confirm: "publish" })}
-          >
-            Publish
-          </button>
-          <button
-            type="button"
-            className="btn"
-            data-testid="revert"
-            disabled={busy || !state.published}
-            onClick={() => dispatch({ type: "ask-confirm", confirm: "revert" })}
-          >
-            Revert
-          </button>
-        </div>
-      ) : null}
+      {!desktop && draft && (view === "page" || view === "edit") ? actions : null}
+      {desktop ? null : tabs}
 
-      <nav className="tabs" aria-label="Desk">
-        <Tab id="list" label="Documents" current={state.view} onSelect={(view) => dispatch({ type: "view", view })} />
-        <Tab id="edit" label="Edit" current={state.view} onSelect={(view) => dispatch({ type: "view", view })} />
-        <Tab id="preview" label="Preview" current={state.view} onSelect={(view) => dispatch({ type: "view", view })} />
-        <Tab id="export" label="Export" current={state.view} onSelect={(view) => dispatch({ type: "view", view })} />
-        <Tab id="media" label="Media" current={state.view} onSelect={(view) => dispatch({ type: "view", view })} />
-      </nav>
-
-      {creating ? <NewArticleSheet onCreate={(values) => void createNew(values)} onClose={closeCreating} /> : null}
+      {creating ? <NewDraftSheet onCreate={(values) => void createNew(values)} onClose={closeCreating} /> : null}
 
       {state.confirm ? (
         <Modal title={confirmTitle(state.confirm)} testId="confirm-dialog" onClose={dismissConfirm}>
           {state.confirm === "publish" ? (
             <>
               <p>
-                Publishing writes the copy you are looking at, including unsaved edits, to the published file. Saving a
-                draft does not do this. The static site reads the published file the next time it is built.
+                Publishing writes the copy you are looking at, including unsaved edits, to the published file on this
+                device. Saving a draft does not do this. With a GitHub token it also opens a pull request. Nothing goes
+                live until that pull request is merged and the site is rebuilt.
               </p>
-              {githubPublishConfigured() ? (
-                <GithubSignIn
-                  owner={githubOwnerName}
-                  repo={githubRepoName}
-                  onOwner={setGithubOwnerName}
-                  onRepo={setGithubRepoName}
-                  token={githubToken}
-                  onToken={setGithubToken}
-                />
-              ) : null}
+              <GithubPanel
+                owner={githubOwnerName}
+                repo={githubRepoName}
+                onOwner={setGithubOwnerName}
+                onRepo={setGithubRepoName}
+                token={githubToken}
+                onToken={setGithubToken}
+              />
             </>
           ) : state.confirm === "delete" ? (
             <p>

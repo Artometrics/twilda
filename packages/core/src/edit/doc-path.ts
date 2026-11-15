@@ -1,4 +1,4 @@
-import { documentSchema, type TwildaDocument } from "../../packages/core/src/schema";
+import { documentSchema, type TwildaDocument } from "../schema";
 
 /**
  * A `data-twilda-ref` is a dotted path into the document JSON: `sections.0.slides.2.title`.
@@ -40,7 +40,21 @@ function setIn(node: unknown, parts: string[], value: string): unknown {
 
 export type EditResult = { ok: true; doc: TwildaDocument } | { ok: false; error: string };
 
-export function applyEdit(doc: TwildaDocument, ref: string, value: string): EditResult {
+export interface ApplyEditOptions {
+  /**
+   * A draft in progress may hold other fields the schema would refuse (an empty
+   * paragraph on a new block, a placeholder link). Lenient mode refuses an edit
+   * only when the schema objects to the field being edited, and keeps the rest as it is.
+   */
+  lenient?: boolean;
+}
+
+function issueMessage(issue: { path: Array<string | number>; message: string } | undefined): string {
+  const where = issue?.path.slice(-1).join("") || "field";
+  return `${where}: ${issue?.message ?? "not valid"}`;
+}
+
+export function applyEdit(doc: TwildaDocument, ref: string, value: string, options: ApplyEditOptions = {}): EditResult {
   let parts: string[];
   try {
     parts = segments(ref);
@@ -50,18 +64,32 @@ export function applyEdit(doc: TwildaDocument, ref: string, value: string): Edit
   if (typeof getAtPath(doc, ref) !== "string") {
     return { ok: false, error: `"${ref}" is not an editable text field.` };
   }
-  const parsed = documentSchema.safeParse(setIn(doc, parts, value));
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    const where = issue?.path.slice(-1).join("") || "field";
-    return { ok: false, error: `${where}: ${issue?.message ?? "not valid"}` };
-  }
-  return { ok: true, doc: parsed.data };
+  const next = setIn(doc, parts, value);
+  const parsed = documentSchema.safeParse(next);
+  if (parsed.success) return { ok: true, doc: parsed.data };
+  if (!options.lenient) return { ok: false, error: issueMessage(parsed.error.issues[0]) };
+  const own = parsed.error.issues.find(
+    (issue) => issue.path.length >= parts.length && parts.every((part, i) => String(issue.path[i]) === part),
+  );
+  if (own) return { ok: false, error: issueMessage(own) };
+  return { ok: true, doc: next as TwildaDocument };
 }
 
 /** Single-line fields: collapse whitespace the way the rendered page does. */
 export function normalizeText(value: string): string {
   return value.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** Paragraph fields: keep line breaks, one blank line between paragraphs, no trailing space. */
+export function normalizeMultiline(value: string): string {
+  return value
+    .replace(/\u00a0/g, " ")
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 /** Leaf paths whose string value differs between two documents, ignoring status and updatedAt. */
@@ -86,7 +114,11 @@ export function changedRefs(before: unknown, after: unknown, prefix = ""): strin
 }
 
 export function fieldLabel(ref: string): string {
-  const last = ref.split(".").at(-1) ?? ref;
+  const parts = ref.split(".");
+  let last = parts.at(-1) ?? ref;
+  if (/^\d+$/.test(last) && parts.length > 1) last = (parts.at(-2) ?? "item").replace(/s$/, "");
   const spaced = last.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
-  return spaced === "dek" ? "summary" : spaced;
+  if (spaced === "dek") return "summary";
+  if (spaced === "src") return "image";
+  return spaced;
 }

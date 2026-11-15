@@ -1,8 +1,6 @@
-import { renderDocument } from "../../src/render/document";
-import { contentDigest } from "../../packages/core/src/serialize";
-import type { TwildaDocument } from "../../packages/core/src/schema";
+import { contentDigest, type TwildaDocument } from "@twilda/core";
+import { changedRefs, mountOverlay } from "@twilda/core/edit";
 import type { ClickEditConfig } from "./config";
-import { applyEdit, changedRefs, fieldLabel, getAtPath, normalizeText } from "./doc-path";
 import { clearLocalDraft, saveLocalDraft, type StorageLike } from "./draft-store";
 import { beginDeviceFlow, checkDeviceFlow, describeAuthError, publishToGithub } from "./publish";
 
@@ -34,20 +32,13 @@ function h<K extends keyof HTMLElementTagNameMap>(
   return el;
 }
 
-const REF = "[data-twilda-ref]";
-
 export function mountEditor(deps: EditorDeps): EditorHandle {
   const { root, base, media, storage, config } = deps;
   let doc = deps.initial;
-  let editing: HTMLElement | null = null;
-  let imageRef: { ref: string; altRef: string } | null = null;
   let token = "";
   let pollTimer: number | undefined;
 
   const status = h("p", { class: "twilda-status", role: "status", "aria-live": "polite", "data-testid": "status" });
-  const toast = h("p", { class: "twilda-toast", role: "alert", hidden: "" });
-  const overlay = h("div", { class: "twilda-overlay", hidden: "", "aria-hidden": "true" }, h("span", { class: "twilda-chip" }));
-  const chip = overlay.firstElementChild as HTMLElement;
 
   const outlinesButton = h("button", { type: "button", class: "twilda-btn", "data-testid": "outlines", "aria-pressed": "false" }, "Outlines");
   const resetButton = h("button", { type: "button", class: "twilda-btn", "data-testid": "reset" }, "Reset");
@@ -59,20 +50,21 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
     h("div", { class: "twilda-actions" }, outlinesButton, resetButton, publishButton),
   );
 
-  const imageSheet = buildImageSheet();
+  const overlay = mountOverlay({
+    root,
+    doc,
+    media,
+    renderOnMount: contentDigest(doc) !== contentDigest(base),
+    onChange(next) {
+      doc = next;
+      persist();
+    },
+  });
   const publishSheet = buildPublishSheet();
-  document.body.append(bar, toast, overlay, imageSheet.el, publishSheet.el);
+  document.body.append(bar, publishSheet.el);
 
   function say(message: string) {
     status.textContent = message;
-  }
-
-  function showError(message: string) {
-    toast.textContent = message;
-    toast.hidden = false;
-    window.setTimeout(() => {
-      if (toast.textContent === message) toast.hidden = true;
-    }, 5000);
   }
 
   function editedCount(): number {
@@ -93,233 +85,10 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
   function persist() {
     const result = saveLocalDraft(storage, doc);
     if (!result.ok) {
-      showError(`Could not save the draft on this device: ${result.error}`);
+      overlay.showError(`Could not save the draft on this device: ${result.error}`);
       return;
     }
     refreshStatus(true);
-  }
-
-  function decorate() {
-    for (const el of root.querySelectorAll<HTMLElement>(REF)) {
-      const ref = el.dataset.twildaRef ?? "";
-      const label = fieldLabel(ref);
-      el.dataset.twildaLabel = label;
-      if (el.dataset.twildaType === "image") {
-        el.setAttribute("role", el.tagName === "IMG" ? "button" : "img");
-        el.setAttribute("tabindex", "0");
-      }
-    }
-    for (const a of root.querySelectorAll<HTMLAnchorElement>("a[href]")) {
-      a.dataset.twildaHref = a.getAttribute("href") ?? "";
-      a.removeAttribute("href");
-    }
-  }
-
-  function render() {
-    root.innerHTML = renderDocument(doc, { annotate: true });
-    decorate();
-  }
-
-  function positionOverlay(el: HTMLElement | null) {
-    if (!el) {
-      overlay.hidden = true;
-      return;
-    }
-    const rect = el.getBoundingClientRect();
-    overlay.hidden = false;
-    overlay.style.top = `${rect.top + window.scrollY}px`;
-    overlay.style.left = `${rect.left + window.scrollX}px`;
-    overlay.style.width = `${rect.width}px`;
-    overlay.style.height = `${rect.height}px`;
-    chip.textContent = el.dataset.twildaType === "image" ? "Replace image" : `Edit ${el.dataset.twildaLabel ?? "text"}`;
-    overlay.classList.toggle("twilda-flip", rect.top < 36);
-  }
-
-  function annotated(target: EventTarget | null): HTMLElement | null {
-    return target instanceof Element ? target.closest<HTMLElement>(REF) : null;
-  }
-
-  root.addEventListener("pointerover", (event) => {
-    if (event.pointerType !== "mouse" || editing) return;
-    positionOverlay(annotated(event.target));
-  });
-  root.addEventListener("pointerleave", () => {
-    if (!editing) positionOverlay(null);
-  });
-  window.addEventListener("scroll", () => {
-    if (!editing) positionOverlay(null);
-  }, { passive: true });
-
-  root.addEventListener("click", (event) => {
-    const link = event.target instanceof Element ? event.target.closest("a") : null;
-    const el = annotated(event.target);
-    if (link || el) event.preventDefault();
-    if (!el) return commitText();
-    if (el === editing) return;
-    if (el.dataset.twildaType === "image") {
-      commitText();
-      openImage(el);
-    } else {
-      startText(el);
-    }
-  });
-
-  root.addEventListener("keydown", (event) => {
-    const el = annotated(event.target);
-    if (el && el.dataset.twildaType === "image" && (event.key === "Enter" || event.key === " ")) {
-      event.preventDefault();
-      openImage(el);
-    }
-  });
-
-  function startText(el: HTMLElement) {
-    commitText();
-    editing = el;
-    positionOverlay(null);
-    el.contentEditable = "true";
-    el.dataset.twildaEditing = "true";
-    document.body.classList.add("twilda-typing");
-    el.focus();
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    range.collapse(false);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-    el.addEventListener("blur", onBlur);
-    el.addEventListener("keydown", onKey);
-    el.addEventListener("beforeinput", onBeforeInput);
-    el.addEventListener("paste", onPaste);
-  }
-
-  function endText(el: HTMLElement) {
-    el.removeEventListener("blur", onBlur);
-    el.removeEventListener("keydown", onKey);
-    el.removeEventListener("beforeinput", onBeforeInput);
-    el.removeEventListener("paste", onPaste);
-    el.removeAttribute("contenteditable");
-    delete el.dataset.twildaEditing;
-    document.body.classList.remove("twilda-typing");
-    editing = null;
-  }
-
-  function onBlur() {
-    commitText();
-  }
-
-  function onKey(event: KeyboardEvent) {
-    if (!editing) return;
-    if (event.key === "Enter") {
-      event.preventDefault();
-      editing.blur();
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      const original = getAtPath(doc, editing.dataset.twildaRef ?? "");
-      editing.textContent = typeof original === "string" ? original : "";
-      editing.blur();
-    }
-  }
-
-  function onBeforeInput(event: InputEvent) {
-    if (event.inputType === "insertParagraph" || event.inputType === "insertLineBreak") {
-      event.preventDefault();
-      editing?.blur();
-    }
-  }
-
-  function onPaste(event: ClipboardEvent) {
-    event.preventDefault();
-    const pasted = event.clipboardData?.getData("text/plain") ?? "";
-    document.execCommand("insertText", false, normalizeText(pasted));
-  }
-
-  function commitText() {
-    const el = editing;
-    if (!el) return;
-    const ref = el.dataset.twildaRef ?? "";
-    const next = normalizeText(el.textContent ?? "");
-    const current = getAtPath(doc, ref);
-    endText(el);
-    if (typeof current !== "string" || next === current) {
-      el.textContent = typeof current === "string" ? current : el.textContent;
-      return;
-    }
-    const result = applyEdit(doc, ref, next);
-    if (!result.ok) {
-      el.textContent = current;
-      showError(result.error);
-      return;
-    }
-    doc = result.doc;
-    el.textContent = next;
-    persist();
-  }
-
-  function buildImageSheet() {
-    const grid = h("div", { class: "twilda-thumbs", role: "listbox", "aria-label": "Images in the repo" });
-    const alt = h("input", { type: "text", class: "twilda-input", id: "twilda-alt", maxlength: "200", "data-testid": "alt-input" });
-    const heading = h("h2", { id: "twilda-image-title" }, "Replace image");
-    const close = h("button", { type: "button", class: "twilda-btn", "data-testid": "image-close" }, "Done");
-    const el = h(
-      "section",
-      { class: "twilda-sheet", role: "dialog", "aria-labelledby": "twilda-image-title", hidden: "", "data-testid": "image-sheet" },
-      h("div", { class: "twilda-sheet-head" }, heading, close),
-      grid,
-      h("label", { class: "twilda-field", for: "twilda-alt" }, h("span", {}, "Alt text (what the image shows)"), alt),
-      h("p", { class: "twilda-hint" }, "Images come from public/media in the repo. Uploading new images is not in this prototype."),
-    );
-    for (const src of media) {
-      const button = h(
-        "button",
-        { type: "button", class: "twilda-thumb", role: "option", "data-src": src, "aria-label": src.replace("/media/", "") },
-        h("img", { src, alt: "" }),
-      );
-      grid.append(button);
-    }
-    grid.addEventListener("click", (event) => {
-      const button = event.target instanceof Element ? event.target.closest<HTMLElement>("[data-src]") : null;
-      if (!button || !imageRef) return;
-      const result = applyEdit(doc, imageRef.ref, button.dataset.src ?? "");
-      if (!result.ok) return showError(result.error);
-      doc = result.doc;
-      persist();
-      render();
-      syncImageSheet();
-    });
-    alt.addEventListener("change", () => {
-      if (!imageRef) return;
-      const result = applyEdit(doc, imageRef.altRef, normalizeText(alt.value));
-      if (!result.ok) {
-        syncImageSheet();
-        return showError(result.error);
-      }
-      doc = result.doc;
-      persist();
-      render();
-    });
-    close.addEventListener("click", () => {
-      imageRef = null;
-      el.hidden = true;
-    });
-    return { el, grid, alt };
-  }
-
-  function syncImageSheet() {
-    if (!imageRef) return;
-    const current = getAtPath(doc, imageRef.ref);
-    for (const button of imageSheet.grid.querySelectorAll<HTMLElement>("[data-src]")) {
-      button.setAttribute("aria-selected", String(button.dataset.src === current));
-    }
-    const alt = getAtPath(doc, imageRef.altRef);
-    imageSheet.alt.value = typeof alt === "string" ? alt : "";
-  }
-
-  function openImage(el: HTMLElement) {
-    positionOverlay(null);
-    imageRef = { ref: el.dataset.twildaRef ?? "", altRef: el.dataset.twildaAltRef ?? "" };
-    imageSheet.el.hidden = false;
-    syncImageSheet();
-    imageSheet.grid.querySelector<HTMLElement>("[aria-selected=true]")?.focus();
   }
 
   function buildPublishSheet() {
@@ -471,35 +240,29 @@ export function mountEditor(deps: EditorDeps): EditorHandle {
   }
 
   outlinesButton.addEventListener("click", () => {
-    const on = root.classList.toggle("twilda-outlines");
-    outlinesButton.setAttribute("aria-pressed", String(on));
+    overlay.setOutlines(!overlay.hasOutlines());
+    outlinesButton.setAttribute("aria-pressed", String(overlay.hasOutlines()));
   });
 
   resetButton.addEventListener("click", () => {
-    commitText();
+    overlay.commit();
     if (!window.confirm("Discard all local edits and go back to the built page?")) return;
     clearLocalDraft(storage, base.id);
     doc = base;
-    render();
+    overlay.setDoc(base);
     refreshStatus(false);
   });
 
   publishButton.addEventListener("click", () => {
-    commitText();
+    overlay.commit();
     publishSheet.open();
   });
 
   if (window.matchMedia("(hover: none)").matches) {
-    root.classList.add("twilda-outlines");
+    overlay.setOutlines(true);
     outlinesButton.setAttribute("aria-pressed", "true");
   }
 
-  if (contentDigest(doc) === contentDigest(base)) {
-    decorate();
-  } else {
-    render();
-  }
-  root.classList.add("twilda-live");
   refreshStatus(false);
 
   return { getDoc: () => doc };

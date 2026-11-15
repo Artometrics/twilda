@@ -1,8 +1,8 @@
 import { GitHubBackend, pollDeviceFlow, startDeviceFlow, type DeviceFlowStart } from "../../packages/backend-github/src/index";
-import { draftBranchName } from "../../packages/core/src/paths";
-import { contentDigest, serializeDocument } from "../../packages/core/src/serialize";
-import type { TwildaDocument } from "../../packages/core/src/schema";
-import { changedRefs } from "./doc-path";
+import { draftBranchName } from "@twilda/core";
+import { contentDigest, serializeDocument } from "@twilda/core";
+import type { TwildaDocument } from "@twilda/core";
+import { changedRefs } from "@twilda/core/edit";
 
 export interface PublishInput {
   token: string;

@@ -1,16 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createBlock } from "../model";
-import { openGithubPullRequest } from "./publish";
+import { deviceFlowAvailable, githubOwner, githubRepo } from "./config";
+import { describeAuthError, openGithubPullRequest } from "./publish";
 
 describe("openGithubPullRequest", () => {
-  it("does not call the network when the client id is unset", async () => {
+  it("does not call the network without a token", async () => {
     let called = false;
     await assert.rejects(
       () =>
         openGithubPullRequest({
-          clientId: "  ",
-          token: "token",
+          token: "  ",
           owner: "Artometrics",
           repo: "twilda",
           doc: {
@@ -30,7 +30,7 @@ describe("openGithubPullRequest", () => {
             throw new Error("network");
           },
         }),
-      /PUBLIC_TWILDA_GITHUB_CLIENT_ID/,
+      /needs a token/,
     );
     assert.equal(called, false);
   });
@@ -64,8 +64,7 @@ describe("openGithubPullRequest", () => {
     };
 
     const pr = await openGithubPullRequest({
-      clientId: "client-from-kyle",
-          token: "runtime-token-from-device-flow",
+      token: "pasted-token",
       owner: "Artometrics",
       repo: "twilda",
       doc: {
@@ -87,5 +86,19 @@ describe("openGithubPullRequest", () => {
     assert.equal(hits.some((hit) => hit.startsWith("POST") && hit.includes("/git/refs")), true);
     assert.equal(hits.some((hit) => hit.startsWith("POST") && hit.includes("/pulls")), true);
     assert.equal(hits.some((hit) => hit.includes("api.github.com") && hit.includes("example.com")), false);
+  });
+});
+
+describe("sign-in defaults", () => {
+  it("defaults to token paste: no client id or proxy means no device flow", () => {
+    assert.equal(deviceFlowAvailable(), false);
+    assert.equal(githubOwner(), "Artometrics");
+    assert.equal(githubRepo(), "twilda");
+  });
+
+  it("explains a blocked device flow and points at the proxy hook", () => {
+    assert.match(describeAuthError(new TypeError("Failed to fetch"), ""), /Paste a token/);
+    assert.match(describeAuthError(new TypeError("Failed to fetch"), "https://proxy.test"), /PUBLIC_TWILDA_DEVICE_FLOW_PROXY/);
+    assert.equal(describeAuthError(new Error("expired"), ""), "expired");
   });
 });

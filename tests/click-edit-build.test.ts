@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { after, describe, it } from "node:test";
 import { documentSchema } from "@twilda/core";
-import { renderDocument } from "../src/render/document";
+import { renderDocument } from "@twilda/core";
 
 function walk(dir: string, acc: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
