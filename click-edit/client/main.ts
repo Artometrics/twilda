@@ -1,6 +1,6 @@
-import "./edit.css";
-import { documentSchema } from "../../packages/core/src/schema";
-import { contentDigest } from "../../packages/core/src/serialize";
+import "@twilda/core/edit.css";
+import "./click-edit.css";
+import { contentDigest, documentSchema } from "@twilda/core";
 import { readConfig } from "./config";
 import { loadLocalDraft } from "./draft-store";
 import { mountEditor } from "./editor";

@@ -1,7 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import { readPublished } from "../content/store";
-import { renderDocument } from "../render/document";
+import { renderDocument } from "@twilda/core";
 
 const doc = readPublished("home");
 if (!doc || doc.kind !== "page") {
