@@ -16,6 +16,7 @@ function article(blocks: Block[], patch: Partial<ArticleDoc> = {}): ArticleDoc {
     kicker: "DRAFT · Culture",
     dek: "One line.\nSecond line.",
     byline: "Kyle McAuliffe",
+    status: "draft",
     updatedAt: "2026-11-12T10:00:00.000Z",
     blocks,
     ...patch,
@@ -76,14 +77,15 @@ describe("exportArticle", () => {
       id: "k",
       type: "key-findings",
       title: "Key findings",
-      findings: [{ id: "f1", label: "One", detail: "The first thing." }],
+      items: ["One: The first thing."],
     },
-    { id: "c", type: "chart", title: "Chart", caption: "A caption.", src: "https://artometrics.com/franchise", alt: "Bars." },
+    { id: "c", type: "chart", title: "Chart", caption: "A caption.", dataPath: "https://artometrics.com/franchise", alt: "Bars." },
     { id: "co", type: "callout", title: "Note", text: "Callout body." },
     { id: "dl", type: "download", label: "CSV", href: "https://example.com/data.csv", description: "All rows." },
     {
       id: "s",
       type: "sources",
+      title: "Sources",
       items: [{ id: "s1", label: "Source (2026)", href: "https://example.com/a(b)" }],
     },
   ];
@@ -93,7 +95,7 @@ describe("exportArticle", () => {
     assert.equal(out.filename, "demo.mdx");
     assert.ok(out.text.startsWith("---\ntitle:"));
     assert.ok(out.text.includes('import { Callout, Chart, Download, KeyFindings } from "../../components/twilda/index.ts";'));
-    assert.ok(out.text.includes('<Chart title={"Chart"} src={"https://artometrics.com/franchise"} alt={"Bars."} caption={"A caption."} />'));
+    assert.ok(out.text.includes('<Chart title={"Chart"} dataPath={"https://artometrics.com/franchise"} alt={"Bars."} caption={"A caption."} />'));
     assert.ok(out.text.includes("<KeyFindings"));
     assert.ok(out.text.includes("## A heading"));
     assert.ok(out.text.includes("\\{braces\\}"));
@@ -106,7 +108,7 @@ describe("exportArticle", () => {
     assert.ok(!out.text.includes("import "));
     assert.ok(!/<(Chart|Callout|Download|KeyFindings)/.test(out.text));
     assert.ok(out.text.includes("> [Open the chart](https://artometrics.com/franchise)"));
-    assert.ok(out.text.includes("- **One:** The first thing."));
+    assert.ok(out.text.includes("- One: The first thing."));
     assert.ok(out.text.includes("**Download:** [CSV](https://example.com/data.csv) — All rows."));
   });
 
@@ -119,7 +121,7 @@ describe("exportArticle", () => {
     const blank: Block[] = [
       { id: "p", type: "paragraph", text: "  " },
       { id: "h", type: "heading", level: 2, text: "" },
-      { id: "s", type: "sources", items: [{ id: "s1", label: "", href: "" }] },
+      { id: "s", type: "sources", title: "Sources", items: [{ id: "s1", label: "", href: "" }] },
     ];
     const out = exportArticle(article(blank), { flavor: "md" });
     assert.equal(out.text, `${frontmatter(article([]))}\n`);
@@ -145,8 +147,8 @@ describe("exportArticle", () => {
       },
     ];
     const doc = article([
-      { id: "i1", type: "image", src: "media/plate.png", alt: "A plate", caption: "Cap" },
-      { id: "i2", type: "image", src: "media/plate.png", alt: "Again", caption: "" },
+      { id: "i1", type: "image", src: "media/plate.png", alt: "A plate", caption: "Cap", role: "figure" },
+      { id: "i2", type: "image", src: "media/plate.png", alt: "Again", caption: "", role: "figure" },
     ]);
     const out = exportArticle(doc, { flavor: "md", media });
     assert.equal(out.images.length, 1);
@@ -192,7 +194,7 @@ describe("check", () => {
   it("is quiet for a finished article", () => {
     const doc = article([
       { id: "p", type: "paragraph", text: "Hi" },
-      { id: "s", type: "sources", items: [{ id: "s1", label: "Source", href: "https://example.com/a" }] },
+      { id: "s", type: "sources", title: "Sources", items: [{ id: "s1", label: "Source", href: "https://example.com/a" }] },
     ]);
     assert.deepEqual(checkArticle(doc), []);
   });

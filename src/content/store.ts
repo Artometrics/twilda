@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ZodError } from "zod";
+import { documentSchema, type TwildaDocument } from "@twilda/core";
 import { contentFingerprint } from "../schema/fingerprint";
-import { documentSchema, type ContentDocument } from "../schema/sections";
+
+export type ContentDocument = TwildaDocument;
 
 const DOCUMENT_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -114,12 +116,12 @@ export function listPublished(root: string = defaultContentRoot): ContentDocumen
     .filter((doc): doc is ContentDocument => doc !== null);
 }
 
-function stamp(doc: ContentDocument): ContentDocument {
-  return { ...doc, updatedAt: new Date().toISOString() };
+function stamp(doc: ContentDocument, status: ContentDocument["status"]): ContentDocument {
+  return { ...doc, status, updatedAt: new Date().toISOString() };
 }
 
 export function saveDraft(doc: ContentDocument, root: string = defaultContentRoot): ContentDocument {
-  const next = stamp(parseDocument(doc, doc.id));
+  const next = stamp(parseDocument(doc, doc.id), "draft");
   writeDocument(path.join(documentDir(root, next.id), "draft.json"), next);
   return next;
 }
@@ -128,7 +130,7 @@ export function publishDocument(doc: ContentDocument, root: string = defaultCont
   draft: ContentDocument;
   published: ContentDocument;
 } {
-  const draft = stamp(parseDocument(doc, doc.id));
+  const draft = stamp(parseDocument(doc, doc.id), "draft");
   for (const other of listPublished(root)) {
     if (other.id !== draft.id && other.slug === draft.slug) {
       throw new ContentError(`Slug "${draft.slug}" is already used by "${other.id}".`);
@@ -136,7 +138,7 @@ export function publishDocument(doc: ContentDocument, root: string = defaultCont
   }
   const dir = documentDir(root, draft.id);
   writeDocument(path.join(dir, "draft.json"), draft);
-  const published = stamp(draft);
+  const published = stamp(draft, "published");
   writeDocument(path.join(dir, "published.json"), published);
   return { draft, published };
 }
@@ -147,7 +149,7 @@ export function revertDraft(id: string, root: string = defaultContentRoot): {
 } {
   const published = readPublished(id, root);
   if (!published) throw new ContentError(`No published copy of "${id}" to revert to.`);
-  const draft = stamp(published);
+  const draft = stamp(published, "draft");
   writeDocument(path.join(documentDir(root, id), "draft.json"), draft);
   return { draft, published };
 }

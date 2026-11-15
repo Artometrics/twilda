@@ -63,6 +63,10 @@ jobs:
           cache: npm
           cache-dependency-path: packages/editor/package-lock.json
 
+      - name: Install workspace
+        working-directory: ${{ github.workspace }}
+        run: npm ci
+
       - name: Install
         run: npm ci
 

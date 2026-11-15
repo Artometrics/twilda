@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { safeHref } from "../export/mdx";
-import type { Block, Doc, MediaAsset } from "../model";
+import { docByline, sectionSummary, type Block, type Doc, type MediaAsset } from "../model";
 
 const VERIFY = /(\[verify\b[^\]]*\])/gi;
 
@@ -49,7 +49,7 @@ export function PreviewPane({
             <Marked text={doc.dek} />
           </p>
         ) : null}
-        {doc.byline ? <p className="byline">{doc.byline}</p> : null}
+        {docByline(doc) ? <p className="byline">{docByline(doc)}</p> : null}
         {doc.kind === "article" ? <ArticleProof blocks={doc.blocks} media={media} /> : <PageProof doc={doc} />}
       </article>
       {previewUrl ? (
@@ -103,22 +103,17 @@ function BlockProof({ block, media }: { block: Block; media: MediaAsset[] }) {
       return (
         <section className="findings">
           <h4>{block.title}</h4>
-          <dl>
-            {block.findings.map((finding) => (
-              <div key={finding.id}>
-                <dt>
-                  <Marked text={finding.label} />
-                </dt>
-                <dd>
-                  <Marked text={finding.detail} />
-                </dd>
-              </div>
+          <ul>
+            {block.items.map((finding, index) => (
+              <li key={`${block.id}-${index}`}>
+                <Marked text={finding} />
+              </li>
             ))}
-          </dl>
+          </ul>
         </section>
       );
     case "chart": {
-      const link = safeHref(block.src);
+      const link = safeHref(block.dataPath);
       const isImage = /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(link);
       return (
         <figure className="chart">
@@ -168,7 +163,7 @@ function BlockProof({ block, media }: { block: Block; media: MediaAsset[] }) {
     case "sources":
       return (
         <section>
-          <h4>Sources</h4>
+          <h4>{block.title || "Sources"}</h4>
           <ol className="sources">
             {block.items.map((item) => {
               const href = safeHref(item.href);
@@ -196,21 +191,15 @@ function BlockProof({ block, media }: { block: Block; media: MediaAsset[] }) {
         </figure>
       );
     }
-    case "video": {
+    case "embed": {
       const src = resolveMedia(media, block.src);
+      const caption = block.caption || block.title;
       return (
         <figure>
-          {src ? <video controls src={src} /> : <p className="hint">No video file attached.</p>}
-          {block.caption ? <figcaption>{block.caption}</figcaption> : null}
-        </figure>
-      );
-    }
-    case "audio": {
-      const src = resolveMedia(media, block.src);
-      return (
-        <figure>
-          {src ? <audio controls src={src} /> : <p className="hint">No audio file attached.</p>}
-          {block.caption ? <figcaption>{block.caption}</figcaption> : null}
+          {src && block.kind === "video" ? <video controls src={src} /> : null}
+          {src && block.kind === "audio" ? <audio controls src={src} /> : null}
+          {!src ? <p className="hint">No {block.kind} file attached.</p> : null}
+          {caption ? <figcaption>{caption}</figcaption> : null}
         </figure>
       );
     }
@@ -240,8 +229,7 @@ function PageProof({ doc }: { doc: Extract<Doc, { kind: "page" }> }) {
       {doc.sections.map((section) => (
         <section key={section.id} className="page-section">
           <p className="kicker">{section.type}</p>
-          <h4>{section.label}</h4>
-          <p>{section.summary}</p>
+          <h4>{sectionSummary(section)}</h4>
         </section>
       ))}
     </div>

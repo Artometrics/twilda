@@ -1,18 +1,4 @@
-import type {
-  CalloutBlock,
-  CarouselSection,
-  CategoryTilesSection,
-  ContentDocument,
-  FigureBlock,
-  HeadingBlock,
-  HeadlineFactsSection,
-  ListBlock,
-  MagazineFeatureSection,
-  ParagraphBlock,
-  PullQuoteBlock,
-  Section,
-  StoryGridSection,
-} from "../schema/sections";
+import type { Block, PageSection, TwildaDocument } from "@twilda/core";
 import { escapeHtml, safeHref, safeMedia } from "./escape";
 
 function plate(src: string, alt: string): string {
@@ -33,7 +19,7 @@ function paragraphs(text: string): string {
     .join("");
 }
 
-function renderCarousel(section: CarouselSection): string {
+function renderCarousel(section: Extract<PageSection, { type: "carousel" }>): string {
   const slides = section.slides
     .map(
       (slide) => `<a class="slide" href="${escapeHtml(safeHref(slide.href))}">
@@ -48,12 +34,14 @@ function renderCarousel(section: CarouselSection): string {
   return `<section class="section carousel" id="${escapeHtml(section.id)}" aria-label="${escapeHtml(section.label || "Carousel")}">${label}<div class="carousel-track">${slides}</div></section>`;
 }
 
-function renderStoryGrid(section: StoryGridSection): string {
-  const lead = section.lead;
-  const stories = section.stories
+function renderStoryGrid(section: Extract<PageSection, { type: "story-grid" }>): string {
+  const [lead, ...rest] = section.stories;
+  if (!lead) return "";
+  const stories = rest
     .map(
       (story) => `<li>
         <a href="${escapeHtml(safeHref(story.href))}">
+          ${plate(story.image, story.imageAlt)}
           <p class="kicker">${escapeHtml(story.kicker)}</p>
           <h3>${escapeHtml(story.title)}</h3>
           <p class="dek">${escapeHtml(story.dek)}</p>
@@ -63,132 +51,139 @@ function renderStoryGrid(section: StoryGridSection): string {
     .join("");
   return `<section class="section story-grid-section" id="${escapeHtml(section.id)}">
     <p class="kicker">${escapeHtml(section.kicker)}</p>
+    <h2>${escapeHtml(section.heading)}</h2>
     <div class="story-grid">
       <a class="lead" href="${escapeHtml(safeHref(lead.href))}">
         ${plate(lead.image, lead.imageAlt)}
         <p class="kicker">${escapeHtml(lead.kicker)}</p>
         <h2>${escapeHtml(lead.title)}</h2>
         <p class="dek">${escapeHtml(lead.dek)}</p>
-        <p class="byline">${escapeHtml(lead.byline)}</p>
       </a>
       <ol class="shorts">${stories}</ol>
     </div>
   </section>`;
 }
 
-function renderFacts(section: HeadlineFactsSection): string {
-  const facts = section.facts
+function renderMenu(section: Extract<PageSection, { type: "menu-shelf" }>): string {
+  const items = section.items
     .map(
-      (fact) =>
-        `<li><span class="fact-label">${escapeHtml(fact.label)}</span><span class="fact-value">${escapeHtml(fact.value)}</span></li>`,
-    )
-    .join("");
-  return `<section class="section facts-section" id="${escapeHtml(section.id)}">
-    <div class="fact-layout">
-      <div>
-        <p class="kicker">${escapeHtml(section.kicker)}</p>
-        <h2>${escapeHtml(section.headline)}</h2>
-        <p class="dek">${escapeHtml(section.dek)}</p>
-      </div>
-      <ol class="facts">${facts}</ol>
-    </div>
-  </section>`;
-}
-
-function renderFeature(section: MagazineFeatureSection): string {
-  return `<section class="section feature-section" id="${escapeHtml(section.id)}">
-    <div class="feature">
-      ${plate(section.image, section.imageAlt)}
-      <div>
-        <p class="kicker">${escapeHtml(section.kicker)}</p>
-        <h2>${escapeHtml(section.title)}</h2>
-        <p class="dek">${escapeHtml(section.dek)}</p>
-        <p class="byline">${escapeHtml(section.byline)}</p>
-        <a class="more" href="${escapeHtml(safeHref(section.href))}">Read the feature</a>
-      </div>
-    </div>
-  </section>`;
-}
-
-function renderTiles(section: CategoryTilesSection): string {
-  const tiles = section.tiles
-    .map(
-      (tile) => `<li>
-        <a href="${escapeHtml(safeHref(tile.href))}">
-          ${plate(tile.image, tile.imageAlt)}
-          <h3>${escapeHtml(tile.title)}</h3>
-          <p class="dek">${escapeHtml(tile.dek)}</p>
+      (item) => `<li>
+        <a href="${escapeHtml(safeHref(item.href))}">
+          <span class="fact-label">${escapeHtml(item.label)}</span>
+          <span class="fact-value">${escapeHtml(item.dek)}</span>
         </a>
       </li>`,
     )
     .join("");
-  return `<section class="section tiles-section" id="${escapeHtml(section.id)}">
+  return `<section class="section shelf-section" id="${escapeHtml(section.id)}">
     <h2>${escapeHtml(section.heading)}</h2>
-    <ul class="tiles">${tiles}</ul>
+    <ol class="facts">${items}</ol>
   </section>`;
 }
 
-function renderHeading(section: HeadingBlock): string {
-  const tag = section.level === 3 ? "h3" : "h2";
-  return `<${tag} class="article-heading" id="${escapeHtml(section.id)}">${escapeHtml(section.text)}</${tag}>`;
-}
-
-function renderParagraph(section: ParagraphBlock): string {
-  return `<div class="prose" id="${escapeHtml(section.id)}">${paragraphs(section.text)}</div>`;
-}
-
-function renderQuote(section: PullQuoteBlock): string {
-  const cite = section.attribution
-    ? `<footer>${escapeHtml(section.attribution)}</footer>`
-    : "";
-  return `<blockquote class="pull-quote" id="${escapeHtml(section.id)}"><p>${escapeHtml(section.quote)}</p>${cite}</blockquote>`;
-}
-
-function renderFigure(section: FigureBlock): string {
-  const caption = section.caption ? `<figcaption>${escapeHtml(section.caption)}</figcaption>` : "";
-  return `<figure class="figure" id="${escapeHtml(section.id)}">${plate(section.image, section.imageAlt)}${caption}</figure>`;
-}
-
-function renderList(section: ListBlock): string {
-  const tag = section.ordered ? "ol" : "ul";
-  const items = section.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-  return `<${tag} class="body-list" id="${escapeHtml(section.id)}">${items}</${tag}>`;
-}
-
-function renderCallout(section: CalloutBlock): string {
-  return `<aside class="callout" id="${escapeHtml(section.id)}">
-    <p class="kicker">Note</p>
-    <h2>${escapeHtml(section.title)}</h2>
-    <p>${escapeHtml(section.text)}</p>
-  </aside>`;
-}
-
-function renderSection(section: Section): string {
+function renderSection(section: PageSection): string {
   switch (section.type) {
     case "carousel":
       return renderCarousel(section);
     case "story-grid":
       return renderStoryGrid(section);
-    case "headline-facts":
-      return renderFacts(section);
-    case "magazine-feature":
-      return renderFeature(section);
-    case "category-tiles":
-      return renderTiles(section);
-    case "heading":
-      return renderHeading(section);
-    case "paragraph":
-      return renderParagraph(section);
-    case "pull-quote":
-      return renderQuote(section);
-    case "figure":
-      return renderFigure(section);
-    case "list":
-      return renderList(section);
-    case "callout":
-      return renderCallout(section);
+    case "menu-shelf":
+      return renderMenu(section);
     default: {
       const exhaustive: never = section;
+      return exhaustive;
+    }
+  }
+}
+
+function renderHeading(block: Extract<Block, { type: "heading" }>): string {
+  const tag = block.level === 3 ? "h3" : "h2";
+  return `<${tag} class="article-heading" id="${escapeHtml(block.id)}">${escapeHtml(block.text)}</${tag}>`;
+}
+
+function renderParagraph(block: Extract<Block, { type: "paragraph" }>): string {
+  return `<div class="prose" id="${escapeHtml(block.id)}">${paragraphs(block.text)}</div>`;
+}
+
+function renderFindings(block: Extract<Block, { type: "key-findings" }>): string {
+  const facts = block.items
+    .map((item) => {
+      const split = item.indexOf(": ");
+      const label = split === -1 ? item : item.slice(0, split);
+      const value = split === -1 ? "" : item.slice(split + 2);
+      return `<li><span class="fact-label">${escapeHtml(label)}</span><span class="fact-value">${escapeHtml(value)}</span></li>`;
+    })
+    .join("");
+  return `<section class="section facts-section" id="${escapeHtml(block.id)}">
+    <div class="fact-layout">
+      <h2>${escapeHtml(block.title)}</h2>
+      <ol class="facts">${facts}</ol>
+    </div>
+  </section>`;
+}
+
+function renderCallout(block: Extract<Block, { type: "callout" }>): string {
+  return `<aside class="callout" id="${escapeHtml(block.id)}">
+    <p class="kicker">Note</p>
+    <h2>${escapeHtml(block.title)}</h2>
+    <p>${escapeHtml(block.text)}</p>
+  </aside>`;
+}
+
+function renderImage(block: Extract<Block, { type: "image" }>): string {
+  const caption = block.caption ? `<figcaption>${escapeHtml(block.caption)}</figcaption>` : "";
+  return `<figure class="figure" id="${escapeHtml(block.id)}">${plate(block.src, block.alt)}${caption}</figure>`;
+}
+
+function renderChart(block: Extract<Block, { type: "chart" }>): string {
+  const href = block.dataPath.startsWith("http://") || block.dataPath.startsWith("https://") ? safeHref(block.dataPath) : "";
+  const link = href ? `<p><a href="${escapeHtml(href)}">Open the chart</a></p>` : `<p class="dek">${escapeHtml(block.dataPath)}</p>`;
+  return `<figure class="figure chart" id="${escapeHtml(block.id)}">
+    <figcaption><strong>${escapeHtml(block.title)}</strong></figcaption>
+    <p>${escapeHtml(block.alt)}</p>
+    ${block.caption ? `<p class="dek">${escapeHtml(block.caption)}</p>` : ""}
+    ${link}
+  </figure>`;
+}
+
+function renderSources(block: Extract<Block, { type: "sources" }>): string {
+  const items = block.items
+    .map((item) => `<li><a href="${escapeHtml(safeHref(item.href))}">${escapeHtml(item.label)}</a></li>`)
+    .join("");
+  return `<section class="sources" id="${escapeHtml(block.id)}"><h2>${escapeHtml(block.title)}</h2><ol>${items}</ol></section>`;
+}
+
+function renderEmbed(block: Extract<Block, { type: "embed" }>): string {
+  const label = block.kind === "audio" ? "Audio" : "Video";
+  return `<p class="embed" id="${escapeHtml(block.id)}"><a href="${escapeHtml(safeHref(block.src))}">${escapeHtml(label)}: ${escapeHtml(block.title)}</a>${block.caption ? ` — ${escapeHtml(block.caption)}` : ""}</p>`;
+}
+
+function renderDownload(block: Extract<Block, { type: "download" }>): string {
+  return `<p class="download" id="${escapeHtml(block.id)}"><a href="${escapeHtml(safeHref(block.href))}">${escapeHtml(block.label)}</a>${block.description ? ` — ${escapeHtml(block.description)}` : ""}</p>`;
+}
+
+function renderBlock(block: Block): string {
+  switch (block.type) {
+    case "heading":
+      return renderHeading(block);
+    case "paragraph":
+      return renderParagraph(block);
+    case "key-findings":
+      return renderFindings(block);
+    case "chart":
+      return renderChart(block);
+    case "callout":
+      return renderCallout(block);
+    case "sources":
+      return renderSources(block);
+    case "image":
+      return renderImage(block);
+    case "embed":
+      return renderEmbed(block);
+    case "download":
+      return renderDownload(block);
+    default: {
+      const exhaustive: never = block;
       return exhaustive;
     }
   }
@@ -214,7 +209,7 @@ function renderFooter(): string {
   </footer>`;
 }
 
-function renderPage(doc: ContentDocument): string {
+function renderPage(doc: Extract<TwildaDocument, { kind: "page" }>): string {
   return `<header class="issue-intro">
     <p class="kicker">${escapeHtml(doc.kicker)}</p>
     <h1>${escapeHtml(doc.title)}</h1>
@@ -223,7 +218,7 @@ function renderPage(doc: ContentDocument): string {
   ${doc.sections.map(renderSection).join("\n")}`;
 }
 
-function renderArticle(doc: ContentDocument): string {
+function renderArticle(doc: Extract<TwildaDocument, { kind: "article" }>): string {
   return `<article class="article">
     <header class="article-head">
       <p class="kicker">${escapeHtml(doc.kicker)}</p>
@@ -232,13 +227,13 @@ function renderArticle(doc: ContentDocument): string {
       <p class="byline">${escapeHtml(doc.byline)}</p>
     </header>
     <div class="article-body">
-      ${doc.sections.map(renderSection).join("\n")}
+      ${doc.blocks.map(renderBlock).join("\n")}
     </div>
   </article>`;
 }
 
 /** Full document HTML shared by the static site and the editor proof. */
-export function renderDocument(doc: ContentDocument): string {
+export function renderDocument(doc: TwildaDocument): string {
   const body = doc.kind === "article" ? renderArticle(doc) : renderPage(doc);
   return `<div class="magazine">${renderMast()}${body}${renderFooter()}</div>`;
 }

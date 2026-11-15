@@ -7,8 +7,8 @@ import { SectionList } from "./ui/SectionList";
 import type { DocumentSummary } from "../src/content/store";
 import { contentFingerprint } from "../src/schema/fingerprint";
 import { moveItem } from "../src/schema/reorder";
-import type { ContentDocument, SectionType } from "../src/schema/sections";
-import { createSection } from "../src/schema/templates";
+import type { ContentDocument } from "../src/content/store";
+import { createPart, documentParts, withParts, type PartType } from "../src/schema/templates";
 
 const SITE_ORIGIN = "http://127.0.0.1:4321";
 
@@ -59,7 +59,7 @@ export function App() {
     setLocal(payload.draft);
     setSaved(payload.draft);
     setPublished(payload.published);
-    setSelectedId(payload.draft.sections[0]?.id ?? null);
+    setSelectedId(documentParts(payload.draft)[0]?.id ?? null);
     setAdding(false);
   }, []);
 
@@ -144,7 +144,7 @@ export function App() {
       setLocal(result.draft);
       setSaved(result.draft);
       setPublished(result.published);
-      setSelectedId(result.draft.sections[0]?.id ?? null);
+      setSelectedId(documentParts(result.draft)[0]?.id ?? null);
       await refreshList();
       setNotice("Draft reset to the published copy.");
     } catch (reason) {
@@ -156,32 +156,37 @@ export function App() {
 
   function moveSection(id: string, direction: -1 | 1) {
     if (!local) return;
-    const from = local.sections.findIndex((section) => section.id === id);
-    setLocal({ ...local, sections: moveItem(local.sections, from, from + direction) });
+    const parts = documentParts(local);
+    const from = parts.findIndex((section) => section.id === id);
+    setLocal(withParts(local, moveItem(parts, from, from + direction)));
   }
 
   function dropSection(sourceId: string, targetId: string) {
     if (!local || sourceId === targetId) return;
-    const from = local.sections.findIndex((section) => section.id === sourceId);
-    const to = local.sections.findIndex((section) => section.id === targetId);
-    setLocal({ ...local, sections: moveItem(local.sections, from, to) });
+    const parts = documentParts(local);
+    const from = parts.findIndex((section) => section.id === sourceId);
+    const to = parts.findIndex((section) => section.id === targetId);
+    setLocal(withParts(local, moveItem(parts, from, to)));
   }
 
   function removeSection(id: string) {
-    if (!local || local.sections.length <= 1) return;
-    const index = local.sections.findIndex((section) => section.id === id);
-    const sections = local.sections.filter((section) => section.id !== id);
-    setLocal({ ...local, sections });
-    if (selectedId === id) setSelectedId(sections[Math.max(0, index - 1)]?.id ?? null);
+    if (!local) return;
+    const parts = documentParts(local);
+    if (parts.length <= 1) return;
+    const index = parts.findIndex((section) => section.id === id);
+    const next = parts.filter((section) => section.id !== id);
+    setLocal(withParts(local, next));
+    if (selectedId === id) setSelectedId(next[Math.max(0, index - 1)]?.id ?? null);
   }
 
-  function addSection(type: SectionType) {
+  function addSection(type: PartType) {
     if (!local) return;
-    const section = createSection(type);
-    const index = local.sections.findIndex((item) => item.id === selectedId);
-    const sections = local.sections.slice();
-    sections.splice(index >= 0 ? index + 1 : sections.length, 0, section);
-    setLocal({ ...local, sections });
+    const section = createPart(type as never);
+    const parts = documentParts(local);
+    const index = parts.findIndex((item) => item.id === selectedId);
+    const next = parts.slice();
+    next.splice(index >= 0 ? index + 1 : next.length, 0, section);
+    setLocal(withParts(local, next));
     setSelectedId(section.id);
     setAdding(false);
   }
@@ -238,7 +243,7 @@ export function App() {
       {local ? (
         <>
           <SectionList
-            sections={local.sections}
+            sections={documentParts(local)}
             selectedId={selectedId}
             onSelect={setSelectedId}
             onMove={moveSection}

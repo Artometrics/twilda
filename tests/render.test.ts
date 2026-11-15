@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { readFileSync } from "node:fs";
-import { documentSchema, type ContentDocument } from "../src/schema/sections";
+import { documentSchema, type TwildaDocument } from "@twilda/core";
 import { renderDocument } from "../src/render/document";
 import { escapeHtml, safeHref, safeMedia } from "../src/render/escape";
 
@@ -25,8 +25,9 @@ describe("render", () => {
       dek: "",
       kicker: "",
       byline: "",
+      status: "draft",
       updatedAt: "2026-11-09T16:00:00.000Z",
-      sections: [
+      blocks: [
         {
           id: "p1",
           type: "paragraph",
@@ -43,12 +44,12 @@ describe("render", () => {
   it("renders the published article without the draft sentinel", () => {
     const published = documentSchema.parse(
       JSON.parse(readFileSync("content/lumen-rail/published.json", "utf8")) as unknown,
-    ) as ContentDocument;
-    const draft = documentSchema.parse(
-      JSON.parse(readFileSync("content/lumen-rail/draft.json", "utf8")) as unknown,
-    );
+    ) as TwildaDocument;
+    const draft = documentSchema.parse(JSON.parse(readFileSync("content/lumen-rail/draft.json", "utf8")) as unknown);
     const html = renderDocument(published);
     assert.match(html, /The night timetable is a public document\./);
+    assert.match(html, /Story year/);
+    assert.match(html, /Cars come off the river span/);
     assert.equal(html.includes("DRAFT-ONLY SENTINEL"), false);
     assert.match(renderDocument(draft), /DRAFT-ONLY SENTINEL/);
   });

@@ -7,6 +7,7 @@ import {
   createId,
   createSection,
   sectionLabel,
+  sectionSummary,
   type ArticleDoc,
   type Block,
   type MediaAsset,
@@ -46,7 +47,7 @@ export function blockSummary(block: Block): string {
     case "paragraph":
       return clip(block.text);
     case "key-findings":
-      return clip(block.title || block.findings[0]?.label || "");
+      return clip(block.title || block.items[0] || "");
     case "chart":
     case "callout":
       return clip(block.title);
@@ -54,9 +55,8 @@ export function blockSummary(block: Block): string {
       return `${block.items.length} source${block.items.length === 1 ? "" : "s"}`;
     case "image":
       return clip(block.alt || block.caption || block.src);
-    case "video":
-    case "audio":
-      return clip(block.caption || block.src);
+    case "embed":
+      return clip(block.caption || block.title || block.src);
     case "download":
       return clip(block.label);
     default:
@@ -167,19 +167,13 @@ export function SectionEditor({
             index={index}
             count={doc.sections.length}
             label={sectionLabel(section.type)}
-            summary={clip(section.label)}
+            summary={clip(sectionSummary(section))}
             collapsed={collapsed.has(section.id)}
             onToggle={() => toggle(section.id)}
             onMoveBy={(delta) => moveBy(section.id, delta)}
             onRemove={() => onRemove(section.id)}
           >
-            <Field label="Label" value={section.label} onChange={(label) => onChange({ ...section, label })} />
-            <Field
-              label="Summary"
-              value={section.summary}
-              multiline
-              onChange={(summary) => onChange({ ...section, summary })}
-            />
+            <SectionFields section={section} onChange={onChange} />
           </ItemFrame>
         ))}
       </ReorderList>
@@ -191,6 +185,69 @@ export function SectionEditor({
       />
     </div>
   );
+}
+
+function SectionFields({ section, onChange }: { section: PageSection; onChange: (section: PageSection) => void }) {
+  switch (section.type) {
+    case "carousel":
+      return (
+        <>
+          <Field label="Label" value={section.label} onChange={(label) => onChange({ ...section, label })} />
+          {section.slides.map((slide, index) => (
+            <Field
+              key={slide.id}
+              label="Slide title"
+              value={slide.title}
+              onChange={(title) => {
+                const slides = section.slides.slice();
+                slides[index] = { ...slide, title };
+                onChange({ ...section, slides });
+              }}
+            />
+          ))}
+        </>
+      );
+    case "story-grid":
+      return (
+        <>
+          <Field label="Heading" value={section.heading} onChange={(heading) => onChange({ ...section, heading })} />
+          {section.stories.map((story, index) => (
+            <Field
+              key={story.id}
+              label="Story title"
+              value={story.title}
+              onChange={(title) => {
+                const stories = section.stories.slice();
+                stories[index] = { ...story, title };
+                onChange({ ...section, stories });
+              }}
+            />
+          ))}
+        </>
+      );
+    case "menu-shelf":
+      return (
+        <>
+          <Field label="Heading" value={section.heading} testId={`heading-${section.id}`} onChange={(heading) => onChange({ ...section, heading })} />
+          {section.items.map((item, index) => (
+            <Field
+              key={item.id}
+              label="Item label"
+              value={item.label}
+              onChange={(label) => {
+                const items = section.items.slice();
+                items[index] = { ...item, label };
+                onChange({ ...section, items });
+              }}
+            />
+          ))}
+        </>
+      );
+    default: {
+      const exhaustive: never = section;
+      return exhaustive;
+    }
+  }
 }
 
 function AddChooser<T extends string>({
@@ -268,34 +325,24 @@ function BlockFields({
       return (
         <>
           <Field label="Title" value={block.title} testId={`title-${block.id}`} onChange={(title) => onChange({ ...block, title })} />
-          {block.findings.map((finding, index) => (
-            <div className="subrow" key={finding.id}>
+          {block.items.map((finding, index) => (
+            <div className="subrow" key={`${block.id}-${index}`}>
               <Field
-                label="Label"
-                value={finding.label}
-                testId={`finding-label-${finding.id}`}
-                onChange={(label) => {
-                  const findings = block.findings.slice();
-                  findings[index] = { ...finding, label };
-                  onChange({ ...block, findings });
-                }}
-              />
-              <Field
-                label="Detail"
-                value={finding.detail}
+                label="Finding line"
+                value={finding}
                 multiline
-                testId={`finding-detail-${finding.id}`}
-                onChange={(detail) => {
-                  const findings = block.findings.slice();
-                  findings[index] = { ...finding, detail };
-                  onChange({ ...block, findings });
+                testId={`finding-${block.id}-${index}`}
+                onChange={(value) => {
+                  const items = block.items.slice();
+                  items[index] = value;
+                  onChange({ ...block, items });
                 }}
               />
               <button
                 type="button"
                 className="btn"
-                onClick={() => onChange({ ...block, findings: block.findings.filter((item) => item.id !== finding.id) })}
-                disabled={block.findings.length === 1}
+                onClick={() => onChange({ ...block, items: block.items.filter((_, at) => at !== index) })}
+                disabled={block.items.length === 1}
               >
                 Remove finding
               </button>
@@ -305,12 +352,7 @@ function BlockFields({
             type="button"
             className="btn"
             data-testid={`add-finding-${block.id}`}
-            onClick={() =>
-              onChange({
-                ...block,
-                findings: [...block.findings, { id: createId("finding"), label: "", detail: "" }],
-              })
-            }
+            onClick={() => onChange({ ...block, items: [...block.items, ""] })}
           >
             Add finding
           </button>
@@ -321,10 +363,10 @@ function BlockFields({
         <>
           <Field label="Title" value={block.title} testId={`title-${block.id}`} onChange={(title) => onChange({ ...block, title })} />
           <Field
-            label="Chart embed link (https://)"
-            value={block.src}
+            label="CSV path"
+            value={block.dataPath}
             testId={`src-${block.id}`}
-            onChange={(src) => onChange({ ...block, src })}
+            onChange={(dataPath) => onChange({ ...block, dataPath })}
           />
           <Field
             label="Alt text (what the chart shows)"
@@ -346,6 +388,7 @@ function BlockFields({
     case "sources":
       return (
         <>
+          <Field label="Title" value={block.title} onChange={(title) => onChange({ ...block, title })} />
           {block.items.map((item, index) => (
             <div className="subrow" key={item.id}>
               <Field
@@ -409,7 +452,7 @@ function BlockFields({
                 event.target.value = "";
                 if (!file) return;
                 void onUploadImage(file).then((asset) => {
-                  if (asset) onChange({ ...block, src: asset.path });
+                  if (asset) onChange({ ...block, src: asset.path, role: block.role });
                 });
               }}
             />
@@ -440,13 +483,27 @@ function BlockFields({
           />
           <Field label="Alt text" value={block.alt} testId={`alt-${block.id}`} onChange={(alt) => onChange({ ...block, alt })} />
           <Field label="Caption" value={block.caption} multiline onChange={(caption) => onChange({ ...block, caption })} />
+          <label className="field">
+            <span>Role</span>
+            <select value={block.role} onChange={(event) => onChange({ ...block, role: event.target.value === "banner" ? "banner" : "figure" })}>
+              <option value="figure">Figure</option>
+              <option value="banner">Banner</option>
+            </select>
+          </label>
         </>
       );
     }
-    case "video":
-    case "audio":
+    case "embed":
       return (
         <>
+          <label className="field">
+            <span>Kind</span>
+            <select value={block.kind} onChange={(event) => onChange({ ...block, kind: event.target.value === "audio" ? "audio" : "video" })}>
+              <option value="video">Video</option>
+              <option value="audio">Audio</option>
+            </select>
+          </label>
+          <Field label="Title" value={block.title} onChange={(title) => onChange({ ...block, title })} />
           <Field label="Link (https://)" value={block.src} onChange={(src) => onChange({ ...block, src })} />
           <Field label="Caption" value={block.caption} multiline onChange={(caption) => onChange({ ...block, caption })} />
         </>

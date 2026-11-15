@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { SECTION_LABELS, type Section } from "../../src/schema/sections";
+import { partLabel, type Part } from "../../src/schema/templates";
 
 export function SectionList({
   sections,
@@ -10,7 +10,7 @@ export function SectionList({
   onDrop,
   onAdd,
 }: {
-  sections: Section[];
+  sections: Part[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onMove: (id: string, direction: -1 | 1) => void;
@@ -33,7 +33,7 @@ export function SectionList({
       </div>
       <ol className="section-list">
         {sections.map((section, index) => {
-          const label = SECTION_LABELS[section.type];
+          const label = partLabel(section.type);
           return (
             <li
               key={section.id}
@@ -66,12 +66,7 @@ export function SectionList({
                 >
                   Drag
                 </span>
-                <button
-                  type="button"
-                  aria-label={`Move ${label} up`}
-                  disabled={index === 0}
-                  onClick={() => onMove(section.id, -1)}
-                >
+                <button type="button" aria-label={`Move ${label} up`} disabled={index === 0} onClick={() => onMove(section.id, -1)}>
                   Up
                 </button>
                 <button

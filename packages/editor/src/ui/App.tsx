@@ -4,7 +4,7 @@ import type { KeyValueStore } from "../backend/persistent";
 import { seedArtometrics } from "../backend/artometrics";
 import { createArticle, parseDocJson, uniqueSlug } from "../doc";
 import { downscaleImage } from "../media/downscale";
-import { fingerprint, type MediaAsset, type MetaPatch } from "../model";
+import { docByline, fingerprint, type MediaAsset, type MetaPatch } from "../model";
 import { CmsError, createCms } from "../backend/service";
 import { FAILURE_LABEL, editorReducer, initialState, isDirty, type DeskView } from "../state/reducer";
 import { ArticleList } from "./ArticleList";
@@ -15,6 +15,9 @@ import { Modal } from "./Modal";
 import { NewArticleSheet, type NewArticleValues } from "./NewArticleSheet";
 import { PreviewPane } from "./PreviewPane";
 import { Field } from "./Field";
+import { githubPublishConfigured } from "../github/config";
+import { openGithubPullRequest } from "../github/publish";
+import { GithubSignIn, defaultGithubOwner, defaultGithubRepo } from "../github/SignIn";
 
 const AUTOSAVE_MS = 1500;
 
@@ -28,6 +31,9 @@ export function App({
   const cms = useMemo(() => createCms(backend), [backend]);
   const [state, dispatch] = useReducer(editorReducer, initialState);
   const [creating, setCreating] = useState(false);
+  const [githubToken, setGithubToken] = useState("");
+  const [githubOwnerName, setGithubOwnerName] = useState(defaultGithubOwner);
+  const [githubRepoName, setGithubRepoName] = useState(defaultGithubRepo);
   const desktop = useDesktop();
   const dismissConfirm = useCallback(() => dispatch({ type: "dismiss-confirm" }), []);
   const closeCreating = useCallback(() => setCreating(false), []);
@@ -182,7 +188,27 @@ export function App({
     try {
       const published = await cms.publish(draft);
       const documents = await cms.listDocuments();
-      dispatch({ type: "published", draft: published, published, documents });
+      let notice: string | undefined;
+      if (githubPublishConfigured()) {
+        if (!githubToken.trim()) {
+          notice = "Published on this device. GitHub sign-in is not finished, so no pull request was opened.";
+        } else {
+          try {
+            const pr = await openGithubPullRequest({
+              clientId: import.meta.env.PUBLIC_TWILDA_GITHUB_CLIENT_ID ?? "",
+              token: githubToken,
+              owner: githubOwnerName,
+              repo: githubRepoName,
+              doc: published,
+            });
+            notice = `Published on this device. GitHub pull request: ${pr.url}`;
+          } catch (error) {
+            const detail = error instanceof Error ? error.message : "GitHub publish failed.";
+            notice = `Published on this device. GitHub pull request was not opened. ${detail}`;
+          }
+        }
+      }
+      dispatch({ type: "published", draft: published, published, documents, notice });
     } catch (error) {
       const phase = error instanceof CmsError ? error.phase : "publish";
       const extra =
@@ -310,7 +336,9 @@ export function App({
               <Field label="Title" value={draft.title} testId="meta-title" onChange={(title) => editMeta({ title })} />
               <Field label="Kicker" value={draft.kicker} testId="meta-kicker" onChange={(kicker) => editMeta({ kicker })} />
               <Field label="Dek" value={draft.dek} multiline testId="meta-dek" onChange={(dek) => editMeta({ dek })} />
-              <Field label="Byline" value={draft.byline} testId="meta-byline" onChange={(byline) => editMeta({ byline })} />
+              {draft.kind === "article" ? (
+                <Field label="Byline" value={docByline(draft)} testId="meta-byline" onChange={(byline) => editMeta({ byline })} />
+              ) : null}
               <Field label="Slug" value={draft.slug} testId="meta-slug" onChange={(slug) => editMeta({ slug })} />
               <button
                 type="button"
@@ -399,10 +427,22 @@ export function App({
       {state.confirm ? (
         <Modal title={confirmTitle(state.confirm)} testId="confirm-dialog" onClose={dismissConfirm}>
           {state.confirm === "publish" ? (
-            <p>
-              Publishing writes the copy you are looking at, including unsaved edits, to the published file. Saving a
-              draft does not do this. The static site reads the published file the next time it is built.
-            </p>
+            <>
+              <p>
+                Publishing writes the copy you are looking at, including unsaved edits, to the published file. Saving a
+                draft does not do this. The static site reads the published file the next time it is built.
+              </p>
+              {githubPublishConfigured() ? (
+                <GithubSignIn
+                  owner={githubOwnerName}
+                  repo={githubRepoName}
+                  onOwner={setGithubOwnerName}
+                  onRepo={setGithubRepoName}
+                  token={githubToken}
+                  onToken={setGithubToken}
+                />
+              ) : null}
+            </>
           ) : state.confirm === "delete" ? (
             <p>
               This removes the draft and any published copy from this device. Export a JSON backup first if you might

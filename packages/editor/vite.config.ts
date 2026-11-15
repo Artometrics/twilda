@@ -8,6 +8,8 @@ import { defineConfig } from "vite";
  */
 export default defineConfig({
   plugins: [react()],
+  // OAuth client id is public. Vite only inlines VITE_* unless this prefix is listed.
+  envPrefix: ["VITE_", "PUBLIC_"],
   server: {
     host: "127.0.0.1",
     port: 5174,

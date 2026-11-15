@@ -54,9 +54,9 @@ test("field desk sample: edit, reorder, section, upload, preview, and publish", 
   await page.getByTestId("tab-list").click();
   await page.getByTestId("doc-home").click();
   await page.getByTestId("add-section").click();
-  await page.getByTestId("choose-category-tiles").click();
-  await expect(page.getByTestId("reorder-list")).toHaveAttribute("data-order", /category-tiles-/);
-  await expect(page.locator(".item").last().getByLabel("Label")).toHaveValue("Sections");
+  await page.getByTestId("choose-menu-shelf").click();
+  await expect(page.getByTestId("reorder-list")).toHaveAttribute("data-order", /menu-shelf-/);
+  await expect(page.locator(".item").last().getByLabel("Heading")).toHaveValue("Sections");
 
   await page.getByTestId("save-draft").click();
   await expect(page.getByTestId("notice")).toContainText("Draft saved");

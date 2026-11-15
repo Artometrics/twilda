@@ -6,11 +6,9 @@ import {
   type Block,
   type BlockType,
   type Doc,
-  type Finding,
   type PageDoc,
   type PageSection,
-  type SectionType,
-  type SourceItem,
+  type PageSectionType,
 } from "./model";
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -62,9 +60,8 @@ export function createArticle(input: NewArticleInput): ArticleDoc {
     dek: input.dek?.trim() ?? "",
     byline: input.byline?.trim() ?? "",
     updatedAt: input.now ?? new Date().toISOString(),
-    blocks: [
-      { id: createId("paragraph"), type: "paragraph", text: "" },
-    ],
+    status: "draft",
+    blocks: [{ id: createId("paragraph"), type: "paragraph", text: "" }],
   };
 }
 
@@ -88,13 +85,30 @@ function blockTypeOf(value: unknown): BlockType | null {
   return BLOCK_CATALOG.find((entry) => entry.type === value)?.type ?? null;
 }
 
-function sectionTypeOf(value: unknown): SectionType | null {
+function sectionTypeOf(value: unknown): PageSectionType | null {
   return SECTION_CATALOG.find((entry) => entry.type === value)?.type ?? null;
+}
+
+function findingLine(entry: Raw): string {
+  const label = str(entry.label).trim();
+  const detail = str(entry.detail).trim();
+  if (label && detail) return `${label}: ${detail}`;
+  return label || detail;
 }
 
 function normalizeBlock(value: unknown, index: number): Block {
   const where = `Block ${index + 1}`;
   if (!isRecord(value)) throw new Error(`${where} is not an object.`);
+  if (value.type === "video" || value.type === "audio") {
+    return {
+      id: str(value.id) || createId("embed"),
+      type: "embed",
+      kind: value.type === "audio" ? "audio" : "video",
+      src: str(value.src),
+      title: str(value.title) || (value.type === "audio" ? "Audio" : "Video"),
+      caption: str(value.caption),
+    };
+  }
   const type = blockTypeOf(value.type);
   if (!type) throw new Error(`${where} has an unknown type "${str(value.type, "?")}".`);
   const id = str(value.id) || createId(type);
@@ -104,16 +118,15 @@ function normalizeBlock(value: unknown, index: number): Block {
     case "paragraph":
       return { id, type, text: need(value, "text", where) };
     case "key-findings": {
-      if (!Array.isArray(value.findings)) throw new Error(`${where} needs a "findings" list.`);
-      const findings: Finding[] = value.findings.map((entry, at) => {
-        if (!isRecord(entry)) throw new Error(`${where}, finding ${at + 1} is not an object.`);
-        return {
-          id: str(entry.id) || createId("finding"),
-          label: str(entry.label),
-          detail: str(entry.detail),
-        };
-      });
-      return { id, type, title: str(value.title), findings };
+      const fromItems = Array.isArray(value.items) ? value.items.map((entry) => (typeof entry === "string" ? entry : "")).filter((entry) => entry.length > 0) : [];
+      const fromFindings = Array.isArray(value.findings)
+        ? value.findings.filter(isRecord).map(findingLine).filter((entry) => entry.length > 0)
+        : [];
+      const items = fromItems.length > 0 ? fromItems : fromFindings;
+      if (items.length === 0 && !Array.isArray(value.items) && !Array.isArray(value.findings)) {
+        throw new Error(`${where} needs an "items" list.`);
+      }
+      return { id, type, title: str(value.title), items };
     }
     case "chart":
       return {
@@ -121,14 +134,14 @@ function normalizeBlock(value: unknown, index: number): Block {
         type,
         title: str(value.title),
         caption: str(value.caption),
-        src: str(value.src),
+        dataPath: str(value.dataPath) || str(value.src),
         alt: str(value.alt),
       };
     case "callout":
       return { id, type, title: str(value.title), text: str(value.text) };
     case "sources": {
       if (!Array.isArray(value.items)) throw new Error(`${where} needs an "items" list.`);
-      const items: SourceItem[] = value.items.map((entry, at) => {
+      const items = value.items.map((entry, at) => {
         if (!isRecord(entry)) throw new Error(`${where}, source ${at + 1} is not an object.`);
         return {
           id: str(entry.id) || createId("source"),
@@ -136,13 +149,26 @@ function normalizeBlock(value: unknown, index: number): Block {
           href: str(entry.href),
         };
       });
-      return { id, type, items };
+      return { id, type, title: str(value.title) || "Sources", items };
     }
     case "image":
-      return { id, type, src: str(value.src), alt: str(value.alt), caption: str(value.caption) };
-    case "video":
-    case "audio":
-      return { id, type, src: str(value.src), caption: str(value.caption) };
+      return {
+        id,
+        type,
+        src: str(value.src),
+        alt: str(value.alt),
+        caption: str(value.caption),
+        role: value.role === "banner" || id === "banner" ? "banner" : "figure",
+      };
+    case "embed":
+      return {
+        id,
+        type,
+        kind: value.kind === "audio" ? "audio" : "video",
+        src: str(value.src),
+        title: str(value.title) || (value.kind === "audio" ? "Audio" : "Video"),
+        caption: str(value.caption),
+      };
     case "download":
       return {
         id,
@@ -162,12 +188,60 @@ function normalizeSection(value: unknown, index: number): PageSection {
   const where = `Section ${index + 1}`;
   if (!isRecord(value)) throw new Error(`${where} is not an object.`);
   const type = sectionTypeOf(value.type);
-  if (!type) throw new Error(`${where} has an unknown type "${str(value.type, "?")}".`);
+  const id = str(value.id) || createId(type ?? "section");
+  if (type === "carousel" && Array.isArray(value.slides)) {
+    return {
+      id,
+      type,
+      label: str(value.label),
+      slides: value.slides.filter(isRecord).map((slide, at) => ({
+        id: str(slide.id) || createId("slide"),
+        kicker: str(slide.kicker),
+        title: str(slide.title) || `Slide ${at + 1}`,
+        dek: str(slide.dek),
+        href: str(slide.href) || "/",
+        image: str(slide.image) || "/media/plate-signal.svg",
+        imageAlt: str(slide.imageAlt) || "Plate",
+      })),
+    };
+  }
+  if (type === "story-grid" && Array.isArray(value.stories)) {
+    return {
+      id,
+      type,
+      kicker: str(value.kicker),
+      heading: str(value.heading) || "Stories",
+      stories: value.stories.filter(isRecord).map((story, at) => ({
+        id: str(story.id) || createId("story"),
+        kicker: str(story.kicker),
+        title: str(story.title) || `Story ${at + 1}`,
+        dek: str(story.dek),
+        href: str(story.href) || "/",
+        image: str(story.image) || "/media/plate-signal.svg",
+        imageAlt: str(story.imageAlt) || "Plate",
+      })),
+    };
+  }
+  if (type === "menu-shelf" && Array.isArray(value.items)) {
+    return {
+      id,
+      type,
+      heading: str(value.heading) || "Sections",
+      items: value.items.filter(isRecord).map((item) => ({
+        id: str(item.id) || createId("item"),
+        label: str(item.label) || "Item",
+        href: str(item.href) || "/",
+        dek: str(item.dek),
+      })),
+    };
+  }
+  const label = str(value.label) || str(value.heading) || str(value.type) || "Section";
+  const summary = str(value.summary) || str(value.dek);
   return {
-    id: str(value.id) || createId(type),
-    type,
-    label: str(value.label),
-    summary: str(value.summary),
+    id,
+    type: "menu-shelf",
+    heading: label,
+    items: [{ id: createId("item"), label, href: str(value.href) || "/", dek: summary }],
   };
 }
 
@@ -190,12 +264,12 @@ export function normalizeDoc(value: unknown): Doc {
     slug,
     kicker: str(value.kicker),
     dek: str(value.dek),
-    byline: str(value.byline),
+    status: value.status === "published" ? "published" : "draft",
     updatedAt: str(value.updatedAt) || new Date().toISOString(),
-  };
+  } as const;
   if (kind === "article") {
     if (!Array.isArray(value.blocks)) throw new Error('The article has no "blocks" list.');
-    const doc: ArticleDoc = { ...base, kind, blocks: value.blocks.map(normalizeBlock) };
+    const doc: ArticleDoc = { ...base, kind, byline: str(value.byline), blocks: value.blocks.map(normalizeBlock) };
     assertUniqueIds(doc.blocks.map((block) => block.id));
     return doc;
   }

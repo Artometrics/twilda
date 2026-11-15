@@ -18,7 +18,7 @@ This repository previously held a different product, an Expo novel workspace. Th
 - Not a hosted CMS, and not a paid plan. Nothing here asks you to create an account.
 - Not a freeform page builder. Sections are prepared types, not a canvas.
 - Not part of the production site. The editor never runs inside `astro build`, and the build does not enable SSR to carry it.
-- Not wired to twilda.com, Netlify, or the Artometrics site. There is no deploy script. Firebase Hosting serves `dist/` with the headers in `firebase.json`. See [examples/hosting/README.md](examples/hosting/README.md).
+- Not wired to artometrics.com. There is no `npm run deploy`. GitHub Actions deploy three noindex Firebase Hosting sites when a commit lands on `main`: the Field Desk magazine (`twilda-510519`), the marketing site (`twilda-landing`), and the phone desk (`twilda-desk-510519`). See [examples/hosting/README.md](examples/hosting/README.md).
 - Not the previous Expo app. Do not look for Supabase, React Native, or the novel workspace on this branch.
 
 ## Demo
@@ -31,9 +31,43 @@ Node.js 22 or newer.
 
 ```bash
 npm install
+npm run build:packages
 ```
 
-No environment file is required. Do not copy credentials from the old app into this repo.
+`npm install` links the workspaces `@twilda/core` and `@twilda/astro`. They are Apache-2.0 and not `private`. This branch does not publish them to npm. No environment file is required. Do not copy credentials from the old app into this repo.
+
+### Use Twilda from another Astro site
+
+Until the packages are on npm, install them from a checkout:
+
+```bash
+npm install ../twilda/packages/core ../twilda/packages/astro
+```
+
+Content for that integration lives in `articles/` and `pages/` under the directory you pass.
+
+```ts
+import { defineConfig } from "astro/config";
+import { twilda } from "@twilda/astro";
+
+export default defineConfig({
+  output: "static",
+  integrations: [twilda({ contentDir: "./content" })],
+});
+```
+
+A page can read the published documents:
+
+```astro
+---
+import { loadPublished, renderDocument } from "twilda:content";
+const home = loadPublished().pages.find((page) => page.slug === "home");
+if (!home) throw new Error("No published home page.");
+---
+<Fragment set:html={renderDocument(home)} />
+```
+
+`twilda()` throws if `output` is anything other than `"static"`. It does not add an adapter.
 
 ## Develop
 
@@ -66,14 +100,16 @@ npm run build
 npm run check:static
 ```
 
-GitHub Actions runs those four commands on pull requests and on this branch. The workflow does not deploy.
+GitHub Actions runs those four commands on pull requests and on this branch. That CI workflow does not deploy. `.github/workflows/firebase-deploy.yml`, `firebase-deploy-www.yml`, and `firebase-deploy-desk.yml` deploy when a commit is merged to `main`.
 
 ## Layout
 
 | Path | Role |
 | --- | --- |
 | `content/` | Git content. Draft and published JSON. |
-| `src/` | Astro site: pages, section HTML, schema, content store. |
+| `src/` | Astro site: pages, section HTML, content store. The section schema is `@twilda/core`. |
+| `packages/core/` | `@twilda/core`. Article blocks, page sections, storage interface. |
+| `packages/astro/` | `@twilda/astro`. The `twilda()` integration. |
 | `editor/` | Vite + React desk. Dev only. |
 | `packages/editor/` | The phone-first desk: new, edit, save, preview, export to Astro MDX or Markdown. Own `package.json`. Hosted on site `twilda-desk-510519`. `/desk` on the magazine site redirects there. |
 | `drafts/artometrics/` | Three DRAFT sample articles (real public facts, cited, `[VERIFY]` notes) that the phone desk seeds on first visit. Not in `content/`. |

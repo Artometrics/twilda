@@ -77,7 +77,7 @@ The phone structure follows a reorder list (a grip on the row, one primary actio
 
 ## Stubbed until the other packages land
 
-- Document types in `src/model.ts` are local. Page sections store a label and a summary, not the nested slides, tiles, and fact rows in `src/schema/sections.ts`. Swap `src/contract.ts` and `src/model.ts` for `@twilda/core` when `cursor/twilda-core-types` is available, and keep the screens.
+- Document types in `src/model.ts` are the `@twilda/core` article blocks and page sections. `src/contract.ts` is still the desk's storage method list.
 - The chart block is a link to a chart that already exists (for example an Artometrics chart page), alt text, and a caption. It does not embed a charting library. The proof shows a ruled stand-in unless the link is an image.
 - Video and audio blocks store a path and a caption. The sample does not ship media files for them.
 - Nothing here writes `content/` in the repository or opens a pull request. Publishing writes a published copy into the browser store. To ship an article, export it and commit the file.

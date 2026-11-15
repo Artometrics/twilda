@@ -42,3 +42,4 @@ export {
 } from "./sample";
 export { clearBrowserDemo, openBrowserDemo, openMemoryDemo } from "./browser-demo";
 export { loadContentTree, type LoadedContent } from "./load";
+export { migrateFieldDeskDocument } from "./migrate";

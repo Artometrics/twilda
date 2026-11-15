@@ -39,7 +39,7 @@ Page sections: `carousel` (the sample home page has 5 slides; the schema allows 
 
 `id` and `slug` match. Links are site paths or `http(s)` URLs. `javascript:` is rejected.
 
-The localhost desk still uses the older section list in `src/schema/sections.ts` (`pull-quote`, `headline-facts`, and so on). That file is the Field Desk contract. It is not the phone contract.
+The localhost Field Desk and the phone desk both use `packages/core/src/schema.ts`. Field Desk still stores one folder per document (`content/<id>/draft.json` and `published.json`). The phone contract's file layout (`content/articles/<slug>.json` and `content/pages/<slug>.json`) is unchanged. Older Field Desk section names were migrated into these blocks and sections.
 
 ## Draft, preview, publish
 
@@ -128,5 +128,5 @@ Unverified items are marked.
 4. GitHub device flow and contents writes are tested with a fake `fetch` only. Real GitHub behavior is unverified. There is no client id in the repo.
 5. A branch preview build in CI is not implemented. The phone preview is a client-side render.
 6. IndexedDB quota on a phone was not measured. Uploads are rejected over 1.5 MB. A full store throws `persist-failed`.
-7. The localhost desk and the phone contract are different JSON shapes. Migrating Field Desk is not done.
+7. Field Desk sample JSON has been migrated onto `@twilda/core`. The two editors still use different file layouts (`draft.json` beside `published.json`, versus one JSON file per article or page).
 8. Shipping this editor onto artometrics.com is out of scope. Preview branches of that site are not created by this repo.

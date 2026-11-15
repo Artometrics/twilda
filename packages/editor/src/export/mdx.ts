@@ -151,29 +151,24 @@ function renderBlock(ctx: Context, block: Block): string {
     case "paragraph":
       return paragraphs(block.text).map(escapeText).join("\n\n");
     case "key-findings": {
-      const findings = block.findings.filter((item) => item.label.trim() || item.detail.trim());
+      const findings = block.items.map((item) => item.trim()).filter(Boolean);
       if (findings.length === 0) return "";
       if (mdx) {
         ctx.used.add("KeyFindings");
-        const items = findings.map((item) => `{ label: ${quote(oneLine(item.label))}, detail: ${quote(oneLine(item.detail))} }`);
+        const items = findings.map((item) => quote(oneLine(item)));
         const title = block.title.trim() ? ` title={${quote(oneLine(block.title))}}` : "";
         return `<KeyFindings${title} items={[\n  ${items.join(",\n  ")},\n]} />`;
       }
-      const list = findings.map((item) => {
-        const label = oneLine(item.label);
-        const detail = oneLine(item.detail);
-        if (label && detail) return `- **${escapeText(label)}:** ${escapeText(detail)}`;
-        return `- ${escapeText(label || detail)}`;
-      });
+      const list = findings.map((item) => `- ${escapeText(oneLine(item))}`);
       const head = block.title.trim() ? `### ${escapeText(oneLine(block.title))}\n\n` : "";
       return `${head}${list.join("\n")}`;
     }
     case "chart": {
-      const src = safeHref(block.src);
+      const src = safeHref(block.dataPath);
       if (mdx) {
         return component(ctx, "Chart", {
           title: oneLine(block.title),
-          src,
+          dataPath: block.dataPath.trim(),
           alt: oneLine(block.alt),
           caption: oneLine(block.caption),
         });
@@ -183,6 +178,7 @@ function renderBlock(ctx: Context, block: Block): string {
       if (block.caption.trim()) parts.push(escapeText(oneLine(block.caption)));
       const lines = [`> ${parts.join(" ")}`];
       if (src) lines.push(">", `> [Open the chart](${encodeDestination(src)})`);
+      else if (block.dataPath.trim()) lines.push(">", `> Data: ${escapeText(oneLine(block.dataPath))}`);
       return lines.join("\n");
     }
     case "callout": {
@@ -203,7 +199,8 @@ function renderBlock(ctx: Context, block: Block): string {
         const href = safeHref(item.href);
         return `${index + 1}. ${href ? `[${label}](${encodeDestination(href)})` : label}`;
       });
-      return `## Sources\n\n${list.join("\n")}`;
+      const title = oneLine(block.title) || "Sources";
+      return `## ${escapeText(title)}\n\n${list.join("\n")}`;
     }
     case "image": {
       const ref = resolveImage(ctx, block.src);
@@ -213,14 +210,13 @@ function renderBlock(ctx: Context, block: Block): string {
       const caption = oneLine(block.caption);
       return caption ? `${image}\n\n*${escapeText(caption)}*` : image;
     }
-    case "video":
-    case "audio": {
+    case "embed": {
       const src = safeHref(block.src);
-      const caption = oneLine(block.caption);
-      if (!src) return comment(ctx, `${block.type} block ${block.id} has no usable link`);
-      const label = block.type === "video" ? "Video" : "Audio";
+      const caption = oneLine(block.caption || block.title);
+      if (!src) return comment(ctx, `${block.kind} block ${block.id} has no usable link`);
+      const label = block.kind === "audio" ? "Audio" : "Video";
       if (mdx) {
-        const tag = block.type === "video" ? "video" : "audio";
+        const tag = block.kind === "audio" ? "audio" : "video";
         const player = `<${tag} controls src={${quote(src)}} />`;
         return caption ? `${player}\n\n*${escapeText(caption)}*` : player;
       }

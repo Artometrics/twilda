@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { SECTION_CATALOG } from "../../src/schema/templates";
-import type { ContentDocument, SectionType } from "../../src/schema/sections";
+import type { TwildaDocument } from "@twilda/core";
+import { PART_CATALOG, type PartType } from "../../src/schema/templates";
 
 export function AddDialog({
   open,
@@ -9,9 +9,9 @@ export function AddDialog({
   onPick,
 }: {
   open: boolean;
-  kind: ContentDocument["kind"];
+  kind: TwildaDocument["kind"];
   onClose: () => void;
-  onPick: (type: SectionType) => void;
+  onPick: (type: PartType) => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
 
@@ -22,15 +22,10 @@ export function AddDialog({
     if (!open && element.open) element.close();
   }, [open]);
 
-  const entries = SECTION_CATALOG.filter((entry) => entry.kinds.includes(kind));
+  const entries = PART_CATALOG.filter((entry) => entry.kinds.includes(kind));
 
   return (
-    <dialog
-      ref={dialog}
-      className="dialog"
-      onClose={onClose}
-      aria-labelledby="add-section-title"
-    >
+    <dialog ref={dialog} className="dialog" onClose={onClose} aria-labelledby="add-section-title">
       <h2 id="add-section-title">Add a prepared section</h2>
       <p>These are the section types prepared for this {kind}. The desk does not draw freeform blocks.</p>
       <div className="catalog">

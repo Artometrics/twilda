@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
+import { documentSchema, type TwildaDocument } from "@twilda/core";
 import { contentFingerprint } from "../src/schema/fingerprint";
 import { moveItem } from "../src/schema/reorder";
-import { documentSchema, type ContentDocument } from "../src/schema/sections";
-import { createSection } from "../src/schema/templates";
-import { readFileSync } from "node:fs";
+import { createPart } from "../src/schema/templates";
 
-function page(sections: ContentDocument["sections"]): ContentDocument {
+function page(sections: Extract<TwildaDocument, { kind: "page" }>["sections"]): TwildaDocument {
   return documentSchema.parse({
     id: "home",
     kind: "page",
@@ -14,7 +14,7 @@ function page(sections: ContentDocument["sections"]): ContentDocument {
     slug: "home",
     dek: "Demo",
     kicker: "Issue",
-    byline: "",
+    status: "published",
     updatedAt: "2026-11-09T16:00:00.000Z",
     sections,
   });
@@ -25,10 +25,13 @@ describe("sections", () => {
     const raw = JSON.parse(readFileSync("content/home/published.json", "utf8")) as unknown;
     const doc = documentSchema.parse(raw);
     assert.equal(doc.kind, "page");
+    if (doc.kind !== "page") return;
     assert.deepEqual(
       doc.sections.map((section) => section.type),
-      ["carousel", "story-grid", "magazine-feature", "headline-facts", "category-tiles"],
+      ["carousel", "story-grid", "story-grid", "menu-shelf", "story-grid"],
     );
+    assert.match(JSON.stringify(doc), /Doors into the issue/);
+    assert.match(JSON.stringify(doc), /Lumen Rail keeps the night timetable public/);
   });
 
   it("rejects a body block on a page", () => {
@@ -37,8 +40,9 @@ describe("sections", () => {
       kind: "page",
       title: "Field Desk",
       slug: "home",
+      status: "draft",
       updatedAt: "2026-11-09T16:00:00.000Z",
-      sections: [createSection("paragraph")],
+      sections: [createPart("paragraph")],
     });
     assert.equal(result.success, false);
   });
@@ -49,14 +53,15 @@ describe("sections", () => {
       kind: "article",
       title: "Note",
       slug: "note",
+      status: "draft",
       updatedAt: "2026-11-09T16:00:00.000Z",
-      sections: [createSection("carousel")],
+      blocks: [createPart("carousel")],
     });
     assert.equal(result.success, false);
   });
 
   it("moves a section without dropping the others", () => {
-    const sections = [createSection("heading"), createSection("paragraph"), createSection("list")];
+    const sections = [createPart("heading"), createPart("paragraph"), createPart("callout")];
     const moved = moveItem(sections, 0, 2);
     assert.deepEqual(
       moved.map((section) => section.id),
@@ -66,7 +71,8 @@ describe("sections", () => {
   });
 
   it("ignores updatedAt when comparing content", () => {
-    const first = page([createSection("headline-facts")]);
+    const shelf = createPart("menu-shelf");
+    const first = page([shelf]);
     const second = { ...first, updatedAt: "2026-11-09T18:00:00.000Z" };
     assert.equal(contentFingerprint(first), contentFingerprint(second));
     assert.notEqual(contentFingerprint(first), contentFingerprint({ ...first, title: "Other" }));

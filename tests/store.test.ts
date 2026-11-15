@@ -5,8 +5,8 @@ import path from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { ContentError, listPublished, publishDocument, readDraft, readPublished, revertDraft, saveDraft } from "../src/content/store";
 import { contentFingerprint } from "../src/schema/fingerprint";
-import type { ContentDocument } from "../src/schema/sections";
-import { createSection } from "../src/schema/templates";
+import type { TwildaDocument } from "@twilda/core";
+import { createPart } from "../src/schema/templates";
 
 const roots: string[] = [];
 
@@ -16,7 +16,7 @@ async function tempRoot(): Promise<string> {
   return root;
 }
 
-function sample(id = "desk-note"): ContentDocument {
+function sample(id = "desk-note"): TwildaDocument {
   return {
     id,
     kind: "article",
@@ -25,8 +25,9 @@ function sample(id = "desk-note"): ContentDocument {
     dek: "A note",
     kicker: "Note",
     byline: "Desk",
+    status: "draft",
     updatedAt: "2026-11-09T16:00:00.000Z",
-    sections: [createSection("paragraph"), createSection("callout")],
+    blocks: [createPart("paragraph"), createPart("callout")],
   };
 }
 
@@ -69,9 +70,6 @@ describe("content store", () => {
     const root = await tempRoot();
     assert.throws(() => saveDraft({ ...sample(), id: "../outside" }, root), ContentError);
     publishDocument(sample("alpha"), root);
-    assert.throws(
-      () => publishDocument({ ...sample("beta"), slug: "alpha" }, root),
-      /already used/,
-    );
+    assert.throws(() => publishDocument({ ...sample("beta"), slug: "alpha" }, root), /slug must match id/);
   });
 });

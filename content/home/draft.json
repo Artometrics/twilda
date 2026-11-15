@@ -5,7 +5,7 @@
   "slug": "home",
   "dek": "A sample issue assembled from prepared sections. Field Desk is demo content for Twilda CMS, not a live magazine.",
   "kicker": "Demo issue 01",
-  "byline": "",
+  "status": "draft",
   "updatedAt": "2026-11-09T16:00:00.000Z",
   "sections": [
     {
@@ -46,70 +46,109 @@
       "id": "issue-grid",
       "type": "story-grid",
       "kicker": "The desk",
-      "lead": {
-        "kicker": "Lead",
-        "title": "A franchise page is a stack, not a canvas",
-        "dek": "Carousel, grid, feature, facts, and tiles are prepared. The writer reorders them. The static build prints whatever was published.",
-        "href": "/articles/lumen-rail",
-        "image": "/media/plate-carriage.svg",
-        "imageAlt": "Geometric plate of four carriage windows",
-        "byline": "Sample · Field Desk"
-      },
+      "heading": "A franchise page is a stack, not a canvas",
       "stories": [
+        {
+          "id": "issue-grid-lead",
+          "kicker": "Lead",
+          "title": "A franchise page is a stack, not a canvas",
+          "dek": "Carousel, grid, feature, facts, and tiles are prepared. The writer reorders them. The static build prints whatever was published. Sample · Field Desk",
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-carriage.svg",
+          "imageAlt": "Geometric plate of four carriage windows"
+        },
         {
           "id": "short-concession",
           "kicker": "Form",
           "title": "The concession fits on one article",
           "dek": "Headings, paragraphs, a quote, a figure, a list, and a note.",
-          "href": "/articles/lumen-rail"
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-carriage.svg",
+          "imageAlt": "Geometric plate of four carriage windows"
         },
         {
           "id": "short-facts",
           "kicker": "Facts",
           "title": "Numbers sit in a table, not in the prose",
           "dek": "Gauge, stations, and the night span are fields.",
-          "href": "/articles/lumen-rail"
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-carriage.svg",
+          "imageAlt": "Geometric plate of four carriage windows"
         },
         {
           "id": "short-tiles",
           "kicker": "Doors",
           "title": "Tiles are section doors",
           "dek": "They link into the issue. They are not free-floating widgets.",
-          "href": "/articles/lumen-rail"
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-carriage.svg",
+          "imageAlt": "Geometric plate of four carriage windows"
         }
       ]
     },
     {
       "id": "issue-feature",
-      "type": "magazine-feature",
+      "type": "story-grid",
       "kicker": "Feature",
-      "title": "Franchise: Lumen Rail",
-      "dek": "Written as a desk template. The city, the concession, and the night span are fiction for this demo.",
-      "byline": "Desk sample",
-      "href": "/articles/lumen-rail",
-      "image": "/media/plate-night.svg",
-      "imageAlt": "Geometric night plate with a moon and signal posts"
+      "heading": "Franchise: Lumen Rail",
+      "stories": [
+        {
+          "id": "issue-feature-story",
+          "kicker": "Feature",
+          "title": "Franchise: Lumen Rail",
+          "dek": "Written as a desk template. The city, the concession, and the night span are fiction for this demo. Desk sample",
+          "href": "/articles/lumen-rail",
+          "image": "/media/plate-night.svg",
+          "imageAlt": "Geometric night plate with a moon and signal posts"
+        }
+      ]
     },
     {
       "id": "issue-facts",
-      "type": "headline-facts",
-      "kicker": "At a glance",
-      "headline": "What the sample concession claims",
-      "dek": "These figures belong to the demo issue. They are not scraped from a live magazine.",
-      "facts": [
-        { "id": "fact-year", "label": "Opened in the story", "value": "1978" },
-        { "id": "fact-gauge", "label": "Gauge", "value": "1,435 mm" },
-        { "id": "fact-stations", "label": "Stations", "value": "24" },
-        { "id": "fact-span", "label": "Night span", "value": "18 min" }
+      "type": "menu-shelf",
+      "heading": "What the sample concession claims",
+      "items": [
+        {
+          "id": "issue-facts-dek",
+          "label": "At a glance",
+          "href": "/articles/home",
+          "dek": "These figures belong to the demo issue. They are not scraped from a live magazine."
+        },
+        {
+          "id": "fact-year",
+          "label": "Opened in the story",
+          "href": "/articles/home",
+          "dek": "1978"
+        },
+        {
+          "id": "fact-gauge",
+          "label": "Gauge",
+          "href": "/articles/home",
+          "dek": "1,435 mm"
+        },
+        {
+          "id": "fact-stations",
+          "label": "Stations",
+          "href": "/articles/home",
+          "dek": "24"
+        },
+        {
+          "id": "fact-span",
+          "label": "Night span",
+          "href": "/articles/home",
+          "dek": "18 min"
+        }
       ]
     },
     {
       "id": "issue-tiles",
-      "type": "category-tiles",
+      "type": "story-grid",
+      "kicker": "",
       "heading": "Doors into the issue",
-      "tiles": [
+      "stories": [
         {
           "id": "tile-franchise",
+          "kicker": "",
           "title": "Franchise",
           "dek": "The concession, told in blocks.",
           "href": "/articles/lumen-rail",
@@ -118,6 +157,7 @@
         },
         {
           "id": "tile-yard",
+          "kicker": "",
           "title": "Yard",
           "dek": "Where the cars wait.",
           "href": "/articles/lumen-rail",
@@ -126,6 +166,7 @@
         },
         {
           "id": "tile-timetable",
+          "kicker": "",
           "title": "Timetable",
           "dek": "The night sheet is public.",
           "href": "/articles/lumen-rail",
@@ -134,6 +175,7 @@
         },
         {
           "id": "tile-riders",
+          "kicker": "",
           "title": "Riders",
           "dek": "What the platform holds.",
           "href": "/articles/lumen-rail",

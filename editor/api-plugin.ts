@@ -10,7 +10,9 @@ import {
   revertDraft,
   saveDraft,
 } from "../src/content/store";
-import { documentSchema, type ContentDocument } from "../src/schema/sections";
+import { documentSchema, type TwildaDocument } from "@twilda/core";
+
+type ContentDocument = TwildaDocument;
 
 function parseIncoming(raw: unknown, id: string): ContentDocument {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {

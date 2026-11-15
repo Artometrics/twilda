@@ -16,18 +16,17 @@ function textOf(block: Block): string[] {
     case "paragraph":
       return [block.text];
     case "key-findings":
-      return [block.title, ...block.findings.flatMap((item) => [item.label, item.detail])];
+      return [block.title, ...block.items];
     case "chart":
-      return [block.title, block.caption, block.alt, block.src];
+      return [block.title, block.caption, block.alt, block.dataPath];
     case "callout":
       return [block.title, block.text];
     case "sources":
-      return block.items.flatMap((item) => [item.label, item.href]);
+      return [block.title, ...block.items.flatMap((item) => [item.label, item.href])];
     case "image":
       return [block.alt, block.caption, block.src];
-    case "video":
-    case "audio":
-      return [block.caption, block.src];
+    case "embed":
+      return [block.title, block.caption, block.src];
     case "download":
       return [block.label, block.href, block.description ?? ""];
     default:
@@ -99,7 +98,7 @@ export function checkArticle(doc: ArticleDoc): Issue[] {
         else if (!block.alt.trim()) out.push({ level: "warn", message: "An image has no alt text.", blockId: block.id });
         break;
       case "chart":
-        if (!safeHref(block.src)) out.push({ level: "warn", message: `Chart "${block.title}" has no usable embed link.`, blockId: block.id });
+        if (!block.dataPath.trim()) out.push({ level: "warn", message: `Chart "${block.title}" has no CSV path.`, blockId: block.id });
         if (!block.alt.trim()) out.push({ level: "warn", message: `Chart "${block.title}" has no alt text.`, blockId: block.id });
         break;
       case "sources":

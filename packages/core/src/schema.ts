@@ -70,13 +70,26 @@ export const keyFindingsBlockSchema = z.object({
   items: z.array(requiredText(300)).min(1).max(12),
 });
 
+const chartDataPath = z
+  .string()
+  .min(1)
+  .max(400)
+  .refine(
+    (value) =>
+      /^content\/data\/[a-z0-9][a-z0-9._-]*\.csv$/.test(value) ||
+      value.startsWith("https://") ||
+      value.startsWith("http://"),
+    "Chart data must be a CSV under content/data/ or an http(s) URL.",
+  );
+
 export const chartBlockSchema = z.object({
   id,
   type: z.literal("chart"),
-  /** Repo path of a CSV, for example content/data/franchise-revenue-mix.csv. */
-  dataPath: z
-    .string()
-    .regex(/^content\/data\/[a-z0-9][a-z0-9._-]*\.csv$/, "Chart data must be a CSV under content/data/."),
+  /**
+   * CSV under content/data/, or an http(s) URL for a chart that is not a file in the repo.
+   * Example: content/data/franchise-revenue-mix.csv
+   */
+  dataPath: chartDataPath,
   alt: requiredText(300),
   title: requiredText(180),
   caption: shortText(400),

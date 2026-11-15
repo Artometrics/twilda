@@ -12,6 +12,7 @@ const article: ArticleDoc = {
   kicker: "Franchise",
   dek: "A sample.",
   byline: "Desk",
+  status: "draft",
   updatedAt: "2026-11-09T18:30:00.000Z",
   blocks: [
     { id: "h-concession", type: "heading", level: 2, text: "The concession" },
@@ -27,11 +28,42 @@ const page: PageDoc = {
   slug: "home",
   kicker: "Issue",
   dek: "Sample issue.",
-  byline: "",
+  status: "draft",
   updatedAt: "2026-11-09T16:00:00.000Z",
   sections: [
-    { id: "issue-carousel", type: "carousel", label: "In this issue", summary: "Leads." },
-    { id: "issue-grid", type: "story-grid", label: "The desk", summary: "A stack." },
+    {
+      id: "issue-carousel",
+      type: "carousel",
+      label: "In this issue",
+      slides: [
+        {
+          id: "slide-1",
+          kicker: "",
+          title: "Leads.",
+          dek: "",
+          href: "/",
+          image: "/media/plate-signal.svg",
+          imageAlt: "Plate",
+        },
+      ],
+    },
+    {
+      id: "issue-grid",
+      type: "story-grid",
+      kicker: "The desk",
+      heading: "A stack.",
+      stories: [
+        {
+          id: "story-1",
+          kicker: "",
+          title: "A stack.",
+          dek: "",
+          href: "/",
+          image: "/media/plate-signal.svg",
+          imageAlt: "Plate",
+        },
+      ],
+    },
   ],
 };
 
@@ -109,14 +141,18 @@ describe("editor reducer", () => {
   });
 
   it("adds, edits, reorders, and removes prepared page sections", () => {
-    const section = createSection("category-tiles", "issue-tiles");
+    const section = createSection("menu-shelf", "issue-tiles");
+    assert.equal(section.type, "menu-shelf");
+    if (section.type !== "menu-shelf") return;
     const added = editorReducer(opened(page), { type: "add-section", section });
-    assert.equal(added.draft?.kind === "page" && added.draft.sections.at(-1)?.label, "Sections");
+    const addedLast = added.draft?.kind === "page" ? added.draft.sections.at(-1) : undefined;
+    assert.equal(addedLast?.type === "menu-shelf" && addedLast.heading, "Sections");
     const edited = editorReducer(added, {
       type: "update-section",
-      section: { ...section, label: "The doors" },
+      section: { ...section, heading: "The doors" },
     });
-    assert.equal(edited.draft?.kind === "page" && edited.draft.sections.at(-1)?.label, "The doors");
+    const editedLast = edited.draft?.kind === "page" ? edited.draft.sections.at(-1) : undefined;
+    assert.equal(editedLast?.type === "menu-shelf" && editedLast.heading, "The doors");
     const moved = editorReducer(edited, { type: "move-section", id: "issue-tiles", to: 0 });
     assert.equal(moved.draft?.kind === "page" && moved.draft.sections[0]?.id, "issue-tiles");
     const removed = editorReducer(moved, { type: "remove-section", id: "issue-tiles" });
