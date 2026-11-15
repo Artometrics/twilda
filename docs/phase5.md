@@ -12,7 +12,7 @@ Follows [phase4.md](phase4.md). Phase 5 lets a Twilda page **collect** something
 | Default is fully shut. | No `forms` setting means `form-action 'none'`, `connect-src 'none'`, `script-src 'none'`: the exact policy `firebase.json` pins and `tests/csp.test.ts` checks. |
 | A live form is a real `<form method="post">` with an `action`. | It works with JavaScript off. The script only adds validation and a nicer answer. |
 | Two modes, `fetch` and `post`. | Many automation webhooks cannot be read by a browser (no CORS). `post` works with anything and keeps `connect-src 'none'`. |
-| The preview is always inert. | The desk, the click-to-edit build and the starters' edit builds render with `preview: true`: the fieldset is disabled, there is no `action` and no script. A draft can never post by accident. |
+| The preview is always inert. | The desk and the click-to-edit build render with `preview: true` (`previewOptionsFor`): the fieldset is disabled, there is no `action` and no script. A draft can never post by accident. |
 | The receiver is a separate package that core never imports. | Owning the receiving end is useful but optional, and it brings platform code (Workers, Firebase) that a static site should not carry. |
 
 ## What changed for the contract
