@@ -49,6 +49,7 @@ Nothing a contributor does in the desk reaches the live site without a merge. A 
 - Embeds are YouTube and Vimeo only. The player URL is rebuilt from a validated video id on a fixed `youtube-nocookie.com` or `player.vimeo.com` origin, and the iframe carries a `sandbox` attribute and a `referrerpolicy`. The embed string in content is never printed.
 - Images in documents are a repo path under `/media/<name>` or a raster `data:image/(png|jpeg|gif|webp);base64,` URL. SVG in a data URL is refused (a finding fixed in Phase 3).
 - Theme settings are two closed font lists and six six-digit hex colors. A theme value is never concatenated into CSS. CSS custom properties are written from the validated list only.
+- Phase 4 added eleven page sections and three blocks, with a second, wider link kind (`actionHref`: a site path, `http(s)`, or a bare `mailto:address`, never a query, a second address, or a punycode host). Only the new section buttons use it. Bar charts are classes (`bar-w-0` to `bar-w-100`), not inline style or SVG, and a lead form is a link to an outside page because `form-action` is `'none'`. `tests/security/modes-xss.test.ts` runs every payload through every string of every new part.
 - Tests: `tests/security/xss.test.ts` (a payload in every string field of every block and section type), `marks.test.ts`, `links.test.ts`, `theme-css.test.ts`.
 
 ### Content-Security-Policy and headers

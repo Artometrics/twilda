@@ -21,6 +21,17 @@ This repository previously held a different product, an Expo novel workspace. Th
 - Not wired to artometrics.com. There is no `npm run deploy`. GitHub Actions deploy three noindex Firebase Hosting sites when a commit lands on `main`: the Field Desk magazine (`twilda-510519`), the marketing site (`twilda-landing`), and the phone desk (`twilda-desk`). See [examples/hosting/README.md](examples/hosting/README.md).
 - Not the previous Expo app. Do not look for Supabase, React Native, or the novel workspace on this branch.
 
+## Modes and starters
+
+A site has a **mode**: corporate, magazine, or lead generation. A mode is a section library, theme tokens, and a default masthead, chosen in the desk (Theme, then Mode) or in `content/site.json`. [docs/choose-a-mode.md](docs/choose-a-mode.md) says which to pick.
+
+```bash
+npm run starter:dev -- corporate                       # run examples/starter-corporate on :4321
+npm run create:twilda -- ../my-site --mode leadgen     # scaffold your own, then: cd ../my-site && npm install && npm run dev
+```
+
+Starters are in `examples/starter-corporate`, `starter-magazine`, and `starter-leadgen`. Nothing is published to npm. See [docs/phase4.md](docs/phase4.md).
+
 ## Demo
 
 The checked-in issue is **Field Desk**, original sample fiction about a made-up operator called Lumen Rail. It is not Artometrics copy. The article draft has one extra note that the published file omits, so the desk opens with unpublished changes on that document.

@@ -30,6 +30,19 @@ Every section has `id` and `type`. Ids are stable so the desk can reorder withou
 | `carousel` | Sideways row of leads | `label`, `slides[]` of kicker, title, dek, href, image, imageAlt |
 | `story-grid` | Story cards | `kicker`, `heading`, `stories[]` with image and imageAlt |
 | `menu-shelf` | A heading and a list of links | `heading`, `items[]` of label, href, dek |
+| `hero` | Opening headline and up to two buttons | `kicker`, `title`, `dek`, `primaryLabel`, `primaryHref`, `secondaryLabel`, `secondaryHref`, `image`, `imageAlt` |
+| `feature-grid` | Benefits or features, 1 to 12 | `kicker`, `heading`, `intro`, `items[]` of label, title, text |
+| `team` | People, 1 to 12 | `kicker`, `heading`, `intro`, `members[]` of name, role, bio, image, imageAlt |
+| `pricing` | Plans, 1 to 4 | `kicker`, `heading`, `intro`, `tiers[]` of name, price, period, summary, features, ctaLabel, ctaHref, featured |
+| `testimonials` | Quotes, 1 to 6 | `kicker`, `heading`, `intro`, `items[]` of quote, name, role |
+| `contact` | Ways to reach a person, 1 to 6 | `kicker`, `heading`, `intro`, `address`, `channels[]` of label, value, href |
+| `social-proof` | Numbers and names | `kicker`, `heading`, `intro`, `stats[]` of value, label, `brands[]` |
+| `cta` | One call to action | `kicker`, `heading`, `text`, `buttonLabel`, `buttonHref`, `note`, `asks[]` |
+| `cover-story` | The lead story on a magazine front | `kicker`, `title`, `dek`, `byline`, `href`, `linkLabel`, `image`, `imageAlt` |
+| `category-grid` | Browse by topic, 1 to 12 | `kicker`, `heading`, `categories[]` of label, dek, href, count |
+| `fast-facts` | Square number tiles, 1 to 8 | `kicker`, `heading`, `facts[]` of value, label |
+
+The new sections (from `hero` down) belong to modes. See [choose-a-mode.md](choose-a-mode.md). Their buttons and links accept a site path, an `https://` address, or a bare `mailto:` address. A page that starts with a `hero` or `cover-story` prints that section's title as its `h1`.
 
 ## Article sections
 
@@ -44,12 +57,19 @@ Every section has `id` and `type`. Ids are stable so the desk can reorder withou
 | `image` | Plate and caption | `src`, `alt`, `caption`, `role` `banner` or `figure` |
 | `embed` | Video or audio link | `kind`, `src`, `title`, `caption` |
 | `download` | A file the reader can take | `href`, `label`, `description` |
+| `fast-facts` | Square number tiles, 1 to 6 | `title`, `facts[]` of value, label |
+| `pull-quote` | A quote set apart | `quote`, `attribution` |
+| `bar-chart` | Inline bars, 2 to 12, no data file | `title`, `alt`, `unit`, `caption`, `bars[]` of label and value (a plain decimal string) |
 
-A page cannot contain article body blocks. An article cannot contain a carousel, story grid, or menu shelf. The schema rejects the mismatch. The Field Desk sample was migrated from the older names (`pull-quote`, `figure`, `list`, `headline-facts`, `magazine-feature`, `category-tiles`) without dropping the sentences.
+A page cannot contain article body blocks. An article cannot contain a page section. The schema rejects the mismatch. The Field Desk sample was migrated from the older names (`pull-quote`, `figure`, `list`, `headline-facts`, `magazine-feature`, `category-tiles`) without dropping the sentences.
 
 ## Links and images
 
 The renderer escapes text. Links must be site-relative paths such as `/articles/lumen-rail`. Other URLs, including `javascript:` and protocol-relative URLs, render as `#`. Images must be `/media/<name>.svg` files in `public/media`. The demo plates are original geometric drawings.
+
+## Site settings
+
+`content/site.json` holds the masthead, theme tokens, and `mode` (`corporate`, `magazine`, or `leadgen`; absent means magazine). The mode picks the section library the desk offers. It does not change how any document renders beyond the masthead.
 
 ## Files
 

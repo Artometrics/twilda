@@ -60,6 +60,9 @@ jobs:
       - name: Click-to-edit prototype (390px and desktop)
         run: npm run test:e2e:edit
 
+      - name: Starters at 320, 390, and 1280 px under the production policy
+        run: npm run test:e2e:starters
+
   desk:
     runs-on: ubuntu-latest
     timeout-minutes: 20

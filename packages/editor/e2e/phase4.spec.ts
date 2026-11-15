@@ -69,6 +69,10 @@ test.describe("phase 4: modes in the desk", () => {
     await expect(canvas.locator(".magazine.mode-leadgen")).toHaveCount(1);
     await expect(canvas.locator(".mast .mark")).toHaveText("Launchpad");
     await shot(page, "leadgen-switch");
+    await show(page, "edit");
+    await expect(page.getByTestId("toggle-team")).toHaveAttribute("aria-label", /outside this mode/);
+    await expect(page.getByTestId("toggle-hero")).not.toHaveAttribute("aria-label", /outside this mode/);
+    await expect(page.getByTestId("field-team-heading")).toBeVisible();
   });
 
   test("an edited masthead survives a mode switch", async ({ page }) => {

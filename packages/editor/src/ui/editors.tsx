@@ -12,10 +12,13 @@ import {
   type PageDoc,
   type PageSection,
 } from "../model";
-import { blockCatalogFor, sectionCatalogFor, type PresetId } from "@twilda/core";
+import { blockCatalogFor, inLibrary, sectionCatalogFor, type PresetId } from "@twilda/core";
 import { Field } from "./Field";
 import { GenericFields } from "./GenericFields";
 import { ItemFrame, ReorderList } from "./Reorder";
+
+/** Appended to a part the current mode does not offer. It still renders and edits. */
+const OUTSIDE = " (outside this mode)";
 
 function useCollapsed(ids: string[]) {
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
@@ -121,7 +124,7 @@ export function BlockEditor({
             id={block.id}
             index={index}
             count={doc.blocks.length}
-            label={blockLabel(block.type)}
+            label={`${blockLabel(block.type)}${inLibrary(mode, block.type, "article") ? "" : OUTSIDE}`}
             summary={blockSummary(block)}
             collapsed={collapsed.has(block.id)}
             onToggle={() => toggle(block.id)}
@@ -176,7 +179,7 @@ export function SectionEditor({
             id={section.id}
             index={index}
             count={doc.sections.length}
-            label={sectionLabel(section.type)}
+            label={`${sectionLabel(section.type)}${inLibrary(mode, section.type, "page") ? "" : OUTSIDE}`}
             summary={clip(sectionSummary(section))}
             collapsed={collapsed.has(section.id)}
             onToggle={() => toggle(section.id)}
