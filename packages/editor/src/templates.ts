@@ -294,7 +294,15 @@ export function createFromTemplate(input: NewDraftInput): Doc {
     status: "draft" as const,
   };
   if (template.kind === "page") {
-    const page: PageDoc = { ...base, kind: "page", sections: template.parts() as PageSection[] };
+    const sections = template.parts() as PageSection[];
+    const lead = sections[0];
+    if (lead && (lead.type === "hero" || lead.type === "cover-story")) {
+      // This section carries the page's h1, so the title the writer just typed has to land in it.
+      lead.title = title;
+      if (base.kicker) lead.kicker = base.kicker;
+      if (base.dek && base.dek.length <= 400) lead.dek = base.dek;
+    }
+    const page: PageDoc = { ...base, kind: "page", sections };
     return page;
   }
   const doc: ArticleDoc = {
