@@ -1,0 +1,15 @@
+{
+  "name": "@twilda/leads-inbox",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Optional, stateless receiver for Twilda forms and a read-only inbox. Templates only: nothing here is deployed by Twilda.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./cloudflare": "./src/cloudflare.ts",
+    "./firebase": "./src/firebase.ts"
+  },
+  "dependencies": {}
+}
