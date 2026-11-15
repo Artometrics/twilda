@@ -1,0 +1,123 @@
+{
+  "id": "home",
+  "kind": "page",
+  "title": "The Ledger: Issue 01",
+  "slug": "home",
+  "dek": "A sample magazine about money, cities, and the numbers behind both.",
+  "kicker": "Issue 01",
+  "status": "draft",
+  "updatedAt": "2026-11-15T00:00:00.000Z",
+  "sections": [
+    {
+      "id": "cover",
+      "type": "cover-story",
+      "kicker": "Cover story",
+      "title": "The city that stopped printing parking tickets",
+      "dek": "Eighteen months after Harrow turned off its enforcement cameras, the budget did not collapse. Here is what did change.",
+      "byline": "By Ines Marlowe",
+      "href": "/articles/parking-tickets",
+      "linkLabel": "Read the story",
+      "image": "/media/plate-map.svg",
+      "imageAlt": "Geometric plate: a folded city map"
+    },
+    {
+      "id": "numbers",
+      "type": "fast-facts",
+      "kicker": "At a glance",
+      "heading": "Harrow in four numbers",
+      "facts": [
+        {
+          "id": "n1",
+          "value": "-18%",
+          "label": "Downtown car trips"
+        },
+        {
+          "id": "n2",
+          "value": "$2.1M",
+          "label": "Ticket revenue lost"
+        },
+        {
+          "id": "n3",
+          "value": "31%",
+          "label": "More bus riders"
+        },
+        {
+          "id": "n4",
+          "value": "0",
+          "label": "Layoffs"
+        }
+      ]
+    },
+    {
+      "id": "latest",
+      "type": "story-grid",
+      "kicker": "Latest",
+      "heading": "Also this week",
+      "stories": [
+        {
+          "id": "s1",
+          "kicker": "Data",
+          "title": "Where the rent went",
+          "dek": "A decade of rent against wages in six mid-size cities.",
+          "href": "/articles/parking-tickets",
+          "image": "/media/plate-river.svg",
+          "imageAlt": "Geometric plate: a river"
+        },
+        {
+          "id": "s2",
+          "kicker": "Profile",
+          "title": "The last night bus",
+          "dek": "Route 9 runs until four. Who rides it?",
+          "href": "/articles/parking-tickets",
+          "image": "/media/plate-night.svg",
+          "imageAlt": "Geometric plate: a night scene"
+        },
+        {
+          "id": "s3",
+          "kicker": "Field notes",
+          "title": "Counting cars by hand",
+          "dek": "Why a city hired students with clickers.",
+          "href": "/articles/parking-tickets",
+          "image": "/media/plate-yard.svg",
+          "imageAlt": "Geometric plate: a rail yard"
+        }
+      ]
+    },
+    {
+      "id": "categories",
+      "type": "category-grid",
+      "kicker": "Sections",
+      "heading": "Browse by desk",
+      "categories": [
+        {
+          "id": "c1",
+          "label": "Cities",
+          "dek": "Transit, housing, and streets.",
+          "href": "/articles/parking-tickets",
+          "count": "24 stories"
+        },
+        {
+          "id": "c2",
+          "label": "Money",
+          "dek": "Budgets, prices, and wages.",
+          "href": "/articles/parking-tickets",
+          "count": "18 stories"
+        },
+        {
+          "id": "c3",
+          "label": "Data",
+          "dek": "Charts with the working shown.",
+          "href": "/articles/parking-tickets",
+          "count": "12 stories"
+        },
+        {
+          "id": "c4",
+          "label": "Profiles",
+          "dek": "People behind the numbers.",
+          "href": "/articles/parking-tickets",
+          "count": "9 stories"
+        }
+      ]
+    }
+  ]
+}

@@ -999,6 +999,9 @@
 
 .mode-corporate .mark,
 .mode-leadgen .mark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -1038,6 +1041,16 @@
 .mode-corporate .colophon,
 .mode-leadgen .colophon {
   border-top: 1px solid var(--hair);
+}
+
+/* Masthead links are tap targets on a phone in every mode. */
+@media (max-width: 560px) {
+  .mark,
+  .mast-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
 }
 
 @media (max-width: 560px) {

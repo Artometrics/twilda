@@ -75,7 +75,13 @@ export const PRESETS: Record<PresetId, Preset> = {
     sections: ["cover-story", "carousel", "story-grid", "fast-facts", "category-grid", "menu-shelf"],
     blocks: ["heading", "paragraph", "key-findings", "fast-facts", "pull-quote", "chart", "bar-chart", "callout", "image", "embed", "download", "sources"],
     theme: DEFAULT_THEME,
-    chrome: DEFAULT_CHROME,
+    chrome: {
+      name: "The Harrow Ledger",
+      issueLabel: "Issue 01",
+      note: "A fictional newsroom that ships with Twilda CMS so the editor can be tried without touching a live publication.",
+      nav: [{ label: "Home", href: "/" }],
+      colophon: "The Harrow Ledger is a fictional publication. Its stories and numbers are made up for this demo.",
+    },
   },
   leadgen: {
     id: "leadgen",
@@ -109,17 +115,34 @@ export function modeOf(site: Pick<SiteSettings, "mode"> | null | undefined): Pre
 }
 
 /**
- * The site with a mode applied: its theme tokens and its default masthead and footer replace
- * the current ones. Per-template and per-document masthead overrides are kept.
+ * True when the masthead is still one the product wrote (the built-in demo masthead or a mode's
+ * default), so switching mode may replace it. A masthead someone edited is theirs and is kept.
+ */
+export function chromeIsPristine(site: Pick<SiteSettings, "chrome">): boolean {
+  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  return same(site.chrome, DEFAULT_CHROME) || PRESET_IDS.some((id) => same(site.chrome, PRESETS[id].chrome));
+}
+
+/**
+ * The site with a mode applied: its theme tokens replace the current ones, and so does its default
+ * masthead and footer, unless the masthead was edited. Per-template and per-document masthead
+ * overrides are kept.
  */
 export function applyPreset(site: SiteSettings, id: PresetId): SiteSettings {
   const preset = PRESETS[id];
-  return { ...site, mode: id, theme: structuredClone(preset.theme), chrome: structuredClone(preset.chrome) };
+  return {
+    ...site,
+    mode: id,
+    theme: structuredClone(preset.theme),
+    chrome: chromeIsPristine(site) ? structuredClone(preset.chrome) : structuredClone(site.chrome),
+  };
 }
 
-/** A new `content/site.json` for a mode. */
+/** A new `content/site.json` for a mode, with a masthead whose links reach the starter documents. */
 export function starterSite(id: PresetId): SiteSettings {
-  return applyPreset({ version: SITE_VERSION, chrome: structuredClone(DEFAULT_CHROME), templates: {}, documents: {}, theme: structuredClone(DEFAULT_THEME) }, id);
+  const site = applyPreset({ version: SITE_VERSION, chrome: structuredClone(DEFAULT_CHROME), templates: {}, documents: {}, theme: structuredClone(DEFAULT_THEME) }, id);
+  if (id === "magazine") site.chrome.nav = [{ label: "Home", href: "/" }, { label: "Cover story", href: "/articles/parking-tickets" }];
+  return site;
 }
 
 /** The catalog of sections the desk offers to add in a mode. */

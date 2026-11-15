@@ -33,11 +33,17 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts tests/security/*.test.ts packages/core/test/*.test.ts packages/astro/test/*.test.ts packages/backend-fs/test/*.test.ts packages/backend-github/test/*.test.ts",
     "test:e2e": "playwright test",
+    "test:e2e:starters": "playwright test --config playwright.starters.config.ts",
     "test:e2e:edit": "playwright test --config playwright.click-edit.config.ts",
     "check:static": "node scripts/check-static.mjs",
     "check:content": "tsx scripts/check-content.ts",
     "check:secrets": "tsx scripts/check-secrets.ts",
     "check:audit": "tsx scripts/check-audit.ts",
+    "create:twilda": "tsx scripts/create-twilda.ts",
+    "starters:sync": "tsx scripts/starters.ts sync",
+    "starter:dev": "tsx scripts/starters.ts dev",
+    "starter:build": "tsx scripts/starters.ts build",
+    "build:starters": "tsx scripts/starters.ts build-all",
     "migrate:content": "tsx scripts/migrate-content-layout.ts"
   },
   "dependencies": {

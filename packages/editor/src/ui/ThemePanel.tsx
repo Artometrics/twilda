@@ -5,6 +5,7 @@ import {
   THEME_FONTS,
   THEME_FONT_IDS,
   applyPreset,
+  chromeIsPristine,
   contrastRatio,
   modeOf,
   type PresetId,
@@ -91,7 +92,7 @@ function RangeField({
 
 /**
  * Choose a mode: a section library, theme tokens, and a default masthead, in one click. Applying
- * one replaces the theme and masthead with that mode's defaults. Pages are never changed, and every
+ * one replaces the theme with that mode's, and the masthead too unless it was edited. Pages are never changed, and every
  * token can still be edited below.
  */
 function ModePicker({ site, busy, onChange }: { site: SiteSettings; busy: boolean; onChange: (site: SiteSettings) => void }) {
@@ -123,7 +124,7 @@ function ModePicker({ site, busy, onChange }: { site: SiteSettings; busy: boolea
         disabled={busy || pending === current}
         onClick={() => onChange(applyPreset(site, pending))}
       >
-        {pending === current ? "Current mode" : `Switch to ${preset.label}: replace theme and masthead`}
+        {pending === current ? "Current mode" : chromeIsPristine(site) ? `Switch to ${preset.label}: replace theme and masthead` : `Switch to ${preset.label}: replace theme, keep my masthead`}
       </button>
     </fieldset>
   );

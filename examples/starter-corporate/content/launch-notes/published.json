@@ -1,0 +1,63 @@
+{
+  "id": "launch-notes",
+  "kind": "article",
+  "title": "What changed in the March release",
+  "slug": "launch-notes",
+  "dek": "Offline mode, a faster inbox, and one thing we removed.",
+  "kicker": "Product notes",
+  "byline": "By Tomas Ellery",
+  "status": "published",
+  "updatedAt": "2026-11-15T00:00:00.000Z",
+  "blocks": [
+    {
+      "id": "intro",
+      "type": "paragraph",
+      "text": "The March release is about two things: working without a signal, and getting requests into the plan faster."
+    },
+    {
+      "id": "facts",
+      "type": "fast-facts",
+      "title": "The release in numbers",
+      "facts": [
+        {
+          "id": "n1",
+          "value": "40%",
+          "label": "Faster inbox triage"
+        },
+        {
+          "id": "n2",
+          "value": "0",
+          "label": "Signal needed to edit"
+        },
+        {
+          "id": "n3",
+          "value": "3",
+          "label": "Screens removed"
+        }
+      ]
+    },
+    {
+      "id": "h-offline",
+      "type": "heading",
+      "level": 2,
+      "text": "Offline mode"
+    },
+    {
+      "id": "offline",
+      "type": "paragraph",
+      "text": "Open the plan on a train, edit it, and close the app. Changes sync the next time your phone finds a connection."
+    },
+    {
+      "id": "quote",
+      "type": "pull-quote",
+      "quote": "The best feature is the one you stop noticing.",
+      "attribution": "Priya Raman, founder"
+    },
+    {
+      "id": "note",
+      "type": "callout",
+      "title": "One removal",
+      "text": "We removed the calendar view. Almost nobody used it, and it slowed the app down."
+    }
+  ]
+}

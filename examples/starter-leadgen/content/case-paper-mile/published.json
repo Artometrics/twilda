@@ -1,0 +1,52 @@
+{
+  "id": "case-paper-mile",
+  "kind": "article",
+  "title": "How Paper Mile got ten customers in nine days",
+  "slug": "case-paper-mile",
+  "dek": "A small stationery subscription, a very short list, and one daily task.",
+  "kicker": "Case study",
+  "byline": "By the Launchpad team",
+  "status": "published",
+  "updatedAt": "2026-11-15T00:00:00.000Z",
+  "blocks": [
+    {
+      "id": "intro",
+      "type": "paragraph",
+      "text": "Amara Neal started the program with a product, a landing page, and no customers."
+    },
+    {
+      "id": "facts",
+      "type": "fast-facts",
+      "title": "Paper Mile in nine days",
+      "facts": [
+        {
+          "id": "n1",
+          "value": "10",
+          "label": "Paying customers"
+        },
+        {
+          "id": "n2",
+          "value": "9",
+          "label": "Days to the tenth"
+        },
+        {
+          "id": "n3",
+          "value": "$0",
+          "label": "Spent on ads"
+        }
+      ]
+    },
+    {
+      "id": "quote",
+      "type": "pull-quote",
+      "quote": "I stopped polishing and started asking.",
+      "attribution": "Amara Neal"
+    },
+    {
+      "id": "next",
+      "type": "callout",
+      "title": "Want the same plan?",
+      "text": "The next cohort starts on the first Monday of the month."
+    }
+  ]
+}

@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import test, { describe, it } from "node:test";
 import {
   BLOCK_TYPES,
-  DEFAULT_CHROME,
   DEFAULT_THEME,
   MAGAZINE_CSS,
   PAGE_SECTION_TYPES,
@@ -13,6 +12,7 @@ import {
   addNode,
   applyPreset,
   blockCatalogFor,
+  chromeIsPristine,
   contrastRatio,
   createBlock,
   createSection,
@@ -75,19 +75,25 @@ describe("presets: what a mode is", () => {
       assert.ok(contrastRatio("#f3efe4", colors.plate) >= 4.5, "the missing-plate label is light text on the plate color");
     });
 
-    it(`${id}: masthead links point at things the starter home page actually has`, () => {
-      const home = starterDocuments(id).find((doc) => doc.id === "home");
+    it(`${id}: masthead links point at things the starter actually has`, () => {
+      const docs = starterDocuments(id);
+      const home = docs.find((doc) => doc.id === "home");
       assert.ok(home && home.kind === "page");
       const ids = new Set(home.sections.map((section) => section.id));
-      for (const item of preset.chrome.nav) {
-        if (item.href.startsWith("/#")) assert.ok(ids.has(item.href.slice(2)), `${id}: nav "${item.label}" points at #${item.href.slice(2)}`);
+      const articles = new Set(docs.filter((doc) => doc.kind === "article").map((doc) => `/articles/${doc.slug}`));
+      for (const chrome of [preset.chrome, starterSite(id).chrome]) {
+        for (const item of chrome.nav) {
+          if (item.href.startsWith("/#")) assert.ok(ids.has(item.href.slice(2)), `${id}: nav "${item.label}" points at #${item.href.slice(2)}`);
+          else if (item.href.startsWith("/articles/")) assert.ok(articles.has(item.href), `${id}: nav "${item.label}" -> ${item.href}`);
+          else assert.equal(item.href, "/");
+        }
       }
+      assert.ok(preset.chrome.nav.every((item) => !item.href.startsWith("/articles/")), "a mode's default masthead links to no article that may not exist");
     });
   }
 
-  it("magazine keeps today's look: the default theme and masthead, byte for byte", () => {
+  it("magazine keeps today's look: the default theme, which prints no theme stylesheet", () => {
     assert.deepEqual(PRESETS.magazine.theme, DEFAULT_THEME);
-    assert.deepEqual(PRESETS.magazine.chrome, DEFAULT_CHROME);
     assert.equal(themeCss(PRESETS.magazine.theme), "");
   });
 
@@ -133,6 +139,7 @@ describe("modes in site.json", () => {
 
   it("applyPreset swaps theme, masthead, and mode, and keeps per-document overrides", () => {
     const base = { ...defaultSite(), documents: { home: { note: "Kept" } }, templates: { article: { issueLabel: "Kept too" } } };
+    assert.equal(chromeIsPristine(base), true);
     for (const id of PRESET_IDS) {
       const next = applyPreset(base, id);
       assert.equal(next.mode, id);
@@ -144,6 +151,20 @@ describe("modes in site.json", () => {
       next.theme.colors.ink = "#000000";
       assert.notEqual(PRESETS[id].theme.colors.ink, "#000000", "applying a preset must copy, never share, its theme");
     }
+  });
+
+  it("a masthead someone edited survives a mode switch; a pristine one is replaced", () => {
+    const edited = { ...defaultSite(), chrome: { ...defaultSite().chrome, name: "My Real Paper" } };
+    assert.equal(chromeIsPristine(edited), false);
+    for (const id of PRESET_IDS) {
+      const next = applyPreset(edited, id);
+      assert.equal(next.chrome.name, "My Real Paper");
+      assert.deepEqual(next.theme, PRESETS[id].theme);
+      assert.equal(next.mode, id);
+    }
+    const switched = applyPreset(applyPreset(defaultSite(), "corporate"), "leadgen");
+    assert.equal(switched.chrome.name, PRESETS.leadgen.chrome.name, "a mode's own default masthead is still pristine");
+    assert.equal(applyPreset(edited, "corporate").chrome !== edited.chrome, true, "the result never shares the input's object");
   });
 
   it("renderOptionsFor carries the mode only when the site chose one", () => {

@@ -94,6 +94,7 @@ export {
   PRESETS,
   applyPreset,
   blockCatalogFor,
+  chromeIsPristine,
   getPreset,
   inLibrary,
   modeOf,
