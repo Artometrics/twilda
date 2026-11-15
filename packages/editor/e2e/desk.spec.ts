@@ -44,8 +44,8 @@ test("field desk sample: edit, reorder, section, upload, preview, and publish", 
     mimeType: "image/png",
     buffer: PNG,
   });
-  await expect(page.getByTestId("media-library")).toContainText("yard-night.png");
-  await expect(page.getByTestId("notice")).toContainText("Stored yard-night.png");
+  await expect(page.getByTestId("media-library")).toContainText("yard-night.jpg");
+  await expect(page.getByTestId("notice")).toContainText("Stored yard-night.jpg");
 
   await page.getByTestId("tab-edit").click();
   await page.getByTestId("save-draft").click();

@@ -131,7 +131,7 @@ test.describe("drafting", () => {
     await expect(text).toContainText('import { Callout, Chart, Download, KeyFindings } from');
     await expect(text).toContainText("\\{braces\\}");
     await expect(text).toContainText("## Sources");
-    await expect(text).toContainText("./images/ballpark-test-piece-1-plate-photo.png");
+    await expect(text).toContainText("./images/ballpark-test-piece-1-plate-photo.jpg");
     await expect(page.getByTestId("export-issues")).toContainText("VERIFY");
 
     const [mdxDownload] = await Promise.all([page.waitForEvent("download"), page.getByTestId("download-text").click()]);
@@ -150,7 +150,7 @@ test.describe("drafting", () => {
     expect(zip.suggestedFilename()).toBe("ballpark-test-piece-twilda.zip");
     const zipBytes = readFileSync(await zip.path());
     expect(zipBytes.subarray(0, 4).toString("hex")).toBe("504b0304");
-    expect(zipBytes.toString("latin1")).toContain("images/ballpark-test-piece-1-plate-photo.png");
+    expect(zipBytes.toString("latin1")).toContain("images/ballpark-test-piece-1-plate-photo.jpg");
 
     // JSON backup, then delete, then import the backup back.
     const [json] = await Promise.all([page.waitForEvent("download"), page.getByTestId("download-json").click()]);

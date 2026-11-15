@@ -201,10 +201,11 @@ test.describe("phase 1 desk", () => {
     await page.getByTestId("confirm-publish").click();
     await expect(page.getByTestId("notice")).toContainText("https://github.com/Artometrics/twilda/pull/9");
 
-    expect(puts.map((entry) => entry.path)).toEqual(["content/articles/token-publish.json"]);
+    expect(puts.map((entry) => entry.path)).toEqual(["content/token-publish/draft.json", "content/token-publish/published.json"]);
     expect(puts[0]?.body.branch).toBe("twilda/draft/token-publish");
     expect(puts[0]?.auth).toBe("Bearer github_pat_example");
-    const written = JSON.parse(Buffer.from(puts[0]!.body.content, "base64").toString("utf8"));
+    const written = JSON.parse(Buffer.from(puts[1]!.body.content, "base64").toString("utf8"));
+    expect(JSON.parse(Buffer.from(puts[0]!.body.content, "base64").toString("utf8")).status).toBe("draft");
     expect(written.status).toBe("published");
     expect(written.title).toBe("Token Publish");
     expect(pull).toMatchObject({ head: "twilda/draft/token-publish", base: "main" });
