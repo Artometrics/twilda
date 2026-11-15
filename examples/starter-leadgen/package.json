@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.23.4"
   },
   "scripts": {
     "dev": "astro dev --host 127.0.0.1 --port 4321",
@@ -14,7 +14,7 @@
   "dependencies": {
     "@twilda/astro": "file:../../packages/astro",
     "@twilda/core": "file:../../packages/core",
-    "astro": "^5.14.1",
+    "astro": "^7.4.12",
     "@fontsource/newsreader": "^5.2.8",
     "@fontsource/public-sans": "^5.2.5"
   }

@@ -20,7 +20,7 @@ export interface StarterOptions {
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
-export const STARTER_ASTRO = "^5.14.1";
+export const STARTER_ASTRO = "^7.4.12";
 const FONTS = { "@fontsource/newsreader": "^5.2.8", "@fontsource/public-sans": "^5.2.5" };
 
 export function starterDir(id: PresetId): string {
@@ -219,7 +219,7 @@ function readme(id: PresetId, kind: "example" | "project", name: string): string
   const headers = recommendedHeaders(site);
   const run =
     kind === "example"
-      ? `From the root of the Twilda repository (Node.js 22 or newer):
+      ? `From the root of the Twilda repository (Node.js 22.23.4 or newer):
 
 \`\`\`bash
 npm install
@@ -228,7 +228,7 @@ npm run starter:build -- ${id}    # writes examples/starter-${id}/dist
 \`\`\`
 
 To start your own project from this starter instead, run \`npm run create:twilda -- ../my-site --mode ${id}\`.`
-      : `Node.js 22 or newer:
+      : `Node.js 22.23.4 or newer:
 
 \`\`\`bash
 npm install
@@ -312,7 +312,7 @@ export function starterFiles(id: PresetId, kind: "example" | "project", options:
       version: "0.1.0",
       private: true,
       type: "module",
-      engines: { node: ">=22" },
+      engines: { node: ">=22.23.4" },
       scripts: { dev: "astro dev --host 127.0.0.1 --port 4321", build: "astro build", preview: "astro preview --host 127.0.0.1 --port 4321" },
       dependencies: { "@twilda/astro": options.packages.astro, "@twilda/core": options.packages.core, astro: STARTER_ASTRO, ...FONTS },
     }),

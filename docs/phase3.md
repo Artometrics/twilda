@@ -48,5 +48,5 @@ npm run test:e2e:edit
 
 - No deploy script, no hosting change beyond the headers in `firebase.json`, no new adapter, and no change to the deploy workflows.
 - No GitHub App, npm token, or paid review. See "Items that need the owner" in [security.md](security.md#items-that-need-the-owner).
-- No major upgrades of Astro or zod. They fix three of the allowlisted advisories and change what `@twilda/astro` promises.
+- No major upgrades of Astro or zod in this phase. They were made afterwards (Astro 7, zod 4), which emptied the allowlist; see [security.md](security.md#accepted-advisories).
 - No Trusted Types, no nonces. See [security.md](security.md#remaining-risks) for why and what would change that.

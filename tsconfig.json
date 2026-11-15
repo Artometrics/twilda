@@ -38,5 +38,5 @@
     "examples/studio/astro.config.ts",
     "tests/**/*.ts"
   ],
-  "exclude": ["packages/editor/astro-kit"]
+  "exclude": ["packages/editor/astro-kit", "packages/editor/vite.config.ts"]
 }

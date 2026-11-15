@@ -42,7 +42,7 @@ The checked-in issue is **Field Desk**, original sample fiction about a made-up 
 
 ## Install
 
-Node.js 22 or newer.
+Node.js 22.23.4 or newer (Astro 7 needs it).
 
 ```bash
 npm install

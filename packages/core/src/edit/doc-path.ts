@@ -49,8 +49,8 @@ export interface ApplyEditOptions {
   lenient?: boolean;
 }
 
-function issueMessage(issue: { path: Array<string | number>; message: string } | undefined): string {
-  const where = issue?.path.slice(-1).join("") || "field";
+function issueMessage(issue: { path: ReadonlyArray<PropertyKey>; message: string } | undefined): string {
+  const where = issue?.path.slice(-1).map(String).join("") || "field";
   return `${where}: ${issue?.message ?? "not valid"}`;
 }
 

@@ -6,7 +6,7 @@ This is a working Astro site wired to Twilda. It is fully static (`output: "stat
 
 ## Quickstart
 
-From the root of the Twilda repository (Node.js 22 or newer):
+From the root of the Twilda repository (Node.js 22.23.4 or newer):
 
 ```bash
 npm install

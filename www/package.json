@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Marketing landing site for Twilda (twilda.com).",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.23.4"
   },
   "scripts": {
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --host 127.0.0.1 --port 4322",
@@ -16,6 +16,6 @@
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.2.6",
     "@fontsource/ibm-plex-sans": "^5.2.8",
-    "astro": "^5.14.1"
+    "astro": "^7.4.12"
   }
 }
