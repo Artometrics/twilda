@@ -172,6 +172,42 @@ test.describe("the desk under its deployed Content-Security-Policy", () => {
     expect(await watch.violations()).toEqual([]);
   });
 
+  test("a form in the preview and the Forms card raise no violation, and nothing is posted anywhere", async ({ page }) => {
+    const posts: string[] = [];
+    page.on("request", (request) => {
+      if (request.method() !== "GET") posts.push(`${request.method()} ${request.url()}`);
+    });
+    const watch = await watchViolations(page);
+    await page.goto("/");
+    await show(page, "list");
+    await page.getByTestId("new-article").click();
+    await page.getByTestId("template-front-page").check({ force: true });
+    await page.getByTestId("new-title").fill("Form Policy Seed");
+    await page.getByTestId("new-create").click();
+    await expect(page.getByTestId("page-canvas").locator(".magazine")).toBeVisible();
+    await show(page, "theme");
+    await page.getByTestId("mode-corporate").check({ force: true });
+    await page.getByTestId("mode-apply").click();
+    await show(page, "list");
+    await page.getByTestId("new-article").click();
+    await page.getByTestId("template-company-home").check({ force: true });
+    await page.getByTestId("new-title").fill("Form Policy");
+    await page.getByTestId("new-create").click();
+    await expect(page.getByTestId("page-canvas").locator("h1")).toHaveText("Form Policy");
+    await show(page, "theme");
+    await page.getByTestId("forms-endpoint").fill("https://formspree.io/f/abc123");
+    await page.getByTestId("forms-policy").locator("summary").click();
+    await expect(page.getByTestId("forms-policy").locator("pre")).toContainText("form-action https://formspree.io");
+    await show(page, "page");
+    const canvas = page.getByTestId("page-canvas");
+    await expect(canvas.locator("#enquiry.form-section")).toHaveCount(1);
+    await expect(canvas.locator("form[action]")).toHaveCount(0);
+    await expect(canvas.locator("script")).toHaveCount(0);
+    await canvas.locator("#enquiry").scrollIntoViewIfNeeded();
+    expect(await watch.violations()).toEqual([]);
+    expect(posts.filter((entry) => !entry.includes("127.0.0.1"))).toEqual([]);
+  });
+
   test("signing out forgets the token: the next publish is not authenticated", async ({ page }) => {
     const fake = createFakeGithub();
     const authHeaders: string[] = [];
