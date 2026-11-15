@@ -52,9 +52,9 @@ describe("one storage layout", () => {
   });
 
   it("refuses an unsafe id or media name", () => {
-    for (const id of ["../x", "A", "a/b", "", "a_b", "-a"]) assert.throws(() => draftPath(id), undefined, id);
+    for (const id of ["../x", "A", "a/b", "", "a_b", "-a"]) assert.throws(() => draftPath(id), (error: unknown) => error instanceof Error, id);
     assert.equal(mediaRepoPath("field-notes.jpg"), "public/media/field-notes.jpg");
-    for (const name of ["../x.jpg", "a.exe", "A.jpg", "a b.jpg", "a/b.jpg", ".jpg", "a.svg.js", `${"a".repeat(90)}.jpg`]) assert.throws(() => mediaRepoPath(name), undefined, name);
+    for (const name of ["../x.jpg", "a.exe", "A.jpg", "a b.jpg", "a/b.jpg", ".jpg", "a.svg.js", `${"a".repeat(90)}.jpg`]) assert.throws(() => mediaRepoPath(name), (error: unknown) => error instanceof Error, name);
   });
 
   it("every editor and the build agree: the repo's content folder is entirely in the new layout", () => {

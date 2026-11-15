@@ -45,7 +45,8 @@ describe("section and block structure", () => {
   });
 
   it("removes but never empties a page or an article", () => {
-    const one = { ...home, sections: [home.sections[0]!] } as TwildaDocument;
+    const homePage = home as Extract<TwildaDocument, { kind: "page" }>;
+    const one = { ...homePage, sections: [homePage.sections[0]!] } as TwildaDocument;
     assert.equal(removeNode(one, 0).ok, false);
     const fewer = removeNode(home, 0);
     assert.ok(fewer.ok && ids(fewer.doc).length === ids(home).length - 1);

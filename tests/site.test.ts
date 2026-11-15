@@ -73,7 +73,7 @@ describe("site settings: hostile and out-of-range values", () => {
   it("accepts only six-digit hex colors", () => {
     for (const bad of ["red", "#fff", "#12345", "#1234567", "#gggggg", "url(javascript:alert(1))", "#fff;}body{display:none", "#ffffff\n}", "expression(1)", "var(--x)", ""]) {
       assert.equal(themeSchema.safeParse(withColors(bad)).success, false, bad);
-      assert.throws(() => themeCss(withColors(bad) as never), undefined, bad);
+      assert.throws(() => themeCss(withColors(bad) as never), (error: unknown) => error instanceof Error, bad);
     }
     assert.equal(themeSchema.safeParse(withColors("#aBcDeF")).success, true);
   });

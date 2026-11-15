@@ -62,7 +62,7 @@ describe("repository boundaries", () => {
     );
     assert.equal(
       common.get("Content-Security-Policy"),
-      "default-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; img-src 'self'; font-src 'self'; style-src 'self'; script-src 'none'; upgrade-insecure-requests",
+      "default-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; img-src 'self'; font-src 'self'; frame-src https://www.youtube-nocookie.com https://player.vimeo.com; style-src 'self'; script-src 'none'; upgrade-insecure-requests",
     );
     const hashed = new Map(bySource.get("/_astro/**")?.map((header) => [header.key, header.value]));
     assert.equal(hashed.get("Cache-Control"), "public, max-age=31536000, immutable");
@@ -82,6 +82,7 @@ describe("repository boundaries", () => {
     );
     assert.equal(landingHeaders.get("X-Robots-Tag"), "noindex, nofollow, noarchive");
     assert.match(landingHeaders.get("Content-Security-Policy") ?? "", /script-src 'none'/);
+    assert.doesNotMatch(landingHeaders.get("Content-Security-Policy") ?? "", /frame-src/);
 
     const rc = JSON.parse(readFileSync(".firebaserc", "utf8")) as {
       projects: { default: string };
