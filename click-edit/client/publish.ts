@@ -18,6 +18,8 @@ export interface PublishInput {
   site?: SiteSettings;
   /** Conflict choices from an earlier attempt. */
   decisions?: Record<string, MergeChoice>;
+  /** Copies this device already sent, so they are not mistaken for someone else's edit. */
+  known?: TwildaDocument[];
   fetchImpl?: typeof fetch;
   now?: () => Date;
 }
@@ -30,6 +32,8 @@ export interface PublishResult {
   /** True when `main` had moved and the draft was merged with it before publishing. */
   rebased: boolean;
   doc: TwildaDocument;
+  /** `main`'s copy at the time when it differed from the base, else null. */
+  seen: TwildaDocument | null;
 }
 
 /** `main` moved and the same fields were edited on both sides. Settle each, then publish again with `decisions`. */
@@ -65,7 +69,7 @@ export async function publishToGithub(input: PublishInput): Promise<PublishResul
     throw new Error("No edits to publish.");
   }
   const access = { token: input.token, owner: input.owner, repo: input.repo, fetchImpl: input.fetchImpl };
-  const plan = await planPublish(access, { base: input.base, doc: input.doc, decisions: input.decisions });
+  const plan = await planPublish(access, { base: input.base, doc: input.doc, decisions: input.decisions, known: input.known });
   if (plan.status === "conflict") throw new PublishConflict(plan);
   const result = await publishDocument({
     access,
@@ -78,7 +82,7 @@ export async function publishToGithub(input: PublishInput): Promise<PublishResul
     note: "Opened from the Twilda click-to-edit editor.",
     now: input.now,
   });
-  return { number: result.number, url: result.url, branch: result.branch, files: result.files, rebased: plan.status === "rebased", doc: result.doc };
+  return { number: result.number, url: result.url, branch: result.branch, files: result.files, rebased: plan.status === "rebased", doc: result.doc, seen: plan.status === "current" ? null : plan.theirs };
 }
 
 export function describeAuthError(error: unknown, proxy: string): string {
