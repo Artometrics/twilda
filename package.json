@@ -53,11 +53,11 @@
     "@fontsource/public-sans": "^5.2.5",
     "@twilda/astro": "*",
     "@twilda/core": "*",
-    "astro": "^7.4.12",
+    "astro": "^7.4.13",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@playwright/test": "^1.65.0",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^22.20.5",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
